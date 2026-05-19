@@ -1,0 +1,22 @@
+@define-color background #281f33;
+@define-color surface    #635575;
+@define-color foreground #f6f7fb;
+@define-color muted      #b9c4d2;
+@define-color select     #7f6f93;
+@define-color accent     #9579b6;
+@define-color border     #817590;
+
+@define-color background-alpha rgba(40, 31, 51, 0.60);
+@define-color surface-alpha    rgba(99, 85, 117, 0.78);
+@define-color select-alpha     rgba(127, 111, 147, 0.76);
+@define-color accent-alpha     rgba(149, 121, 182, 0.84);
+@define-color border-alpha     rgba(129, 117, 144, 0.55);
+
+@define-color pink       #c59dc5;
+@define-color purple     #a383c7;
+@define-color red        #f38ba8;
+@define-color orange     #b3908b;
+@define-color yellow     #c6a7aa;
+@define-color green      #969e9f;
+@define-color blue       @accent;
+@define-color gray       #4b4761;

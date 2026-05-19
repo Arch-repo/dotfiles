@@ -1,0 +1,186 @@
+/* =============================================================================
+   WAYBAR MINIMALIST & SOBER STYLE SHEET
+   Theme: Flat Glassmorphic Clean Minimalism
+   ============================================================================= */
+
+@import "../colors/colors.css";
+
+/* Universal Reset & Sleek Defaults */
+* {
+    font-family: "JetBrainsMono Nerd Font", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    background-color: transparent;
+    border-radius: 0;
+    min-height: 0;
+    transition: all 0.2s ease-in-out;
+}
+
+
+/* Premium Sober Tooltip */
+tooltip {
+    color: @foreground;
+    background: alpha(@background, 0.92);
+    border: 1px solid alpha(@border, 0.25);
+    border-radius: 8px;
+    padding: 6px 10px;
+}
+
+tooltip label {
+    font-size: 12px;
+    color: @foreground;
+}
+
+/* Main Bar Container - Full Width & Clean */
+#waybar {
+    background: alpha(@background, 0.65);
+    border-bottom: 1px solid alpha(@border, 0.2);
+    border-radius: 0;
+}
+
+/* Workspaces Container */
+#workspaces {
+    margin: 5px 6px;
+}
+
+/* Individual Workspaces */
+#workspaces button {
+    color: alpha(@foreground, 0.6);
+    background: transparent;
+    border: 1px solid transparent;
+    margin: 0 3px;
+    padding: 0;
+    min-width: 30px;
+    min-height: 30px;
+    border-radius: 8px;
+}
+
+/* Workspace Hover */
+#workspaces button:hover {
+    color: @foreground;
+    background: @select-alpha;
+    border-color: @accent-alpha;
+}
+
+/* Active Workspace Indicator */
+#workspaces button.active {
+    color: @foreground;
+    background: @select-alpha;
+    border-color: @accent-alpha;
+    font-weight: 700;
+}
+
+/* Urgent Workspace Indicator */
+#workspaces button.urgent {
+    color: @foreground;
+    background: alpha(@red, 0.18);
+    border-color: alpha(@red, 0.45);
+}
+
+/* Clock - Center Module */
+#custom-clock {
+    color: @foreground;
+    margin: 5px 3px;
+    padding: 0 14px;
+    min-height: 30px;
+    font-weight: 700;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+/* Right Side Modules - Purely Icon-Based Buttons */
+#custom-screenshot,
+#custom-notifications,
+#custom-control,
+#network,
+#bluetooth,
+#custom-power {
+    color: alpha(@foreground, 0.85);
+    margin: 5px 4px;
+    padding: 0;
+    min-width: 30px;
+    min-height: 30px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+/* Right Side Modules - Text + Icon Buttons */
+#pulseaudio,
+#battery,
+#custom-keyboard {
+    color: alpha(@foreground, 0.85);
+    margin: 5px 4px;
+    padding: 0 10px;
+    min-height: 30px;
+    border: 1px solid transparent;
+    border-radius: 8px;
+}
+
+/* Subtle, clean hover effect for status modules */
+#custom-screenshot:hover,
+#custom-notifications:hover,
+#custom-control:hover,
+#network:hover,
+#bluetooth:hover,
+#pulseaudio:hover,
+#battery:hover,
+#custom-keyboard:hover,
+#custom-clock:hover {
+    background: @select-alpha;
+    border-color: @accent-alpha;
+    color: @foreground;
+}
+
+/* Soft Accent overrides on Hover for critical actions */
+#custom-screenshot:hover {
+    color: @green;
+    border-color: @accent-alpha;
+}
+
+#custom-notifications:hover {
+    color: @accent;
+    border-color: @accent-alpha;
+}
+
+#custom-control:hover {
+    color: @yellow;
+    border-color: @accent-alpha;
+}
+
+/* Integrated Status States */
+#network.wifi,
+#network.ethernet,
+#bluetooth.connected {
+    color: @accent;
+}
+
+#network.disconnected,
+#bluetooth.disabled,
+#bluetooth.off {
+    color: alpha(@foreground, 0.4);
+}
+
+#battery.warning {
+    color: @yellow;
+}
+
+#battery.critical {
+    color: @red;
+}
+
+#custom-keyboard {
+    color: @accent;
+}
+
+/* Power Session Module - Subtle Red Accent */
+#custom-power {
+    margin-right: 8px;
+    color: alpha(@foreground, 0.8);
+    font-size: 14px;
+}
+
+#custom-power:hover {
+    color: @red;
+    background: alpha(@red, 0.08);
+    border-color: alpha(@red, 0.35);
+}

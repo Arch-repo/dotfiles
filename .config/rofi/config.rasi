@@ -1,0 +1,174 @@
+/* =============================================================================
+   ROFI SHARED LAUNCHER THEME
+   Same visual language as control_menu.rasi, with app/wallpaper icons enabled.
+   ============================================================================= */
+
+configuration {
+    scroll-method: 1;
+    scrollbar: false;
+    show-icons: true;
+    icon-theme: "WhiteSur-dark";
+    application-fallback-icon: "application-default-icon";
+    display-run: " Run";
+    display-drun: " Apps";
+    display-emoji: " Emoji";
+    drun-display-format: "{name}";
+    modi: "run,drun,emoji";
+}
+
+@import "~/.config/colors/colors.rasi"
+
+* {
+    font: "JetBrainsMono Nerd Font SemiBold 11";
+    background-color: transparent;
+    text-color: @foreground;
+}
+
+#window {
+    location:         center;
+    anchor:           center;
+    x-offset:         0px;
+    y-offset:         0px;
+    background-color: @background-alpha;
+    border:           2px;
+    border-color:     @border-alpha;
+    border-radius:    24px;
+    padding:          20px;
+    width:            680px;
+}
+
+#mainbox {
+    spacing: 14px;
+    background-color: transparent;
+}
+
+#listview {
+    columns:      2;
+    lines:        6;
+    fixed-height: 0;
+    border:       0px;
+    spacing:      8px;
+    padding:      2px;
+}
+
+#element {
+    children:      [ element-icon, element-text ];
+    orientation:   horizontal;
+    border:        1px;
+    border-color:  transparent;
+    border-radius: 14px;
+    padding:       10px 14px;
+    background-color: transparent;
+}
+
+#element.normal.normal {
+    background-color: transparent;
+    text-color:       @foreground;
+}
+
+#element.normal.urgent {
+    background-color: @urgent-background;
+    text-color:       @urgent-foreground;
+}
+
+#element.normal.active {
+    background-color: @active-background;
+    text-color:       @foreground;
+}
+
+#element.alternate.normal {
+    background-color: transparent;
+    text-color:       @foreground;
+}
+
+#element.alternate.urgent {
+    background-color: @urgent-background;
+    text-color:       @urgent-foreground;
+}
+
+#element.alternate.active {
+    background-color: @active-background;
+    text-color:       @foreground;
+}
+
+#element.selected.normal {
+    background-color: @accent;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element.selected.urgent {
+    background-color: @selected-urgent-background;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element.selected.active {
+    background-color: @selected-active-background;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element-icon {
+    size:             32px;
+    margin:           0px 12px 0px 0px;
+    background-color: transparent;
+}
+
+#element-text {
+    expand:           true;
+    horizontal-align: 0.0;
+    vertical-align:   0.5;
+    background-color: inherit;
+    text-color:       inherit;
+}
+
+#scrollbar {
+    width:        2px ;
+    border:       0;
+    handle-width: 8px ;
+    padding:      0;
+    handle-color: @select;
+}
+
+#inputbar {
+    children:   [ prompt, textbox-prompt-colon, entry ];
+    spacing:       6px;
+    padding:       10px 14px;
+    border:        1px;
+    border-color:  @border;
+    border-radius: 14px;
+    background-color: @surface;
+}
+
+#prompt {
+    spacing:    0;
+    text-color: @accent;
+    font: "JetBrainsMono Nerd Font Bold 12";
+}
+
+#textbox-prompt-colon {
+    expand:     false;
+    str:        "•";
+    margin:     0px 0.1em 0em 0em;
+    text-color: @muted;
+}
+
+#entry {
+    spacing:    0;
+    text-color: @foreground;
+    placeholder: "Cerca applicazioni o comandi...";
+    placeholder-color: @muted;
+}
+
+#message {
+    border:           1px;
+    border-color:     @border-alpha;
+    border-radius:    16px;
+    padding:          14px;
+    background-color: @surface-alpha;
+}
+
+#textbox {
+    text-color:       @foreground;
+}

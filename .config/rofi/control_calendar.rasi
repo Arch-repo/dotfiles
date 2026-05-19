@@ -1,0 +1,15 @@
+/* =============================================================================
+   ROFI DEDICATED CONTROL CALENDAR THEME
+   Inherits control_menu.rasi with overrides for grid alignments
+   ============================================================================= */
+
+@import "~/.config/rofi/control_menu.rasi"
+
+window {
+    width:            440px;
+}
+
+#textbox {
+    font:             "JetBrainsMono Nerd Font Mono Medium 10.5";
+    horizontal-align: 0.5;
+}

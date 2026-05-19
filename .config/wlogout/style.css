@@ -1,0 +1,92 @@
+/* =============================================================================
+   WLOGOUT CONTROL MENU THEME
+   Uses the same compact glass controls as the rofi panels.
+   ============================================================================= */
+
+@import "../colors/colors.css";
+
+* {
+    font-family: "JetBrainsMono Nerd Font", sans-serif;
+    transition: all 0.22s ease-in-out;
+}
+
+window {
+    background-color: alpha(@background, 0.60);
+}
+
+button, button label {
+    color: alpha(@foreground, 0.88);
+}
+
+button {
+    background-color: alpha(@surface, 0.78);
+    outline-style: none;
+    border: 2px solid alpha(@border, 0.55);
+    border-radius: 24px;
+    font-size: 15px;
+    font-weight: 700;
+    min-width: 150px;
+    min-height: 120px;
+    padding: 16px 18px;
+    margin: 10px;
+
+    background-repeat: no-repeat;
+    background-position: center 22%;
+    background-size: 38px;
+}
+
+button label {
+    margin-top: 50px;
+}
+
+#lock {
+    background-image: url("./icons/lock.svg");
+}
+#suspend {
+    background-image: url("./icons/suspend.svg");
+}
+#logout {
+    background-image: url("./icons/logout.svg");
+}
+#reboot {
+    background-image: url("./icons/reboot.svg");
+}
+#shutdown {
+    background-image: url("./icons/shutdown.svg");
+}
+#cancel {
+    background-image: url("./icons/cancel.svg");
+}
+
+button:hover, button:focus, button:hover label, button:focus label {
+    color: @foreground;
+}
+
+button:hover, button:focus {
+    background-color: @accent;
+    border-color: @border;
+}
+
+#lock:hover, #lock:focus {
+    background-image: url("./icons/lock-hover.svg");
+}
+
+#suspend:hover, #suspend:focus {
+    background-image: url("./icons/suspend-hover.svg");
+}
+
+#logout:hover, #logout:focus {
+    background-image: url("./icons/logout-hover.svg");
+}
+
+#reboot:hover, #reboot:focus {
+    background-image: url("./icons/reboot-hover.svg");
+}
+
+#shutdown:hover, #shutdown:focus {
+    background-image: url("./icons/shutdown-hover.svg");
+}
+
+#cancel:hover, #cancel:focus {
+    background-image: url("./icons/cancel-hover.svg");
+}

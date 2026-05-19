@@ -1,0 +1,71 @@
+/* @import "$HOME/.config/colors/colors.css" */
+@import "../colors/colors.css";
+
+* {
+    background-image: none;
+    font-family: "JetBrainsMono Nerd Font";
+    transition: 140ms;
+}
+
+window {
+    background: alpha(@background, 0.44);
+}
+
+button {
+    color: @foreground;
+    background-color: alpha(@surface, 0.72);
+    outline-style: none;
+    border: 1px solid alpha(@border, 0.22);
+    border-radius: 18px;
+    font-size: 17px;
+    font-weight: 700;
+    min-width: 154px;
+    min-height: 110px;
+    padding: 18px;
+    text-shadow: none;
+    box-shadow: 0 10px 28px alpha(@background, 0.28);
+}
+
+button:hover {
+    color: @foreground;
+    background-color: alpha(@select, 0.82);
+    border-color: alpha(@border, 0.56);
+    outline-style: none;
+    box-shadow: 0 12px 32px alpha(@background, 0.36);
+}
+
+#lock:hover,
+#logout:hover,
+#suspend:hover {
+    background-color: alpha(@surface, 0.82);
+}
+
+#shutdown {
+    color: alpha(@foreground, 0.92);
+}
+
+#shutdown:hover {
+    color: @red;
+    background-color: alpha(@red, 0.18);
+    border-color: alpha(@red, 0.58);
+}
+
+#reboot {
+    color: alpha(@foreground, 0.92);
+}
+
+#reboot:hover {
+    color: @accent;
+    background-color: alpha(@accent, 0.18);
+    border-color: alpha(@accent, 0.58);
+}
+
+#cancel {
+    color: alpha(@foreground, 0.72);
+}
+
+#cancel:hover {
+    color: @foreground;
+    background-color: alpha(@background, 0.54);
+    border-color: alpha(@border, 0.42);
+}

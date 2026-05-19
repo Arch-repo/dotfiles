@@ -1,0 +1,130 @@
+{
+  "position": "top",
+  "height": 42,
+  "spacing": 4,
+  "modules-left": [
+    "hyprland/workspaces"
+  ],
+  "modules-center": [
+    "custom/clock"
+  ],
+  "modules-right": [
+    "network",
+    "bluetooth",
+    "pulseaudio",
+    "battery",
+    "custom/keyboard",
+    "custom/notifications",
+    "custom/screenshot",
+    "custom/control",
+    "custom/power"
+  ],
+  "custom/power": {
+    "format": "",
+    "tooltip-format": "Spegnimento",
+    "on-click": "$HOME/.config/anto426/control_menu.sh power",
+    "on-click-right": "hyprlock"
+  },
+  "custom/screenshot": {
+    "exec": "bash -lc 'pidfile=${XDG_RUNTIME_DIR:-/tmp}/anto426-screen-recording.pid; if [ -s \"$pidfile\" ] && kill -0 \"$(cat \"$pidfile\")\" 2>/dev/null; then printf \"󰑊\\n\"; else printf \"󰹑\\n\"; fi'",
+    "interval": 1,
+    "format": "{}",
+    "tooltip-format": "Cattura\nClick: menu\nTasto destro: screenshot area\nTasto centrale: recorder",
+    "on-click": "$HOME/.config/anto426/screenshot_menu.sh",
+    "on-click-right": "$HOME/.config/anto426/screenshot_menu.sh quick-area",
+    "on-click-middle": "$HOME/.config/anto426/screenshot_menu.sh record-menu"
+  },
+  "custom/notifications": {
+    "exec": "bash -lc 'count=$(swaync-client -c 2>/dev/null || echo 0); case \"$count\" in \"\"|*[!0-9]*) count=0 ;; esac; if [ \"$count\" -gt 0 ]; then printf \"󰂚 %s\\n\" \"$count\"; else printf \"󰂜\\n\"; fi'",
+    "interval": 5,
+    "tooltip-format": "Notifiche\nClick: menu\nTasto destro: pulisci\nTasto centrale: DND",
+    "on-click": "$HOME/.config/anto426/control_menu.sh notifications",
+    "on-click-right": "swaync-client -C",
+    "on-click-middle": "swaync-client -d"
+  },
+  "custom/control": {
+    "format": "󰒓",
+    "tooltip-format": "Controlli rapidi",
+    "on-click": "$HOME/.config/anto426/control_menu.sh main"
+  },
+  "hyprland/workspaces": {
+    "disable-scroll": true,
+    "all-outputs": true,
+    "warp-on-scroll": false,
+    "format": "{name}",
+    "cursor": true
+  },
+  "network": {
+    "format-wifi": "󰤨",
+    "format-ethernet": "󰈀",
+    "format-linked": "󰖪",
+    "format-disconnected": "󰤭",
+    "tooltip-format-wifi": "{essid}\n{ifname} • {signalStrength}%",
+    "tooltip-format-ethernet": "Ethernet\n{ifname}",
+    "tooltip-format-disconnected": "Rete disconnessa",
+    "on-click": "$HOME/.config/anto426/control_menu.sh wifi",
+    "on-click-right": "bash -lc 'nmcli radio wifi | grep -q enabled && nmcli radio wifi off || nmcli radio wifi on'"
+  },
+  "bluetooth": {
+    "format": "󰂯",
+    "format-disabled": "󰂲",
+    "format-off": "󰂲",
+    "format-connected": "󰂱",
+    "format-connected-battery": "󰂱",
+    "tooltip-format": "{controller_alias}\n{status}",
+    "tooltip-format-connected": "{controller_alias}\n{device_alias}",
+    "tooltip-format-connected-battery": "{controller_alias}\n{device_alias} • {device_battery_percentage}%",
+    "on-click": "$HOME/.config/anto426/control_menu.sh bluetooth",
+    "on-click-right": "bash -lc 'bluetoothctl show | grep -q \"Powered: yes\" && bluetoothctl power off || bluetoothctl power on'"
+  },
+  "battery": {
+    "states": {
+      "good": 85,
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "{icon} {capacity}%",
+    "format-full": "{icon} {capacity}%",
+    "format-plugged": " {capacity}%",
+    "format-charging": " {capacity}%",
+    "format-alt": "{icon} {capacity}%",
+    "format-icons": [
+      " ",
+      " ",
+      " ",
+      " ",
+      " "
+    ],
+    "tooltip-format": "{time}",
+    "on-click": "$HOME/.config/anto426/control_menu.sh battery"
+  },
+  "custom/keyboard": {
+    "exec": "$HOME/.config/anto426/keyboard_status.sh",
+    "return-type": "json",
+    "interval": 1,
+    "tooltip": true,
+    "on-click": "$HOME/.config/anto426/control_menu.sh keyboard",
+    "on-click-right": "hyprctl switchxkblayout all next",
+    "on-scroll-up": "hyprctl switchxkblayout all next",
+    "on-scroll-down": "hyprctl switchxkblayout all prev"
+  },
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "  {volume}%",
+    "format-bluetooth": " {volume}%",
+    "format-bluetooth-muted": "  {volume}%",
+    "format-icons": {
+      "headphone": " ",
+      "headset": " ",
+      "default": [
+        " "
+      ]
+    },
+    "on-click": "$HOME/.config/anto426/control_menu.sh audio"
+  },
+  "custom/clock": {
+    "exec": "$HOME/.config/anto426/custom_clock.sh",
+    "tooltip": false,
+    "on-click": "$HOME/.config/anto426/control_menu.sh calendar"
+  }
+}

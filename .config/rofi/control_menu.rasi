@@ -1,0 +1,144 @@
+/* =============================================================================
+   ROFI DEDICATED CONTROL MENU THEME
+   Style: Compact Solid Premium Widget Design
+   ============================================================================= */
+
+configuration {
+    show-icons:     false;
+    scroll-method:  1;
+    scrollbar:      false;
+}
+
+@import "~/.config/colors/colors.rasi"
+
+* {
+    font: "JetBrainsMono Nerd Font SemiBold 11";
+    background-color: transparent;
+    text-color: @foreground;
+}
+
+#window {
+    location:         center;
+    anchor:           center;
+    x-offset:         0px;
+    y-offset:         0px;
+    background-color: @background-alpha;
+    border:           2px;
+    border-color:     @border-alpha;
+    border-radius:    24px;
+    padding:          20px;
+    width:            380px;
+}
+
+#mainbox {
+    spacing:          14px;
+    background-color: transparent;
+}
+
+#message {
+    border:           1px;
+    border-color:     @border-alpha;
+    border-radius:    16px;
+    padding:          14px;
+    background-color: @surface-alpha;
+}
+
+#textbox {
+    background-color: transparent;
+    text-color:       @foreground;
+    font:             "JetBrainsMono Nerd Font Medium 10.5";
+}
+
+#listview {
+    columns:          1;
+    lines:            8;
+    fixed-height:     false;
+    border:           0px;
+    spacing:          8px;
+    scrollbar:        false;
+    background-color: transparent;
+}
+
+#element {
+    border:           1px;
+    border-color:     transparent;
+    border-radius:    14px;
+    padding:          10px 14px;
+    background-color: transparent;
+    text-color:       @foreground;
+}
+
+#element.normal.normal {
+    background-color: transparent;
+    text-color:       #f6f7fb;
+}
+
+#element.normal.urgent {
+    background-color: @urgent-background;
+    text-color:       @urgent-foreground;
+}
+
+#element.normal.active {
+    background-color: @active-background;
+    text-color:       #f6f7fb;
+}
+
+#element.alternate.normal {
+    background-color: transparent;
+    text-color:       #f6f7fb;
+}
+
+#element.alternate.urgent {
+    background-color: @urgent-background;
+    text-color:       @urgent-foreground;
+}
+
+#element.alternate.active {
+    background-color: @active-background;
+    text-color:       #f6f7fb;
+}
+
+#element.selected.normal {
+    background-color: @accent;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element.selected.urgent {
+    background-color: @selected-urgent-background;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element.selected.active {
+    background-color: @selected-active-background;
+    text-color:       #f6f7fb;
+    border-color:     @border;
+}
+
+#element-text {
+    background-color: inherit;
+    text-color:       inherit;
+    font:             "JetBrainsMono Nerd Font SemiBold 11";
+}
+
+#inputbar {
+    spacing:          6px;
+    padding:          10px 14px;
+    border:           1px;
+    border-color:     @border;
+    border-radius:    14px;
+    background-color: @surface;
+}
+
+#prompt {
+    background-color: transparent;
+    text-color:       @accent;
+    font:             "JetBrainsMono Nerd Font Bold 12";
+}
+
+#entry {
+    background-color: transparent;
+    text-color:       @foreground;
+    placeholder-color: #b9c4d2;
+}
