@@ -10,10 +10,21 @@ RECORD_PID_FILE="$RUNTIME_DIR/anto426-screen-recording.pid"
 RECORD_FILE_STATE="$RUNTIME_DIR/anto426-screen-recording.file"
 RECORD_LOG="$STATE_DIR/screen_recording.log"
 FILE_MANAGER="${FILE_MANAGER:-nemo}"
+CAPTURE_DELAY="${ANTO426_CAPTURE_DELAY:-0.24}"
 
 if pgrep -x rofi >/dev/null; then
     pkill -x rofi
 fi
+
+dismiss_capture_ui() {
+    pkill -x rofi 2>/dev/null || true
+
+    if [[ "$CAPTURE_DELAY" =~ ^([0-9]+([.][0-9]+)?|[.][0-9]+)$ ]]; then
+        sleep "$CAPTURE_DELAY"
+    else
+        sleep 0.24
+    fi
+}
 
 notify() {
     notify-send "Cattura" "$*" 2>/dev/null || true
@@ -225,6 +236,7 @@ save_screenshot() {
     local mode="$1"
     local file="$2"
 
+    dismiss_capture_ui
     mkdir -p "$(dirname "$file")"
 
     if [[ "$mode" == "area" || "$mode" == "monitor" ]]; then
@@ -277,6 +289,8 @@ start_recording() {
         notify "Recorder mancante: installa wf-recorder"
         return 1
     }
+
+    dismiss_capture_ui
 
     if pid="$(recording_pid)"; then
         notify "Registrazione già attiva: PID $pid"

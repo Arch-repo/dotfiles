@@ -8,10 +8,10 @@ pacman_packages=(
     brightnessctl network-manager-applet bluez bluez-utils blueman pipewire wireplumber pavucontrol
     
     # System Utilities and Media
-    ghostty nemo gvfs curl python loupe celluloid gnome-text-editor evince obs-studio ffmpeg cava
+    ghostty nemo gvfs curl python loupe celluloid gnome-text-editor evince ffmpeg cava
     
     # Qt & Display Manager Support
-    sddm qt5ct qt6ct qt5-wayland qt6-wayland
+    sddm qt5ct qt6ct qt5-wayland qt6-wayland sassc gnome-themes-extra gtk-engine-murrine
 
     # Input Method
     fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
@@ -26,8 +26,8 @@ aur_packages=(
 
     # System Utilities and Media
 
-    # Communication
-    spotify brave-bin zen-browser-bin
+    # Browsers
+    brave-bin zen-browser-bin
 
     # Code Editors and IDEs
     visual-studio-code-bin sublime-text-4
@@ -36,5 +36,5 @@ aur_packages=(
     ttf-segoe-ui-variable sddm-astronaut-theme apple_cursor whitesur-icon-theme tint
 )
 
-sudo pacman -S --noconfirm "${pacman_packages[@]}"
-yay -S --noconfirm "${aur_packages[@]}"
+sudo pacman -S --needed --noconfirm "${pacman_packages[@]}"
+yay -S --needed --noconfirm "${aur_packages[@]}"
