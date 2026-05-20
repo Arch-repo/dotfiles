@@ -79,6 +79,9 @@ menu_rows() {
     header "Widget"
     row "SUPER G" "Mostra/nasconde widget"
     row "SUPER Shift G" "Riavvia widget"
+    row "SUPER Alt G" "Salva posizione widget"
+    row "SUPER Shift Alt G" "Menu ordine widget"
+    row "SUPER Click sx (floating)" "Trascina widget / finestre"
     printf '\n'
 
     header "Floating mode"
