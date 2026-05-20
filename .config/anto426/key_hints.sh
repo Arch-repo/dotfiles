@@ -1,51 +1,117 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-THEME="$HOME/.config/rofi/control_menu.rasi"
+THEME="$HOME/.config/rofi/key_hints.rasi"
 KEYBINDS="$HOME/.config/hypr/conf/keybinding.conf"
 
-if pgrep -x rofi > /dev/null; then
+if pgrep -x rofi >/dev/null; then
     pkill -x rofi
 fi
 
+header() {
+    printf '── %s ──\n' "$1"
+}
+
+row() {
+    printf '  %-24s %s\n' "$1" "$2"
+}
+
+menu_rows() {
+    header "Applicazioni"
+    row "SUPER Space" "Terminale"
+    row "SUPER E" "File manager"
+    row "SUPER B" "Browser"
+    row "Alt Space" "Launcher applicazioni"
+    row "SUPER ." "Emoji"
+    row "SUPER V" "Clipboard"
+    row "Copilot / F23" "Note"
+    printf '\n'
+
+    header "Finestre"
+    row "SUPER Q" "Chiudi finestra"
+    row "SUPER Shift Q" "Forza chiusura PID"
+    row "SUPER Frecce" "Sposta focus"
+    row "SUPER Shift Frecce" "Muovi finestra"
+    row "SUPER Ctrl Frecce" "Ridimensiona"
+    row "SUPER P" "Pseudo tiling"
+    row "SUPER J" "Toggle split"
+    printf '\n'
+
+    header "Workspace"
+    row "SUPER Tab" "Workspace successivo"
+    row "SUPER Shift Tab" "Workspace precedente"
+    row "SUPER 1..0" "Vai a workspace 1..10"
+    row "SUPER Shift 1..0" "Sposta finestra a workspace"
+    row "SUPER Scroll" "Scorri workspace"
+    printf '\n'
+
+    header "Screenshot e registrazione"
+    row "Print" "Menu screenshot"
+    row "Shift Print" "Screenshot area"
+    row "Alt Print" "Screenshot finestra"
+    row "Ctrl Print" "Screenshot schermo"
+    row "SUPER Shift R" "Menu registrazione"
+    printf '\n'
+
+    header "Audio"
+    row "XF86 Volume Up/Down" "Volume +/-"
+    row "XF86 Mute" "Mute audio"
+    row "XF86 MicMute" "Mute microfono"
+    row "Control Menu > Audio" "Mixer e dispositivi"
+    printf '\n'
+
+    header "Luminosità"
+    row "XF86 Brightness +/-" "Luminosità +/-"
+    row "SUPER Shift B" "Menu luminosità"
+    printf '\n'
+
+    header "Wallpaper"
+    row "SUPER W" "Scegli wallpaper"
+    row "SUPER Shift W" "Wallpaper casuale"
+    printf '\n'
+
+    header "Widget"
+    row "SUPER G" "Mostra/nasconde widget"
+    row "SUPER Shift G" "Riavvia widget"
+    printf '\n'
+
+    header "Floating mode"
+    row "SUPER F" "Toggle floating"
+    row "SUPER Shift F" "Floating Manager"
+    row "SUPER Ctrl F" "Centra finestra"
+    row "SUPER Alt F" "Pin / unpin"
+    row "SUPER Ctrl 1/2/3" "Resize small/medium/large"
+    row "SUPER Ctrl T" "Porta sopra"
+    row "SUPER Ctrl Backspace" "Reset floating"
+    printf '\n'
+
+    header "Sistema"
+    row "SUPER L" "Blocca schermo"
+    row "Power" "Menu spegnimento"
+    row "SUPER Shift P" "Proietta schermo"
+    row "SUPER Shift Ctrl Esc" "Esci da Hyprland"
+    row "SUPER Shift N" "Identifica tasto Copilot"
+    printf '\n'
+
+    printf '󱂬 Apri Floating Manager\n'
+    printf '󰃠 Apri menu luminosità\n'
+    printf '󰍹 Apri Proietta schermo\n'
+    printf '󱓞 Toggle widget\n'
+    printf '󰈙 Apri keybinding.conf\n'
+}
+
 choice="$(
-    printf '%s\n' \
-        "  =      SUPER KEY (Windows key)" \
-        "  H       Show keybinding hints" \
-        "  Space   Open terminal" \
-        "  E       Open file manager" \
-        "  B       Open browser" \
-        "  Shift Ctrl Esc   Exit Hyprland" \
-        "  Q       Close active window" \
-        "  Shift Q Kill active window by PID" \
-        "  F       Toggle floating" \
-        "  P       Toggle pseudo (dwindle)" \
-        "  J       Toggle split (dwindle)" \
-        "  L       Lock screen" \
-        "Alt Space  App launcher" \
-        "  .       Emoji selector" \
-        "  V       Clipboard manager" \
-        "  W       Choose wallpaper" \
-        "  Shift W Random wallpaper" \
-        "  Shift S Screenshot menu" \
-        "  Shift R Screen recorder menu" \
-        "Print      Screenshot menu" \
-        "Shift Print Quick screenshot region" \
-        "Alt Print  Quick screenshot window" \
-        "Ctrl Print Recorder menu" \
-        "Power      Power menu" \
-        "  Tab     Next workspace" \
-        "  Shift Tab Previous workspace" \
-        "  Shift Arrows Move active window" \
-        "  Ctrl Arrows Resize active window" \
-        "  [1 -> 0] Switch workspace 1-10" \
-        "  Shift [1 -> 0] Move window to workspace 1-10" \
-        "󰈙 Apri keybinding.conf" |
-        rofi -dmenu -i -matching fuzzy -p "Tasti Hyprland" -theme "$THEME"
+    menu_rows |
+        rofi -dmenu -i -matching fuzzy \
+            -p "Scorciatoie Hyprland" \
+            -mesg "Sezioni: Applicazioni, Finestre, Workspace, Screenshot, Audio, Luminosità, Wallpaper, Widget, Floating, Sistema" \
+            -theme "$THEME"
 )"
 
 case "$choice" in
-    *"Apri keybinding.conf")
-        xdg-open "$KEYBINDS" >/dev/null 2>&1 &
-        ;;
+    *"Floating Manager") "$HOME/.config/anto426/floating_manager.sh" menu ;;
+    *"luminosità") "$HOME/.config/anto426/brightness_menu.sh" menu ;;
+    *"Proietta") "$HOME/.config/anto426/projection_menu.sh" ;;
+    *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle ;;
+    *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & ;;
 esac

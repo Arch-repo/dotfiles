@@ -7,12 +7,8 @@ CALENDAR_DIR="$DATA_DIR/calendar"
 GCAL_ICS_FILE="$CALENDAR_DIR/google.ics"
 GCAL_EVENTS_FILE="$CALENDAR_DIR/google_events.json"
 GCAL_REMINDER_STATE_FILE="$CALENDAR_DIR/google_reminders.sent"
-ASSETS_STAMP="$DATA_DIR/assets-sync.stamp"
 THEME_SETUP="$HOME/.config/rofi/control_setup.rasi"
 DAEMON_LOCK_DIR="${XDG_RUNTIME_DIR:-/tmp}/anto426-remote-sync.lock"
-
-LOCAL_WALLPAPERS_DIR="${ANTO426_WALLPAPERS_DIR:-$HOME/Pictures/Wallpapers}"
-LOCAL_NEOFETCH_DIR="${ANTO426_NEOFETCH_DIR:-$HOME/Pictures/neofetch}"
 
 quiet="${ANTO426_SYNC_QUIET:-0}"
 
@@ -58,13 +54,6 @@ ensure_config() {
 # 3. Copia "Indirizzo segreto in formato iCal" e incollalo qui.
 # export ANTO426_GCAL_ICS_URL='https://calendar.google.com/calendar/ical/.../basic.ics'
 #
-# Asset remoti via Google Drive o qualunque sync locale:
-# crea una cartella con:
-#   wallpapers/  -> immagini desktop
-#   neofetch/    -> immagini usate dal terminale
-# poi imposta il path montato/sincronizzato qui sotto.
-# export ANTO426_REMOTE_ASSETS_DIR="$HOME/Google Drive/anto426"
-#
 # Opzionali:
 # export ANTO426_GCAL_SYNC_PAST_DAYS=7
 # export ANTO426_GCAL_SYNC_FUTURE_DAYS=120
@@ -77,72 +66,6 @@ load_config() {
     ensure_config
     # shellcheck disable=SC1090
     source "$CONFIG_FILE"
-}
-
-copy_images() {
-    local src="$1"
-    local dest="$2"
-    local copied=0
-
-    [[ -d "$src" ]] || return 0
-    mkdir -p "$dest"
-
-    while IFS= read -r -d '' file; do
-        cp -u "$file" "$dest/" && copied=$((copied + 1))
-    done < <(
-        find "$src" -maxdepth 1 -type f \
-            \( -iname '*.png' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.webp' -o -iname '*.gif' \) \
-            -print0
-    )
-
-    printf '%s' "$copied"
-}
-
-first_existing_dir() {
-    local dir
-    for dir in "$@"; do
-        if [[ -d "$dir" ]]; then
-            printf '%s' "$dir"
-            return 0
-        fi
-    done
-    return 1
-}
-
-sync_assets() {
-    load_config
-
-    local remote="${ANTO426_REMOTE_ASSETS_DIR:-}"
-    if [[ -z "$remote" || ! -d "$remote" ]]; then
-        notify "Cartella remota non configurata. Modifica $CONFIG_FILE"
-        return 2
-    fi
-
-    local wallpaper_src neofetch_src wall_count neofetch_count
-    wallpaper_src="$(
-        first_existing_dir \
-            "$remote/wallpapers" \
-            "$remote/Wallpapers" \
-            "$remote/sfondi" \
-            "$remote/Sfondi" \
-            "$remote/desktop"
-    )" || wallpaper_src=""
-    neofetch_src="$(
-        first_existing_dir \
-            "$remote/neofetch" \
-            "$remote/Neofetch" \
-            "$remote/terminal" \
-            "$remote/Terminal" \
-            "$remote/fetch"
-    )" || neofetch_src=""
-
-    wall_count=0
-    neofetch_count=0
-    [[ -n "$wallpaper_src" ]] && wall_count="$(copy_images "$wallpaper_src" "$LOCAL_WALLPAPERS_DIR")"
-    [[ -n "$neofetch_src" ]] && neofetch_count="$(copy_images "$neofetch_src" "$LOCAL_NEOFETCH_DIR")"
-
-    date +%s > "$ASSETS_STAMP"
-    notify "Asset aggiornati: $wall_count sfondi, $neofetch_count neofetch"
 }
 
 notify_calendar_due() {
@@ -548,10 +471,9 @@ manual_config() {
 
 save_config() {
     local gcal_url="$1"
-    local remote_dir="$2"
-    local past_days="$3"
-    local future_days="$4"
-    local interval="$5"
+    local past_days="$2"
+    local future_days="$3"
+    local interval="$4"
 
     mkdir -p "$DATA_DIR" "$CALENDAR_DIR"
     cat > "$CONFIG_FILE" <<EOF
@@ -564,17 +486,13 @@ export ANTO426_GCAL_ICS_URL=$(shell_quote "$gcal_url")
 export ANTO426_GCAL_SYNC_PAST_DAYS=$(shell_quote "$past_days")
 export ANTO426_GCAL_SYNC_FUTURE_DAYS=$(shell_quote "$future_days")
 
-# Cartella Drive/sync locale con sottocartelle wallpapers/ e neofetch/.
-export ANTO426_REMOTE_ASSETS_DIR=$(shell_quote "$remote_dir")
-
 # Intervallo daemon in secondi.
 export ANTO426_SYNC_INTERVAL=$(shell_quote "$interval")
 EOF
 }
 
 config_status_message() {
-    local calendar_status assets_status interval_label
-    local assets_label assets_detail
+    local calendar_status interval_label
 
     if [[ -n "${ANTO426_GCAL_ICS_URL:-}" ]]; then
         calendar_status="configurato"
@@ -582,42 +500,10 @@ config_status_message() {
         calendar_status="non configurato"
     fi
 
-    if [[ -n "${ANTO426_REMOTE_ASSETS_DIR:-}" && -d "${ANTO426_REMOTE_ASSETS_DIR:-}" ]]; then
-        assets_status="ok"
-        assets_detail="${ANTO426_REMOTE_ASSETS_DIR}"
-    elif [[ -n "${ANTO426_REMOTE_ASSETS_DIR:-}" ]]; then
-        assets_status="percorso non trovato"
-        assets_detail="${ANTO426_REMOTE_ASSETS_DIR}"
-    else
-        assets_status="non configurato"
-        assets_detail=""
-    fi
-
     interval_label="${ANTO426_SYNC_INTERVAL:-900}s"
-    assets_label="Drive/asset: $assets_status"
-    if [[ -n "$assets_detail" ]]; then
-        printf 'Google Calendar: %s\n%s\n  %s\nIntervallo daemon: %s\n\nDrive deve contenere: wallpapers/ e opzionale neofetch/' \
-            "$calendar_status" \
-            "$assets_label" \
-            "$assets_detail" \
-            "$interval_label"
-    else
-        printf 'Google Calendar: %s\n%s\nIntervallo daemon: %s\n\nDrive deve contenere: wallpapers/ e opzionale neofetch/' \
-            "$calendar_status" \
-            "$assets_label" \
-            "$interval_label"
-    fi
-}
-
-common_asset_dirs() {
-    printf '%s\n' \
-        "$HOME/Google Drive/anto426" \
-        "$HOME/GoogleDrive/anto426" \
-        "$HOME/Drive/anto426" \
-        "$HOME/Google Drive" \
-        "$HOME/GoogleDrive" \
-        "$HOME/Drive" |
-        awk '!seen[$0]++'
+    printf 'Google Calendar: %s\nIntervallo daemon: %s' \
+        "$calendar_status" \
+        "$interval_label"
 }
 
 guided_calendar_config() {
@@ -652,36 +538,6 @@ guided_calendar_config() {
     esac
 }
 
-guided_assets_config() {
-    local choice remote
-
-    choice="$(
-        {
-            common_asset_dirs
-            printf '%s\n' "󰅖 Disattiva sync asset"
-            printf '%s\n' "󰌍 Indietro"
-        } |
-            rofi_pick_msg "Drive / asset" "Scegli o scrivi la cartella locale sincronizzata con Drive.\nDentro dovrebbe avere wallpapers/ e, se vuoi, neofetch/."
-    )"
-
-    case "$choice" in
-        "" | *"Indietro")
-            return 0
-            ;;
-        *"Disattiva"*)
-            ANTO426_REMOTE_ASSETS_DIR=""
-            ;;
-        *)
-            remote="${choice/#\~/$HOME}"
-            remote="${remote/#\$HOME/$HOME}"
-            ANTO426_REMOTE_ASSETS_DIR="$remote"
-            if [[ ! -d "$remote" ]]; then
-                notify "Cartella salvata, ma non esiste ancora: $remote"
-            fi
-            ;;
-    esac
-}
-
 guided_interval_config() {
     local choice
 
@@ -691,7 +547,7 @@ guided_interval_config() {
             "15 minuti" \
             "30 minuti" \
             "1 ora" |
-            rofi_pick_msg "Intervallo sync" "Ogni quanto il daemon aggiorna Calendar e asset"
+            rofi_pick_msg "Intervallo sync" "Ogni quanto il daemon aggiorna Calendar"
     )"
 
     case "$choice" in
@@ -705,7 +561,6 @@ guided_interval_config() {
 persist_current_config() {
     save_config \
         "${ANTO426_GCAL_ICS_URL:-}" \
-        "${ANTO426_REMOTE_ASSETS_DIR:-}" \
         "${ANTO426_GCAL_SYNC_PAST_DAYS:-7}" \
         "${ANTO426_GCAL_SYNC_FUTURE_DAYS:-120}" \
         "${ANTO426_SYNC_INTERVAL:-900}"
@@ -725,7 +580,6 @@ guided_config() {
         choice="$(
             printf '%s\n' \
                 "󰃭 Configura Google Calendar" \
-                "󰋊 Configura Drive/asset" \
                 "󰔚 Intervallo sincronizzazione" \
                 "󰑓 Salva e testa tutto" \
                 "󰈙 Apri file avanzato" \
@@ -736,10 +590,6 @@ guided_config() {
         case "$choice" in
             *"Google Calendar")
                 guided_calendar_config
-                persist_current_config
-                ;;
-            *"Drive/asset")
-                guided_assets_config
                 persist_current_config
                 ;;
             *"Intervallo")
@@ -784,7 +634,6 @@ daemon() {
 
     while true; do
         ANTO426_SYNC_QUIET=1 "$0" calendar >/dev/null 2>&1 || true
-        ANTO426_SYNC_QUIET=1 "$0" assets >/dev/null 2>&1 || true
         sleep "$interval"
     done
 }
@@ -797,21 +646,17 @@ case "${1:-all}" in
     config)
         guided_config
         ;;
-    assets)
-        sync_assets
-        ;;
     calendar)
         sync_calendar
         ;;
     all)
         sync_calendar || true
-        sync_assets || true
         ;;
     daemon)
         daemon
         ;;
     *)
-        printf 'Uso: %s [init|config|calendar|assets|all|daemon]\n' "$0" >&2
+        printf 'Uso: %s [init|config|calendar|all|daemon]\n' "$0" >&2
         exit 2
         ;;
 esac

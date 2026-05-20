@@ -50,8 +50,8 @@ pacman_packages=(
     pipewire pipewire-pulse wireplumber pavucontrol
 
     # Apps used by the dotfiles
-    ghostty nemo gvfs curl python loupe celluloid gnome-text-editor evince
-    ffmpeg cava cliphist gnome-characters keepass
+    ghostty nemo gvfs curl jq python loupe celluloid gnome-text-editor evince
+    ffmpeg cava cliphist gnome-characters keepass playerctl wev
 
     # Qt, display manager, and theming
     sddm qt5ct qt6ct qt5-wayland qt6-wayland nwg-look adw-gtk-theme kvantum-qt5

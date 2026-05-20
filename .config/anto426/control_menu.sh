@@ -1689,15 +1689,19 @@ power_menu() {
 main_menu() {
     while true; do
         local choice
-        local bluetooth wifi audio battery keyboard notifications calendar wallpapers power
+        local bluetooth wifi audio brightness battery keyboard notifications calendar wallpapers display widgets power floating
         bluetooth="$(menu_item "󰂯" "Bluetooth")"
         wifi="$(menu_item "󰤨" "Wi-Fi")"
         audio="$(menu_item "󰓃" "Sound")"
+        brightness="󰃠 Luminosità"
         battery="$(menu_item "󰂎" "Battery")"
         keyboard="$(menu_item "" "Keyboard")"
         notifications="$(menu_item "󰵙" "Notifications")"
         calendar="$(menu_item "󰃭" "Calendar")"
         wallpapers="$(menu_item "󰸉" "Wallpaper")"
+        display="󰍹 Proietta schermo"
+        widgets="󱓞 Widget desktop"
+        floating="󱂬 Floating Manager"
         power="$(menu_item "󰐥" "Power Off")"
 
         choice="$(
@@ -1705,11 +1709,15 @@ main_menu() {
                 "$bluetooth" \
                 "$wifi" \
                 "$audio" \
+                "$brightness" \
                 "$battery" \
                 "$keyboard" \
                 "$notifications" \
                 "$calendar" \
                 "$wallpapers" \
+                "$display" \
+                "$widgets" \
+                "$floating" \
                 "$power" |
                 rofi_pick "$(system_text "Settings")"
         )"
@@ -1720,11 +1728,15 @@ main_menu() {
             "$bluetooth") MENU_STATE="bluetooth"; return 0 ;;
             "$wifi") MENU_STATE="wifi"; return 0 ;;
             "$audio") MENU_STATE="audio"; return 0 ;;
+            "$brightness") "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
             "$battery") MENU_STATE="battery"; return 0 ;;
             "$keyboard") MENU_STATE="keyboard"; return 0 ;;
             "$notifications") MENU_STATE="notifications"; return 0 ;;
             "$calendar") MENU_STATE="calendar"; return 0 ;;
             "$wallpapers") "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
+            "$display") "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
+            "$widgets") "$HOME/.config/anto426/widgets.sh" toggle; return 0 ;;
+            "$floating") "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
             "$power") MENU_STATE="power"; return 0 ;;
             *) return 0 ;;
         esac
