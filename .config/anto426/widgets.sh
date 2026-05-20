@@ -30,6 +30,9 @@ export ANTO426_WIDGET_GAP=18
 
 # Terminale usato per i widget (ghostty consigliato)
 export ANTO426_WIDGETS_BACKEND="terminal"
+
+# 1 = widget bloccati: non prendono focus e non si spostano per sbaglio.
+export ANTO426_WIDGETS_LOCKED=0
 EOF
     fi
 
@@ -291,7 +294,10 @@ start_widgets() {
     done
 
     (
-        apply_widget_layout || layout_default_stack && apply_widget_layout
+        if ! apply_widget_layout_locked; then
+            layout_default_stack
+            apply_widget_layout_locked
+        fi
     ) &
 
     [[ "$quiet" == "quiet" ]] || notify "Widget avviati — trascina con Super + tasto sinistro"
@@ -319,6 +325,90 @@ any_running() {
         [[ -n "$widget" ]] && widget_client_address "$widget" | grep -q . && return 0
     done
     return 1
+}
+
+set_config_value() {
+    local key="$1"
+    local value="$2"
+    local file tmp
+
+    ensure_config
+    file="$config_file"
+    tmp="$(mktemp)"
+    awk -v key="$key" -v value="$value" '
+        BEGIN { found = 0 }
+        $0 ~ "^export " key "=" {
+            print "export " key "=\"" value "\""
+            found = 1
+            next
+        }
+        { print }
+        END {
+            if (!found) print "export " key "=\"" value "\""
+        }
+    ' "$file" >"$tmp" && mv "$tmp" "$file"
+    # shellcheck disable=SC1090
+    source "$file"
+}
+
+widgets_locked() {
+    [[ "${ANTO426_WIDGETS_LOCKED:-0}" == "1" ]]
+}
+
+apply_widgets_lock_state() {
+    local name addr value lock_arg
+
+    ensure_config
+    if widgets_locked; then
+        value=1
+        lock_arg=lock
+    else
+        value=0
+        lock_arg=
+    fi
+
+    for name in $(widget_order_default); do
+        [[ -n "$name" ]] || continue
+        addr="$(widget_client_address "$name")"
+        [[ -n "$addr" ]] || continue
+        hyprctl setprop "address:$addr" nofocus "$value" $lock_arg >/dev/null 2>&1 || true
+    done
+}
+
+apply_widget_layout_locked() {
+    local status=0
+
+    apply_widget_layout || status=$?
+    apply_widgets_lock_state
+    return "$status"
+}
+
+set_widgets_lock() {
+    local state="$1"
+
+    case "$state" in
+        lock | locked | 1 | true)
+            save_widget_layout 2>/dev/null || true
+            set_config_value ANTO426_WIDGETS_LOCKED 1
+            apply_widgets_lock_state
+            notify "Widget bloccati"
+            ;;
+        unlock | unlocked | 0 | false)
+            set_config_value ANTO426_WIDGETS_LOCKED 0
+            apply_widgets_lock_state
+            notify "Widget sbloccati"
+            ;;
+        toggle)
+            if widgets_locked; then
+                set_widgets_lock unlock
+            else
+                set_widgets_lock lock
+            fi
+            ;;
+        *)
+            return 1
+            ;;
+    esac
 }
 
 widget_label() {
@@ -410,7 +500,7 @@ move_widget_in_order() {
     new_order="${items[*]}"
     write_widget_order "$new_order"
     layout_default_stack
-    apply_widget_layout
+    apply_widget_layout_locked
     notify "Ordine aggiornato"
 }
 
@@ -426,6 +516,11 @@ arrange_widgets() {
         {
             printf '%s\n' "󱓞 Mostra/nasconde widget"
             printf '%s\n' "󰑓 Riavvia widget"
+            if widgets_locked; then
+                printf '%s\n' "󰌾 Sblocca widget"
+            else
+                printf '%s\n' "󰌾 Blocca widget"
+            fi
             printf '%s\n' "󰒓 Applica layout salvato"
             printf '%s\n' "󰑐 Reset posizioni"
             printf '%s\n' "󰆓 Salva posizioni attuali"
@@ -457,14 +552,16 @@ arrange_widgets() {
             sleep 0.3
             start_widgets
             ;;
-        *"Applica layout"*) apply_widget_layout && notify "Layout applicato" ;;
-        *"Reset posizioni"*) reset_widget_layout && notify "Layout resettato" ;;
-        *"Salva posizioni"*) save_widget_layout && apply_widget_layout && notify "Layout salvato" ;;
+        *"Blocca widget"*) set_widgets_lock lock ;;
+        *"Sblocca widget"*) set_widgets_lock unlock ;;
+        *"Applica layout"*) apply_widget_layout_locked && notify "Layout applicato" ;;
+        *"Reset posizioni"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout resettato" ;;
+        *"Salva posizioni"*) save_widget_layout && apply_widget_layout_locked && notify "Layout salvato" ;;
         *"Aggiungi widget terminale"*)
             if new_id="$(pick_terminal_widget)"; then
                 launch_custom_widget "$new_id"
                 layout_default_stack
-                apply_widget_layout
+                apply_widget_layout_locked
                 notify "Widget terminale aggiunto"
             fi
             ;;
@@ -472,7 +569,7 @@ arrange_widgets() {
             if new_id="$(pick_app_for_widget)"; then
                 launch_custom_widget "$new_id"
                 layout_default_stack
-                apply_widget_layout
+                apply_widget_layout_locked
                 notify "Widget app aggiunto"
             fi
             ;;
@@ -484,7 +581,7 @@ arrange_widgets() {
             fi
             remove_custom_widget "$selected"
             layout_default_stack
-            apply_widget_layout
+            apply_widget_layout_locked
             notify "Widget rimosso"
             ;;
         *"Sposta selezionato su")
@@ -524,8 +621,11 @@ case "${1:-toggle}" in
             start_widgets
         fi
         ;;
-    save-layout) save_widget_layout && apply_widget_layout && notify "Layout salvato" ;;
+    save-layout) save_widget_layout && apply_widget_layout_locked && notify "Layout salvato" ;;
     arrange) arrange_widgets ;;
+    lock) set_widgets_lock lock ;;
+    unlock) set_widgets_lock unlock ;;
+    toggle-lock) set_widgets_lock toggle ;;
     status)
         if any_running; then
             printf 'running\n'
@@ -534,7 +634,7 @@ case "${1:-toggle}" in
         fi
         ;;
     *)
-        printf 'Uso: %s [autostart|start|stop|restart|reload|toggle|save-layout|arrange|status]\n' "$0" >&2
+        printf 'Uso: %s [autostart|start|stop|restart|reload|toggle|save-layout|arrange|lock|unlock|toggle-lock|status]\n' "$0" >&2
         exit 2
         ;;
 esac

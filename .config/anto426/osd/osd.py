@@ -11,6 +11,15 @@ from pathlib import Path
 import gi
 
 gi.require_version("Gtk", "3.0")
+gi.require_version("Gdk", "3.0")
+try:
+    gi.require_version("GtkLayerShell", "0.1")
+    from gi.repository import GtkLayerShell  # noqa: E402
+
+    HAS_LAYER_SHELL = True
+except (ImportError, ValueError):
+    GtkLayerShell = None
+    HAS_LAYER_SHELL = False
 from gi.repository import Gdk, GLib, Gtk  # noqa: E402
 
 STATE_FILE = Path(
@@ -20,7 +29,21 @@ STATE_FILE = Path(
     )
 )
 CSS_FILE = Path(__file__).with_name("style.css")
+COLORS_FILE = Path(
+    os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
+) / "colors" / "colors.css"
 HIDE_MS = 1400
+OSD_WIDTH = 400
+OSD_HEIGHT = 120
+
+FALLBACK_CSS = b"""
+@define-color background #1e1e2e;
+@define-color surface #313244;
+@define-color foreground #f6f7fb;
+@define-color muted #b9c4d2;
+@define-color accent #8cb8e4;
+@define-color border #6c7086;
+"""
 
 ICONS = {
     "volume": "󰕾",
@@ -45,20 +68,16 @@ class OsdWindow(Gtk.Window):
         self.set_skip_pager_hint(True)
         self.set_accept_focus(False)
         self.set_type_hint(Gdk.WindowTypeHint.NOTIFICATION)
+        self.set_app_paintable(True)
         self.get_style_context().add_class("osd-root")
         self.set_name("anto426-osd")
         try:
             self.set_wmclass("anto426-osd", "anto426-osd")
         except AttributeError:
             pass
+        self._configure_surface()
 
-        provider = Gtk.CssProvider()
-        provider.load_from_path(str(CSS_FILE))
-        Gtk.StyleContext.add_provider_for_screen(
-            Gdk.Screen.get_default(),
-            provider,
-            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
-        )
+        self._load_css()
 
         outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
         outer.get_style_context().add_class("osd-box")
@@ -95,6 +114,54 @@ class OsdWindow(Gtk.Window):
         self.show_all()
         self._centre()
 
+    def _load_css(self) -> None:
+        screen = Gdk.Screen.get_default()
+        if screen is None:
+            return
+
+        fallback = Gtk.CssProvider()
+        fallback.load_from_data(FALLBACK_CSS)
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            fallback,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION,
+        )
+
+        if COLORS_FILE.exists():
+            colors = Gtk.CssProvider()
+            colors.load_from_path(str(COLORS_FILE))
+            Gtk.StyleContext.add_provider_for_screen(
+                screen,
+                colors,
+                Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 1,
+            )
+
+        provider = Gtk.CssProvider()
+        provider.load_from_path(str(CSS_FILE))
+        Gtk.StyleContext.add_provider_for_screen(
+            screen,
+            provider,
+            Gtk.STYLE_PROVIDER_PRIORITY_APPLICATION + 2,
+        )
+
+    def _configure_surface(self) -> None:
+        screen = self.get_screen()
+        visual = screen.get_rgba_visual() if screen is not None else None
+        if visual is not None:
+            self.set_visual(visual)
+
+        if HAS_LAYER_SHELL and GtkLayerShell is not None:
+            GtkLayerShell.init_for_window(self)
+            GtkLayerShell.set_namespace(self, "anto426-osd")
+            GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
+            GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.NONE)
+            GtkLayerShell.set_exclusive_zone(self, -1)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.TOP, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
+            return
+
+        self.set_position(Gtk.WindowPosition.CENTER)
+
     def _centre(self) -> None:
         display = Gdk.Display.get_default()
         monitor = display.get_primary_monitor() if display else None
@@ -103,10 +170,16 @@ class OsdWindow(Gtk.Window):
         if monitor is None:
             return
         geo = monitor.get_geometry()
-        self.get_window().move(
-            geo.x + max(0, (geo.width - 400) // 2),
-            geo.y + max(0, (geo.height - 120) // 2),
-        )
+        x = max(0, (geo.width - OSD_WIDTH) // 2)
+        y = max(0, (geo.height - OSD_HEIGHT) // 2)
+        if HAS_LAYER_SHELL and GtkLayerShell is not None:
+            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, x)
+            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.TOP, y)
+            return
+
+        window = self.get_window()
+        if window is not None:
+            window.move(geo.x + x, geo.y + y)
 
     def _schedule_hide(self) -> None:
         if self._hide_id is not None:

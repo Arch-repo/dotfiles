@@ -125,16 +125,18 @@ grub=$grub_theme_dir
 sddm=$sddm_background
 
 [zen.tokens]
-zen-colors-primary=$accent
-zen-colors-secondary=$base
-zen-colors-tertiary=$background
+zen-primary-color=$accent
+zen-colors-primary=$background
+zen-colors-secondary=$base_alt
+zen-colors-tertiary=$base
 zen-colors-border=$border
 zen-colors-background=$background
 zen-colors-foreground=$foreground
 zen-colors-accent=$accent
-zen-sidebar-background=$background
-zen-toolbar-background=$(hex_to_css_rgba "$background" 0.72)
+zen-sidebar-background=$(hex_to_css_rgba "$background" 0.96)
+zen-toolbar-background=$(hex_to_css_rgba "$base" 0.94)
+zen-urlbar-background=$(hex_to_css_rgba "$base_alt" 0.96)
 lwt-accent-color=$background
-tab-selected-bgcolor=$(hex_to_css_rgba "$accent" 0.82)
+tab-selected-bgcolor=$(hex_to_css_rgba "$select" 0.72)
 EOF
 }
