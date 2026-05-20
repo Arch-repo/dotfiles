@@ -14,12 +14,6 @@ box.osd-box {
   box-shadow: none;
 }
 
-box.osd-box.toast {
-  min-width: 236px;
-  min-height: 34px;
-  padding: 10px 16px;
-}
-
 label.osd-icon {
   font-family: "JetBrainsMono Nerd Font";
   font-size: 21px;
@@ -41,10 +35,6 @@ label.osd-value {
   font-size: 19px;
   font-weight: bold;
   color: @foreground;
-}
-
-box.osd-box.toast label.osd-value {
-  font-size: 17px;
 }
 
 progressbar.osd-track {

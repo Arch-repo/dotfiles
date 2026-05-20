@@ -21,9 +21,8 @@ write_state() {
     local kind="$1"
     local value="$2"
     local muted="${3:-0}"
-    local message="${4:-}"
     mkdir -p "$RUNTIME_DIR"
-    printf '%s %s %s %s\n' "$kind" "$value" "$muted" "$message" >"$STATE_FILE"
+    printf '%s %s %s\n' "$kind" "$value" "$muted" >"$STATE_FILE"
 }
 
 start_daemon() {
@@ -70,17 +69,6 @@ case "${1:-}" in
     volume | brightness | mic)
         show_osd "$1" "${2:-0}" "${3:-0}"
         ;;
-    clipboard | toast)
-        write_state "${1:-toast}" 0 0 "${2:-Copied to clipboard}"
-        if [[ -f "$PID_FILE" ]]; then
-            pid="$(cat "$PID_FILE" 2>/dev/null || true)"
-            if osd_pid_running "$pid"; then
-                kill -USR1 "$pid" 2>/dev/null && exit 0
-            fi
-            rm -f "$PID_FILE"
-        fi
-        start_daemon
-        ;;
     hide)
         if [[ -f "$PID_FILE" ]]; then
             pid="$(cat "$PID_FILE" 2>/dev/null || true)"
@@ -89,7 +77,7 @@ case "${1:-}" in
         rm -f "$PID_FILE"
         ;;
     *)
-        printf 'Uso: %s <volume|brightness|mic> <0-100> [muted] | clipboard [messaggio]\n' "$0" >&2
+        printf 'Uso: %s <volume|brightness|mic> <0-100> [muted]\n' "$0" >&2
         exit 2
         ;;
 esac

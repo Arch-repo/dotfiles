@@ -11,8 +11,6 @@ runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
 lock_daemon_pid="$runtime_dir/lock-daemon.pid"
 delete_watcher_pid="$runtime_dir/delete-watcher.pid"
 managed_stop_marker="$runtime_dir/managed-stop"
-hidden_marker="$runtime_dir/widgets-hidden"
-hidden_workspace="special:anto426-widgets-hidden"
 config_file="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets.env"
 cava_config="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/cava_widget.conf"
 colors_file="${XDG_CONFIG_HOME:-$HOME/.config}/colors/colors.sh"
@@ -278,8 +276,6 @@ start_widgets() {
         layout_default_stack
     fi
 
-    pkill -f -- ".config/anto426/desktop_widgets.py" 2>/dev/null || true
-
     for widget in ${ANTO426_WIDGETS_ENABLED:-clock cava system}; do
         case "$widget" in
             clock)
@@ -323,14 +319,13 @@ stop_widgets() {
     stop_widgets_lock_daemon
     save_widget_layout 2>/dev/null || true
 
-    pkill -f -- ".config/anto426/desktop_widgets.py" 2>/dev/null || true
     stop_widget clock "$(widget_meta clock class)"
     stop_widget cava "$(widget_meta cava class)"
     stop_widget system "$(widget_meta system class)"
     for widget in $(custom_widget_ids); do
         [[ -n "$widget" ]] && stop_custom_widget "$widget"
     done
-    rm -f "$hidden_marker" "$managed_stop_marker"
+    rm -f "$managed_stop_marker"
     [[ "$quiet" == "quiet" ]] || notify "Widget chiusi — layout salvato"
 }
 
@@ -381,71 +376,6 @@ widget_addresses() {
     done
 }
 
-active_workspace_target() {
-    local target
-
-    target="$(
-        hyprctl activeworkspace -j 2>/dev/null |
-            jq -r '(.id // .name // "1") | tostring' 2>/dev/null |
-            sed -n '1p'
-    )"
-    printf '%s' "${target:-1}"
-}
-
-widget_address_json() {
-    widget_addresses | jq -R . | jq -s .
-}
-
-normal_clients_on_active_workspace() {
-    local workspace widgets_json
-
-    workspace="$(active_workspace_target)"
-    [[ "$workspace" =~ ^-?[0-9]+$ ]] || {
-        printf '0'
-        return 0
-    }
-
-    widgets_json="$(widget_address_json)"
-    hyprctl clients -j 2>/dev/null |
-        jq -r --argjson workspace "$workspace" --argjson widgets "$widgets_json" '
-            [
-                .[]
-                | select((.workspace.id // -999999) == $workspace)
-                | select((.hidden // false) | not)
-                | select((.address as $addr | ($widgets | index($addr)) | not))
-                | select(((.class // .initialClass // "") | test("^(rofi|waybar|swaync|swaync-control-center|wofi|anto426-osd)$"; "i")) | not)
-            ] | length
-        ' 2>/dev/null || printf '0'
-}
-
-hide_locked_widgets() {
-    local addr hidden=0
-
-    for addr in $(widget_addresses); do
-        hyprctl dispatch movetoworkspacesilent "$hidden_workspace,address:$addr" >/dev/null 2>&1 || true
-        hidden=1
-    done
-
-    ((hidden)) && touch "$hidden_marker"
-}
-
-restore_locked_widgets() {
-    local addr workspace restored=0
-
-    workspace="$(active_workspace_target)"
-    for addr in $(widget_addresses); do
-        hyprctl dispatch movetoworkspacesilent "$workspace,address:$addr" >/dev/null 2>&1 || true
-        restored=1
-    done
-
-    rm -f "$hidden_marker"
-    if ((restored)); then
-        sleep 0.08
-        apply_widget_layout >/dev/null 2>&1 || true
-        apply_widgets_lock_state
-    fi
-}
-
 bury_widget_windows() {
     local addr
 
@@ -455,21 +385,8 @@ bury_widget_windows() {
 }
 
 sync_locked_widgets() {
-    local normal_count
-
     ensure_config
-    if ! widgets_locked; then
-        [[ -f "$hidden_marker" ]] && restore_locked_widgets
-        return 0
-    fi
-
-    normal_count="$(normal_clients_on_active_workspace)"
-    if [[ "${normal_count:-0}" -gt 0 ]]; then
-        hide_locked_widgets
-        return 0
-    fi
-
-    [[ -f "$hidden_marker" ]] && restore_locked_widgets
+    widgets_locked || return 0
     apply_widget_layout >/dev/null 2>&1 || true
     apply_widgets_lock_state
     bury_widget_windows
@@ -574,25 +491,25 @@ run_widget_delete_watcher() {
 }
 
 apply_widgets_lock_state() {
-    local name addr value lock_arg
+    local name addr value zorder
 
     ensure_config
     if widgets_locked; then
         value=1
-        lock_arg=lock
+        zorder=bottom
     else
         value=0
-        lock_arg=
+        zorder=top
     fi
 
     for name in $(widget_order_default); do
         [[ -n "$name" ]] || continue
         addr="$(widget_client_address "$name")"
         [[ -n "$addr" ]] || continue
-        hyprctl setprop "address:$addr" nofocus "$value" $lock_arg >/dev/null 2>&1 ||
-            hyprctl setprop "address:$addr" no_focus "$value" $lock_arg >/dev/null 2>&1 ||
+        hyprctl setprop "address:$addr" nofocus "$value" >/dev/null 2>&1 ||
+            hyprctl setprop "address:$addr" no_focus "$value" >/dev/null 2>&1 ||
             true
-        hyprctl dispatch alterzorder "bottom,address:$addr" >/dev/null 2>&1 || true
+        hyprctl dispatch alterzorder "$zorder,address:$addr" >/dev/null 2>&1 || true
     done
 }
 
@@ -601,7 +518,6 @@ apply_widget_layout_locked() {
 
     apply_widget_layout || status=$?
     apply_widgets_lock_state
-    widgets_locked && sync_locked_widgets
     return "$status"
 }
 
@@ -621,7 +537,6 @@ set_widgets_lock() {
         unlock | unlocked | 0 | false)
             stop_widgets_lock_daemon
             set_config_value ANTO426_WIDGETS_LOCKED 0
-            [[ -f "$hidden_marker" ]] && restore_locked_widgets
             apply_widgets_lock_state
             apply_widget_layout >/dev/null 2>&1 || true
             start_widget_delete_watcher

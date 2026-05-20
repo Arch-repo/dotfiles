@@ -14,7 +14,7 @@ A highly customized, aesthetic, and fully dynamic **Wayland/Hyprland** ecosystem
 
 This setup is not just a collection of config files; it features a **fully dynamic theming engine** that extracts colors from the current wallpaper and propagates them instantly across the entire operating system.
 
-- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Zen Browser, and Waybar.
+- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Ghostty, and Waybar.
 - 🧱 **Theme Fallbacks**: Uses the separate [`Anto426-theme`](https://github.com/Anto426/Anto426-theme) repo as a stable GTK base before dynamic colors are generated.
 - 🖼️ **Boot Integration**: Custom SDDM and GRUB themes automatically generated to match the wallpaper.
 - ⚡ **Performance**: Built around modern, fast tools optimized for Wayland.

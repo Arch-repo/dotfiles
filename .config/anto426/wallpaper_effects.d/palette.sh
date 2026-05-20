@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Palette generation from wallpaper RGB samples.
-# Outputs semantic tokens consumed by Hyprland, Rofi, GTK, Ghostty, Zen, GRUB, SDDM.
+# Outputs semantic tokens consumed by Hyprland, Rofi, GTK, Ghostty, GRUB, SDDM.
 
 generate_palette_from_samples() {
     local r="$1"
@@ -111,7 +111,6 @@ gray=$gray
 hypr=theme.generated.conf
 colors=colors.{css,rasi,sh}
 ghostty=dynamic.conf + themes/anto426
-zen=$HOME/.config/zen/anto426/{userChrome,userContent}.css
 htop=$HOME/.config/htop/htoprc
 
 [targets.apps]
@@ -124,14 +123,6 @@ kvantum=$kvantum_theme_dir
 [targets.boot]
 grub=$grub_theme_dir
 sddm=$sddm_background
-
-[zen.tokens]
-zen.theme.accent-color=$accent
-zen.theme.gradient=true
-zen.theme.gradient.show-custom-colors=true
-zen.view.compact.color-sidebar=true
-zen.view.compact.color-toolbar=true
-css-overrides=minimal
 
 [htop.tokens]
 color_scheme=0

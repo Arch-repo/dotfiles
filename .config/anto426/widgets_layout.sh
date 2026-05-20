@@ -160,7 +160,7 @@ apply_widget_geometry() {
     addr="$(widget_client_address "$name")"
     [[ -n "$addr" ]] || return 1
 
-    hyprctl --batch "dispatch setfloating address:$addr; dispatch resizewindowpixel exact $w $h,address:$addr; dispatch movewindowpixel exact $x $y,address:$addr; dispatch alterzorder bottom,address:$addr" >/dev/null 2>&1
+    hyprctl --batch "dispatch setfloating address:$addr; dispatch resizewindowpixel exact $w $h,address:$addr; dispatch movewindowpixel exact $x $y,address:$addr" >/dev/null 2>&1
     return 0
 }
 
