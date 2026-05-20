@@ -3,6 +3,7 @@ set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 effects_lib_dir="$script_dir/wallpaper_effects.d"
+widgets_script="$script_dir/widgets.sh"
 
 destination_wallpaper_dir="$HOME/.cache/awww"
 colors_dir="$HOME/.config/colors"
@@ -18,6 +19,7 @@ qt5ct_dir="$HOME/.config/qt5ct"
 qt6ct_dir="$HOME/.config/qt6ct"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/anto426"
 log_file="$state_dir/wallpaper_effects.log"
+widgets_reload_status="non attivi"
 
 grub_theme_dir="/usr/share/grub/themes/anto426"
 grub_background="$grub_theme_dir/background.jpg"
@@ -47,6 +49,10 @@ log() {
 
 notify() {
     notify-send "Sfondo" "$*" 2>/dev/null || true
+}
+
+notify_theme_reload() {
+    notify-send "Tema aggiornato" "$*" 2>/dev/null || true
 }
 
 require_command() {
@@ -243,6 +249,24 @@ install_optional_file() {
     return 1
 }
 
+reload_widgets_after_theme() {
+    if [[ -x "$widgets_script" ]]; then
+        if "$widgets_script" status 2>/dev/null | grep -q '^running$'; then
+            if "$widgets_script" reload >/dev/null 2>&1; then
+                widgets_reload_status="ricaricati"
+            else
+                widgets_reload_status="errore reload"
+                log "Reload widget fallito: $widgets_script"
+            fi
+        else
+            log "Reload widget saltato: nessun widget attivo"
+        fi
+    else
+        widgets_reload_status="script mancante"
+        log "Reload widget saltato, script mancante: $widgets_script"
+    fi
+}
+
 make_cover_image() {
     local src="$1"
     local size="$2"
@@ -368,6 +392,7 @@ write_boot_theme
 pkill -SIGUSR2 waybar 2>/dev/null || true
 swaync-client -rs >/dev/null 2>&1 || true
 hyprctl reload >/dev/null 2>&1 || true
+reload_widgets_after_theme
 
 log "Tema aggiornato: bg=$background surface=$surface accent=$accent border=$border"
-notify "Tema aggiornato da $(basename "$current_wallpaper_path")"
+notify_theme_reload "Da $(basename "$current_wallpaper_path"). Widget: $widgets_reload_status. Riavvia le app aperte se non aggiornano colori o tema."

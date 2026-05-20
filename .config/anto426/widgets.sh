@@ -891,7 +891,7 @@ case "${1:-toggle}" in
     reload)
         stop_widgets quiet
         sleep 0.3
-        start_widgets
+        start_widgets quiet
         ;;
     toggle)
         if any_running; then
