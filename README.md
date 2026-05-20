@@ -75,10 +75,12 @@ Clone this repository into your home folder and use `stow` to create the symlink
 
 ```bash
 cd ~
-git clone https://github.com/anto426/dotfiles.git
+git clone https://github.com/Anto426/dotfiles.git
 cd dotfiles
 stow --restow .
 ```
+
+For an Arch/Hyprland machine, `~/.config/anto426/install_archpkg.sh` installs the same desktop package set used by the `Arch-Hyprland` installer.
 
 ### 3. Initialize the Theme Engine
 To generate the initial color palettes and apply the theme to the entire system (including GRUB and Qt), simply run the wallpaper engine once or select a wallpaper from the Rofi menu:
