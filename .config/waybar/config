@@ -9,6 +9,7 @@
     "custom/clock"
   ],
   "modules-right": [
+    "custom/background-apps",
     "network",
     "bluetooth",
     "pulseaudio",
@@ -19,6 +20,13 @@
     "custom/control",
     "custom/power"
   ],
+  "custom/background-apps": {
+    "exec": "$HOME/.config/anto426/background_apps.sh status",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true,
+    "on-click": "$HOME/.config/anto426/background_apps.sh menu"
+  },
   "custom/power": {
     "format": "",
     "tooltip-format": "Spegnimento",

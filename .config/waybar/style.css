@@ -92,6 +92,7 @@ tooltip label {
 #custom-screenshot,
 #custom-notifications,
 #custom-control,
+#custom-background-apps,
 #network,
 #bluetooth,
 #custom-power {
@@ -120,6 +121,7 @@ tooltip label {
 #custom-screenshot:hover,
 #custom-notifications:hover,
 #custom-control:hover,
+#custom-background-apps:hover,
 #network:hover,
 #bluetooth:hover,
 #pulseaudio:hover,
@@ -145,6 +147,14 @@ tooltip label {
 #custom-control:hover {
     color: @yellow;
     border-color: @accent-alpha;
+}
+
+#custom-background-apps.active {
+    color: @accent;
+}
+
+#custom-background-apps.empty {
+    color: alpha(@foreground, 0.45);
 }
 
 /* Integrated Status States */

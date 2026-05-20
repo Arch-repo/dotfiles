@@ -724,9 +724,9 @@ audio_menu() {
 
         case "$choice" in
             *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "Output: $sink_desc\nVolume: $sink_vol" "slider-volume" "output-volume" ;;
+            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "" "slider-volume" "output-volume" ;;
             *"Silenzia/Attiva Microfono") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "Input: $source_desc\nVolume: $source_vol" "slider-mic" "input-volume" ;;
+            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "" "slider-mic" "input-volume" ;;
             *"Seleziona dispositivo Output") audio_choose_sink ;;
             *"Seleziona dispositivo Input") audio_choose_source ;;
             "󰌍 Indietro")

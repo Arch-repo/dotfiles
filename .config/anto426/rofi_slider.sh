@@ -89,7 +89,11 @@ rofi_slider_pick() {
     message="$(printf '%b' "$message")"
 
     local theme_str
-    theme_str="mainbox { children: [message, ${panel_children}]; } ${panel_children} { children: [${slider_name}]; } ${slider_name} { min: ${min}; max: ${max}; step: ${step}; value: ${current}; }"
+    if [[ -n "$message" ]]; then
+        theme_str="mainbox { children: [message, ${panel_children}]; } ${panel_children} { children: [${slider_name}]; } ${slider_name} { min: ${min}; max: ${max}; step: ${step}; value: ${current}; }"
+    else
+        theme_str="mainbox { children: [${panel_children}]; } ${panel_children} { children: [${slider_name}]; } ${slider_name} { min: ${min}; max: ${max}; step: ${step}; value: ${current}; }"
+    fi
 
     local rofi_args=(
         -dmenu
