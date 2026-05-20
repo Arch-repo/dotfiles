@@ -24,14 +24,26 @@ bindkey -e
 
 # ─── FZF ─────────────────────────────────────────────────────────
 eval "$(fzf --zsh)"
-# FZF theme, aligned with the desktop palette
-export FZF_DEFAULT_OPTS=" \
---color=bg+:#7f635d,bg:#3e2d28,spinner:#c18c80,hl:#f38ba8 \
---color=fg:#f6f7fb,header:#c18c80,info:#b9c4d2,pointer:#f9e2af \
---color=marker:#a6e3a1,fg+:#ffffff,prompt:#c18c80,hl+:#f38ba8 \
---color=selected-bg:#997a73 \
---color=border:#98817b,label:#f6f7fb"
-export FZF_TAB_COLORS='fg:#f6f7fb,bg:#3e2d28,hl:#f38ba8,min-height=5'
+# FZF theme, aligned dynamically with the desktop wallpaper palette
+if [[ -f ~/.config/colors/colors.sh ]]; then
+    source ~/.config/colors/colors.sh
+    export FZF_DEFAULT_OPTS=" \
+    --color=bg+:${ANTO426_SURFACE},bg:${ANTO426_BACKGROUND},spinner:${ANTO426_MUTED},hl:${ANTO426_ACCENT} \
+    --color=fg:${ANTO426_FOREGROUND},header:${ANTO426_MUTED},info:${ANTO426_MUTED},pointer:${ANTO426_ACCENT} \
+    --color=marker:${ANTO426_ACCENT},fg+:${ANTO426_FOREGROUND},prompt:${ANTO426_ACCENT},hl+:${ANTO426_ACCENT} \
+    --color=selected-bg:${ANTO426_SELECT} \
+    --color=border:${ANTO426_BORDER},label:${ANTO426_FOREGROUND}"
+    export FZF_TAB_COLORS="fg:${ANTO426_FOREGROUND},bg:${ANTO426_BACKGROUND},hl:${ANTO426_ACCENT},min-height=5"
+else
+    # Fallback to static theme palette
+    export FZF_DEFAULT_OPTS=" \
+    --color=bg+:#7f635d,bg:#3e2d28,spinner:#c18c80,hl:#f38ba8 \
+    --color=fg:#f6f7fb,header:#c18c80,info:#b9c4d2,pointer:#f9e2af \
+    --color=marker:#a6e3a1,fg+:#ffffff,prompt:#c18c80,hl+:#f38ba8 \
+    --color=selected-bg:#997a73 \
+    --color=border:#98817b,label:#f6f7fb"
+    export FZF_TAB_COLORS='fg:#f6f7fb,bg:#3e2d28,hl:#f38ba8,min-height=5'
+fi
 
 # ─── Zinit ───────────────────────────────────────────────────────
 # Set the directory we want to store zinit and plugins
