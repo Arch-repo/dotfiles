@@ -629,7 +629,7 @@ audio_volume_slider() {
     [[ -z "$value" ]] && return 0
     ((value < 0)) && value=0
     ((value > 100)) && value=100
-    run_or_notify "$prompt impostato a ${value}%" wpctl set-volume -l 1 "$target" "${value}%"
+    wpctl set-volume -l 1 "$target" "${value}%" >/dev/null 2>&1 || true
 }
 
 audio_default_sink() {

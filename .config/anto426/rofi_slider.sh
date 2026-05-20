@@ -86,14 +86,15 @@ rofi_slider_pick() {
     max="$(_rofi_slider_number "$max" 100)"
     step="$(_rofi_slider_number "$step" 1)"
     current="$(_rofi_slider_clamp "$current" "$min" "$max" "$step")"
-    message="$(printf '%b' "$message")"
 
     if [[ "$message" != *"{value}"* ]]; then
         if [[ -n "$message" ]]; then
-            message="${message}\n<b><span size='x-large'>{value}%</span></b>"
+            message="$(printf '%b' "$message")"$'\n'"<span weight='bold'>{value}%</span>"
         else
-            message="<b><span size='x-large'>{value}%</span></b>"
+            message="<span weight='bold'>{value}%</span>"
         fi
+    else
+        message="$(printf '%b' "$message")"
     fi
 
     local theme_str

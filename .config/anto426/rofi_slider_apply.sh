@@ -31,22 +31,16 @@ value="$(percent "$value")"
 
 case "$target" in
     output-volume)
-        if command -v wpctl >/dev/null 2>&1; then
+        command -v wpctl >/dev/null 2>&1 &&
             wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ "${value}%" >/dev/null 2>&1
-            notify-send -h "string:x-dunst-stack-tag:volume" -h "int:value:$value" "Volume" "${value}%" 2>/dev/null || true
-        fi
         ;;
     input-volume | mic-volume)
-        if command -v wpctl >/dev/null 2>&1; then
+        command -v wpctl >/dev/null 2>&1 &&
             wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ "${value}%" >/dev/null 2>&1
-            notify-send -h "string:x-dunst-stack-tag:mic" -h "int:value:$value" "Microfono" "${value}%" 2>/dev/null || true
-        fi
         ;;
     brightness)
-        if command -v brightnessctl >/dev/null 2>&1; then
+        command -v brightnessctl >/dev/null 2>&1 &&
             brightnessctl set "${value}%" >/dev/null 2>&1
-            notify-send -h "string:x-dunst-stack-tag:brightness" -h "int:value:$value" "Luminosità" "${value}%" 2>/dev/null || true
-        fi
         ;;
     *)
         exit 2

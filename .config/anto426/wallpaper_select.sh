@@ -47,9 +47,6 @@ trap 'rm -f "$tmp_map"' EXIT
 
 choice="$(
     {
-        printf '󰒟 Wallpaper casuale\n'
-        printf '󰑓 Rigenera tema corrente\n'
-        printf ' Apri cartella wallpaper\n'
         printf '── Wallpaper ──\n'
 
         wallpaper_files | while IFS= read -r file; do
@@ -59,6 +56,10 @@ choice="$(
             printf '%s\0icon\x1f%s\n' "$label" "$file"
         done
 
+        printf '── Azioni ──\n'
+        printf '󰒟 Wallpaper casuale\n'
+        printf '󰑓 Rigenera tema corrente\n'
+        printf ' Apri cartella wallpaper\n'
         printf '󰌍 Indietro\n'
     } |
         rofi -dmenu -i -matching fuzzy \
@@ -89,7 +90,7 @@ case "$choice" in
     *"Indietro")
         go_back
         ;;
-    "── Wallpaper ──")
+    "── Wallpaper ──" | "── Azioni ──")
         exit 0
         ;;
     *)

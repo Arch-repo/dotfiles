@@ -83,7 +83,8 @@ pick_slider() {
 
     value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Schermo principale" "$current" 0 100 1 "brightness")"
     [[ -z "$value" ]] && return 0
-    set_brightness "${value}%"
+    command -v brightnessctl >/dev/null 2>&1 &&
+        brightnessctl set "${value}%" >/dev/null 2>&1 || true
 }
 
 case "${1:-menu}" in
