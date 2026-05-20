@@ -14,11 +14,11 @@ A highly customized, aesthetic, and fully dynamic **Wayland/Hyprland** ecosystem
 
 This setup is not just a collection of config files; it features a **fully dynamic theming engine** that extracts colors from the current wallpaper and propagates them instantly across the entire operating system.
 
-- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, and Waybar.
+- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Zen Browser, and Waybar.
 - 🧱 **Theme Fallbacks**: Uses the separate [`Anto426-theme`](https://github.com/Anto426/Anto426-theme) repo as a stable GTK base before dynamic colors are generated.
 - 🖼️ **Boot Integration**: Custom SDDM and GRUB themes automatically generated to match the wallpaper.
 - ⚡ **Performance**: Built around modern, fast tools optimized for Wayland.
-- 🧩 **Modular Control Menu**: Integrated Rofi-based menus for audio, bluetooth, Wi-Fi, and a synchronized calendar.
+- 🧩 **Modular Control Menu**: Integrated Rofi-based menus for audio, bluetooth, Wi-Fi, a synchronized calendar, live sliders, and background app switching.
 
 ---
 
@@ -28,7 +28,7 @@ This setup is not just a collection of config files; it features a **fully dynam
 |----------|------|
 | **Window Manager** | [Hyprland](https://hyprland.org/) |
 | **Status Bar** | [Waybar](https://github.com/Alexays/Waybar) |
-| **App Launcher** | [Rofi-Wayland](https://github.com/lbonn/rofi) |
+| **App Launcher** | [Anto426 Rofi](https://github.com/Anto426/rofi), built with Wayland and slider support |
 | **Terminal** | [Ghostty](https://github.com/mitchellh/ghostty) |
 | **Notifications** | [SwayNC](https://github.com/ErikReider/SwayNotificationCenter) |
 | **Editor** | [Neovim](https://neovim.io/) |
@@ -67,8 +67,12 @@ The repository is structured to be managed seamlessly with [GNU Stow](https://ww
 
 ## 🚀 Installation
 
-### 1. Prerequisites
-Ensure you have the required dependencies installed (Hyprland, Waybar, Rofi, GNU Stow, Magick, Kvantum, etc.).
+### 1. Base Packages
+On Arch, install the bootstrap tools first:
+
+```bash
+sudo pacman -S --needed base-devel git stow
+```
 
 ### 2. Clone & Stow
 Clone this repository into your home folder and use `stow` to create the symlinks:
@@ -80,9 +84,51 @@ cd dotfiles
 stow --restow .
 ```
 
-For an Arch/Hyprland machine, `~/.config/anto426/install_archpkg.sh` installs the same desktop package set used by the `Arch-Hyprland` installer.
+### 3. Install Arch/Hyprland Packages
+The installer pulls the package set used by this Arch-Hyprland setup, installs AUR extras through `yay`, then builds the custom rofi used by the control menus:
 
-### 3. Initialize the Theme Engine
+```bash
+~/.config/anto426/install_archpkg.sh
+```
+
+The script builds [`Anto426/rofi`](https://github.com/Anto426/rofi) into:
+
+```bash
+~/.local/rofi-anto426
+```
+
+and links the active binary here:
+
+```bash
+~/.local/bin/rofi
+```
+
+Make sure `~/.local/bin` is before `/usr/bin` in your session `PATH`.
+
+### 4. Manual Rofi Build
+If you only want to rebuild the custom rofi:
+
+```bash
+sudo pacman -S --needed base-devel git meson ninja pkgconf flex bison check pandoc doxygen \
+  glib2 cairo pango gdk-pixbuf2 startup-notification libxkbcommon libxcb \
+  xcb-util xcb-util-wm xcb-util-cursor xcb-util-keysyms xcb-imdkit \
+  wayland wayland-protocols
+
+git clone --recursive https://github.com/Anto426/rofi ~/Git/arch/rofi
+meson setup ~/Git/arch/rofi/build-anto426 ~/Git/arch/rofi --prefix ~/.local/rofi-anto426
+meson compile -C ~/Git/arch/rofi/build-anto426
+meson install -C ~/Git/arch/rofi/build-anto426
+mkdir -p ~/.local/bin
+ln -sfn ~/.local/rofi-anto426/bin/rofi ~/.local/bin/rofi
+```
+
+Verify the slider-enabled build:
+
+```bash
+~/.local/bin/rofi -help | grep slider
+```
+
+### 5. Initialize the Theme Engine
 To generate the initial color palettes and apply the theme to the entire system (including GRUB and Qt), simply run the wallpaper engine once or select a wallpaper from the Rofi menu:
 
 ```bash
