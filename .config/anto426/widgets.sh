@@ -424,6 +424,8 @@ arrange_widgets() {
 
     choice="$(
         {
+            printf '%s\n' "󱓞 Mostra/nasconde widget"
+            printf '%s\n' "󰑓 Riavvia widget"
             printf '%s\n' "󰒓 Applica layout salvato"
             printf '%s\n' "󰑐 Reset posizioni"
             printf '%s\n' "󰆓 Salva posizioni attuali"
@@ -443,9 +445,21 @@ arrange_widgets() {
     [[ -z "$choice" ]] && return 0
 
     case "$choice" in
+        *"Mostra/nasconde"*)
+            if any_running; then
+                stop_widgets
+            else
+                start_widgets
+            fi
+            ;;
+        *"Riavvia widget"*)
+            stop_widgets quiet
+            sleep 0.3
+            start_widgets
+            ;;
         *"Applica layout"*) apply_widget_layout && notify "Layout applicato" ;;
         *"Reset posizioni"*) reset_widget_layout && notify "Layout resettato" ;;
-        *"Salva posizioni"*) save_widget_layout && notify "Layout salvato" ;;
+        *"Salva posizioni"*) save_widget_layout && apply_widget_layout && notify "Layout salvato" ;;
         *"Aggiungi widget terminale"*)
             if new_id="$(pick_terminal_widget)"; then
                 launch_custom_widget "$new_id"
@@ -510,7 +524,7 @@ case "${1:-toggle}" in
             start_widgets
         fi
         ;;
-    save-layout) save_widget_layout && notify "Layout salvato" ;;
+    save-layout) save_widget_layout && apply_widget_layout && notify "Layout salvato" ;;
     arrange) arrange_widgets ;;
     status)
         if any_running; then

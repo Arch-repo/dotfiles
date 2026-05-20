@@ -1683,7 +1683,7 @@ main_menu() {
         calendar="$(menu_item "󰃭" "Calendar")"
         wallpapers="$(menu_item "󰸉" "Wallpaper")"
         display="󰍹 Proietta schermo"
-        widgets="󱓞 Widget desktop"
+        widgets="󱓞 Gestione widget"
         floating="󱂬 Floating Manager"
         power="$(menu_item "󰐥" "Power Off")"
 
@@ -1718,7 +1718,7 @@ main_menu() {
             "$calendar") MENU_STATE="calendar"; return 0 ;;
             "$wallpapers") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
             "$display") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
-            "$widgets") "$HOME/.config/anto426/widgets.sh" toggle; return 0 ;;
+            "$widgets") "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
             "$floating") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
             "$power") MENU_STATE="power"; return 0 ;;
             *) return 0 ;;

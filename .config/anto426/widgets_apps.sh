@@ -328,7 +328,6 @@ write_custom_widget_hypr_rules() {
             printf 'windowrule = no_shadow on, match:class ^%s$\n' "$wm_class"
             printf 'windowrule = no_anim on, match:class ^%s$\n' "$wm_class"
             printf 'windowrule = no_initial_focus on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = no_focus on, match:class ^%s$\n' "$wm_class"
             printf 'windowrule = no_follow_mouse on, match:class ^%s$\n' "$wm_class"
             printf 'windowrule = focus_on_activate off, match:class ^%s$\n' "$wm_class"
             printf 'windowrule = rounding 14, match:class ^%s$\n' "$wm_class"

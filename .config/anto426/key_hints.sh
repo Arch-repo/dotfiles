@@ -79,6 +79,7 @@ menu_rows() {
     header "Widget"
     row "SUPER G" "Mostra/nasconde widget"
     row "SUPER Shift G" "Riavvia widget"
+    row "SUPER Control G" "Menu gestione widget"
     row "SUPER Alt G" "Salva posizione widget"
     row "SUPER Shift Alt G" "Menu widget / terminale / app"
     row "Tasti volume/luce" "Slider OSD al centro (CSS)"
