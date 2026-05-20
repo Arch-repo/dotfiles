@@ -154,6 +154,58 @@ copy_gtk_base_theme() {
     return 1
 }
 
+# Convert a hex color like #aabbcc to decimal "r, g, b" for rgba() replacement
+hex_to_rgb_triple() {
+    local hex="${1#\#}"
+    printf '%d, %d, %d' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
+}
+
+# Patch all hardcoded colors (hex and rgba) in a compiled GTK CSS file
+patch_gtk_base_css() {
+    local file="$1"
+    [[ -f "$file" ]] || return 0
+
+    # Original theme hardcoded colors (Anto426-Dark / Orchis purple palette)
+    local orig_accent="9579b6"       # purple accent
+    local orig_bg="281f33"           # deep purple bg
+    local orig_surface="342941"      # dark purple surface
+    local orig_mid="635575"          # mid purple (buttons, entries bg)
+    local orig_mid2="817190"         # light purple (borders/shadows)
+    local orig_muted="b9c4d2"        # muted text (stays the same, it's neutral)
+    local orig_fg="f6f7fb"           # foreground
+
+    # Compute RGB triples for rgba() replacement
+    local rgb_accent; rgb_accent="$(hex_to_rgb_triple "$accent")"
+    local rgb_bg;     rgb_bg="$(hex_to_rgb_triple "$background")"
+    local rgb_surface; rgb_surface="$(hex_to_rgb_triple "$surface")"
+    local rgb_border; rgb_border="$(hex_to_rgb_triple "$border")"
+    local rgb_muted;  rgb_muted="$(hex_to_rgb_triple "$muted")"
+    local rgb_fg;     rgb_fg="$(hex_to_rgb_triple "$foreground")"
+
+    # Original RGB triples (from the Anto426-Dark compiled values)
+    local orig_rgb_accent="149, 121, 182"
+    local orig_rgb_bg="40, 31, 51"
+    local orig_rgb_surface="52, 41, 65"
+    local orig_rgb_mid="99, 85, 117"
+    local orig_rgb_mid2="129, 117, 144"
+    local orig_rgb_muted="185, 196, 210"
+
+    sed -i \
+        -e "s/#${orig_accent}/${accent}/gI" \
+        -e "s/#${orig_bg}/${background}/gI" \
+        -e "s/#${orig_surface}/${surface}/gI" \
+        -e "s/#${orig_mid}/${surface}/gI" \
+        -e "s/#${orig_mid2}/${border}/gI" \
+        -e "s/#${orig_fg}/${foreground}/gI" \
+        -e "s/rgba(${orig_rgb_accent},/rgba(${rgb_accent},/g" \
+        -e "s/rgba(${orig_rgb_bg},/rgba(${rgb_bg},/g" \
+        -e "s/rgba(${orig_rgb_surface},/rgba(${rgb_surface},/g" \
+        -e "s/rgba(${orig_rgb_mid},/rgba(${rgb_surface},/g" \
+        -e "s/rgba(${orig_rgb_mid2},/rgba(${rgb_border},/g" \
+        -e "s/rgba(${orig_rgb_muted},/rgba(${rgb_muted},/g" \
+        "$file" 2>/dev/null || true
+}
+
 prepare_gtk_overlay_target() {
     local target="$1"
     local gtk_dir="$2"
@@ -174,6 +226,10 @@ prepare_gtk_overlay_target() {
     else
         base_dark_css="$base_css"
     fi
+
+    # Patch hardcoded hex AND rgba() colors in the compiled base theme files
+    [[ -n "$base_css" ]] && patch_gtk_base_css "$css_dir/$base_css"
+    [[ -n "$base_dark_css" && "$base_dark_css" != "$base_css" ]] && patch_gtk_base_css "$css_dir/$base_dark_css"
 
     write_gtk_css_file "$css_dir/gtk.css" "${gtk_dir#gtk-}" "$base_css"
     write_gtk_css_file "$css_dir/gtk-dark.css" "${gtk_dir#gtk-}" "$base_dark_css"
