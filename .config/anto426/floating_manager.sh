@@ -115,7 +115,7 @@ reset_window() {
     active_flag pinned && dispatch pin
 
     if active_flag floating; then
-        dispatch settiled || dispatch togglefloating
+        dispatch togglefloating
     fi
 }
 

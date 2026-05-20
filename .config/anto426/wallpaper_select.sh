@@ -77,7 +77,7 @@ case "$choice" in
     *"Apri cartella")
         open_wallpaper_dir
         ;;
-    *"Wallpaper"* | "── "*)
+    "── Wallpaper ──")
         exit 0
         ;;
     *)

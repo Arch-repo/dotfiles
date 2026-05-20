@@ -374,7 +374,7 @@ pick_action() {
         printf '%s\n' \
             "󰆞 Screenshot area" \
             "󰖲 Screenshot finestra" \
-            "󰍹 Screenshot schermo attivo" \
+            "󰍹 Screenshot schermo intero" \
             "󰑊 Registra area" \
             "󰑊 Registra finestra" \
             "󰑊 Registra schermo attivo" \
@@ -403,7 +403,7 @@ run_menu() {
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot window "$(default_screenshot_path)"
             ;;
-        *"Screenshot schermo attivo")
+        *"Screenshot schermo intero")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot monitor "$(default_screenshot_path)"
             ;;

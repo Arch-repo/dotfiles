@@ -2,7 +2,28 @@
 set -uo pipefail
 
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
+config_file="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets.env"
 mkdir -p "$runtime_dir"
+
+ensure_config() {
+    if [[ ! -f "$config_file" ]]; then
+        cat >"$config_file" <<'EOF'
+# Set to 0 to prevent widgets from starting with Hyprland.
+export ANTO426_WIDGETS_AUTOSTART=1
+
+# Available widgets: clock cava system
+export ANTO426_WIDGETS_ENABLED="clock cava system"
+EOF
+    fi
+
+    # shellcheck disable=SC1090
+    source "$config_file"
+}
+
+if [[ -f "$config_file" ]]; then
+    # shellcheck disable=SC1090
+    source "$config_file"
+fi
 
 notify() {
     notify-send "Widget" "$*" 2>/dev/null || true
@@ -109,10 +130,18 @@ done
 '
 
 start_widgets() {
-    [[ "${ANTO426_WIDGETS_AUTOSTART:-1}" == "0" ]] && return 0
-    launch_widget clock clock-widget "Clock Widget" "$clock_command"
-    launch_widget cava cava-widget "Cava Widget" "$cava_command"
-    launch_widget system system-widget "System Widget" "$system_command"
+    local widget
+
+    ensure_config
+
+    for widget in ${ANTO426_WIDGETS_ENABLED:-clock cava system}; do
+        case "$widget" in
+            clock) launch_widget clock clock-widget "Clock Widget" "$clock_command" ;;
+            cava) launch_widget cava cava-widget "Cava Widget" "$cava_command" ;;
+            system) launch_widget system system-widget "System Widget" "$system_command" ;;
+        esac
+    done
+
     notify "Widget avviati"
 }
 
@@ -128,6 +157,10 @@ any_running() {
 }
 
 case "${1:-toggle}" in
+    autostart)
+        [[ "${ANTO426_WIDGETS_AUTOSTART:-1}" == "0" ]] && exit 0
+        start_widgets
+        ;;
     start) start_widgets ;;
     stop) stop_widgets ;;
     restart)
@@ -150,7 +183,7 @@ case "${1:-toggle}" in
         fi
         ;;
     *)
-        printf 'Uso: %s [start|stop|restart|toggle|status]\n' "$0" >&2
+        printf 'Uso: %s [autostart|start|stop|restart|toggle|status]\n' "$0" >&2
         exit 2
         ;;
 esac

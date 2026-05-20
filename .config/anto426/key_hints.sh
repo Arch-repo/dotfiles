@@ -24,7 +24,7 @@ menu_rows() {
     row "Alt Space" "Launcher applicazioni"
     row "SUPER ." "Emoji"
     row "SUPER V" "Clipboard"
-    row "Copilot / F23" "Note"
+    row "XF86Assistant / F23" "Note"
     printf '\n'
 
     header "Finestre"

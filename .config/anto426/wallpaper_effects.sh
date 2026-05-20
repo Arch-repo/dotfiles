@@ -111,7 +111,10 @@ detect_canvas_size() {
     local size
 
     if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
-        size="$(hyprctl monitors -j 2>/dev/null | jq -r '.[0] | select(.width and .height) | "\(.width)x\(.height)"' 2>/dev/null || true)"
+        size="$(
+            hyprctl monitors -j 2>/dev/null |
+                jq -r '([.[] | select(.focused == true)][0] // (sort_by(.width * .height) | last)) | select(.width and .height) | "\(.width)x\(.height)"' 2>/dev/null || true
+        )"
         [[ "$size" =~ ^[0-9]+x[0-9]+$ ]] && {
             printf '%s' "$size"
             return 0
@@ -119,7 +122,23 @@ detect_canvas_size() {
     fi
 
     if command -v hyprctl >/dev/null 2>&1; then
-        size="$(hyprctl monitors 2>/dev/null | awk '/^[[:space:]]*[0-9]+x[0-9]+@/ {split($1, a, "@"); print a[1]; exit}')"
+        size="$(
+            hyprctl monitors 2>/dev/null |
+                awk '
+                    /^[[:space:]]*[0-9]+x[0-9]+@/ {
+                        split($1, mode, "@")
+                        split(mode[1], size, "x")
+                        area = size[1] * size[2]
+                        if (area > best_area) {
+                            best_area = area
+                            best = mode[1]
+                        }
+                    }
+                    END {
+                        if (best != "") print best
+                    }
+                '
+        )"
         [[ "$size" =~ ^[0-9]+x[0-9]+$ ]] && {
             printf '%s' "$size"
             return 0
