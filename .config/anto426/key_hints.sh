@@ -33,6 +33,9 @@ menu_rows() {
     row "SUPER Frecce" "Sposta focus"
     row "SUPER Shift Frecce" "Muovi / sposta floating"
     row "SUPER Ctrl Frecce" "Ridimensiona a pixel"
+    row "SUPER Mouse sinistro" "Sposta finestra"
+    row "SUPER Mouse destro" "Ridimensiona finestra"
+    row "SUPER S" "Fullscreen"
     row "SUPER P" "Pseudo tiling"
     row "SUPER J" "Toggle split"
     printf '\n'

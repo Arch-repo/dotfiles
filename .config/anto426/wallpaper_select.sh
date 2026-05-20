@@ -50,7 +50,6 @@ choice="$(
         printf '󰒟 Wallpaper casuale\n'
         printf '󰑓 Rigenera tema corrente\n'
         printf ' Apri cartella wallpaper\n'
-        printf '󰌍 Indietro\n'
         printf '── Wallpaper ──\n'
 
         wallpaper_files | while IFS= read -r file; do
@@ -59,6 +58,8 @@ choice="$(
             printf '%s\t%s\n' "$label" "$file" >>"$tmp_map"
             printf '%s\0icon\x1f%s\n' "$label" "$file"
         done
+
+        printf '󰌍 Indietro\n'
     } |
         rofi -dmenu -i -matching fuzzy \
             -p "Wallpaper" \
