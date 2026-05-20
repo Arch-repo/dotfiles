@@ -24,16 +24,40 @@ muted_state() {
     wpctl get-volume "$1" 2>/dev/null | grep -q '\[MUTED\]'
 }
 
+change_volume() {
+    local direction="$1"
+    local before after
+
+    before="$(volume_percent "$target_sink")"
+    [[ -n "$before" ]] || before=0
+
+    case "$direction" in
+        up)
+            ((before >= 100)) && return 0
+            wpctl set-volume -l 1 "$target_sink" 5%+
+            ;;
+        down)
+            ((before <= 0)) && return 0
+            wpctl set-volume "$target_sink" 5%-
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    after="$(volume_percent "$target_sink")"
+    [[ -n "$after" ]] || after="$before"
+    [[ "$after" == "$before" ]] && return 0
+
+    notify "Volume" "${after}%" "$after"
+}
+
 case "${1:-}" in
     volume-up)
-        wpctl set-volume -l 1 "$target_sink" 5%+
-        value="$(volume_percent "$target_sink")"
-        notify "Volume" "${value:-?}%" "${value:-}"
+        change_volume up
         ;;
     volume-down)
-        wpctl set-volume "$target_sink" 5%-
-        value="$(volume_percent "$target_sink")"
-        notify "Volume" "${value:-?}%" "${value:-}"
+        change_volume down
         ;;
     mute)
         wpctl set-mute "$target_sink" toggle
