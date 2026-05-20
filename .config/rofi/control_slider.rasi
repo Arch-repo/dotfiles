@@ -24,7 +24,7 @@ slider-brightness {
     max: 100;
     step: 1;
     value: 50;
-    length: 280px;
+    length: 300px;
     orientation: horizontal;
     track-width: 6px;
     handle-width: 16px;
