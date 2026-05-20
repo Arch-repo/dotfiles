@@ -29,7 +29,7 @@ pacman_packages=(
 
 aur_packages=(
     # Desktop shell extras
-    wlogout sddm-astronaut-theme apple_cursor whitesur-icon-theme tint
+    wlogout sddm-sugar-candy-git apple_cursor whitesur-icon-theme tint
 
     # Browsers and editors
     brave-bin zen-browser-bin visual-studio-code-bin sublime-text-4

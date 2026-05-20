@@ -227,6 +227,47 @@ row:selected {
   background-color: $accent;
   color: $selected_fg;
 }
+
+scale trough,
+scale > trough {
+  background-image: none;
+  background-color: $(hex_to_css_rgba "$foreground" 0.22);
+  border: none;
+  border-radius: 999px;
+  min-height: 3px;
+  min-width: 3px;
+}
+
+scale highlight,
+scale > trough > highlight {
+  background-image: none;
+  background-color: $accent;
+  border-radius: 999px;
+}
+
+scale slider,
+scale > trough > slider {
+  background-image: none;
+  background-color: $accent;
+  color: $selected_fg;
+  min-height: 16px;
+  min-width: 16px;
+  margin: -7px;
+  border: none;
+  border-radius: 999px;
+  box-shadow: none;
+}
+
+scale slider:hover,
+scale slider:focus,
+scale slider:active,
+scale > trough > slider:hover,
+scale > trough > slider:focus,
+scale > trough > slider:active {
+  background-image: none;
+  background-color: $select;
+  box-shadow: 0 0 0 2px $(hex_to_css_rgba "$accent" 0.18);
+}
 EOF
     } >"$output"
 }
@@ -304,6 +345,11 @@ patch_gtk_base_css() {
     local orig_action_hover="8868ad"
     local orig_border="817590"
     local orig_border_legacy="817190"
+    local orig_accent_light="b5a1cc"
+    local orig_accent_light_gtk4_a="a086bd"
+    local orig_accent_light_gtk4_b="aa94c5"
+    local orig_accent_light_gtk4_c="a58dc1"
+    local orig_visited_link="c59dc5"
     local orig_muted="b9c4d2"
     local orig_fg="f6f7fb"
 
@@ -328,6 +374,7 @@ patch_gtk_base_css() {
     local orig_rgb_surface="99, 85, 117"
     local orig_rgb_titlebar_backdrop="87, 74, 102"
     local orig_rgb_border="129, 117, 144"
+    local orig_rgb_border_legacy="129, 113, 144"
     local orig_rgb_muted="185, 196, 210"
     local orig_rgb_fg="246, 247, 251"
 
@@ -354,6 +401,11 @@ patch_gtk_base_css() {
         -e "s/#${orig_action_hover}/${accent}/gI" \
         -e "s/#${orig_border}/${border}/gI" \
         -e "s/#${orig_border_legacy}/${border}/gI" \
+        -e "s/#${orig_accent_light}/${accent}/gI" \
+        -e "s/#${orig_accent_light_gtk4_a}/${accent}/gI" \
+        -e "s/#${orig_accent_light_gtk4_b}/${accent}/gI" \
+        -e "s/#${orig_accent_light_gtk4_c}/${accent}/gI" \
+        -e "s/#${orig_visited_link}/${accent}/gI" \
         -e "s/#${orig_fg}/${foreground}/gI" \
         -e "s/rgba(${orig_rgb_accent},/rgba(${rgb_accent},/g" \
         -e "s/rgba(${orig_rgb_select},/rgba(${rgb_select},/g" \
@@ -363,9 +415,25 @@ patch_gtk_base_css() {
         -e "s/rgba(${orig_rgb_surface},/rgba(${rgb_surface},/g" \
         -e "s/rgba(${orig_rgb_titlebar_backdrop},/rgba(${rgb_titlebar_backdrop},/g" \
         -e "s/rgba(${orig_rgb_border},/rgba(${rgb_border},/g" \
+        -e "s/rgba(${orig_rgb_border_legacy},/rgba(${rgb_border},/g" \
         -e "s/rgba(${orig_rgb_muted},/rgba(${rgb_muted},/g" \
         -e "s/rgba(${orig_rgb_fg},/rgba(${rgb_fg},/g" \
         "$file" 2>/dev/null || true
+}
+
+patch_copied_theme_text_colors() {
+    local target="$1"
+    local file
+
+    [[ -d "$target" ]] || return 0
+
+    while IFS= read -r -d '' file; do
+        patch_gtk_base_css "$file"
+    done < <(
+        find "$target" -type f \
+            \( -name '*.css' -o -name '*.svg' -o -name '*.rc' -o -name 'gtkrc' -o -name '*.xpm' \) \
+            -print0
+    )
 }
 
 prepare_gtk_overlay_target() {
@@ -412,6 +480,7 @@ write_gtk_theme() {
         copy_gtk_base_theme "$target" || true
         prepare_gtk_overlay_target "$target" "gtk-3.0"
         prepare_gtk_overlay_target "$target" "gtk-4.0"
+        patch_copied_theme_text_colors "$target"
         cat >"$target/index.theme" <<EOF
 [X-GNOME-Metatheme]
 Name=$gtk_theme_name
