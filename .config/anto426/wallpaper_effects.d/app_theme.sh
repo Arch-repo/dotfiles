@@ -9,21 +9,32 @@ gtk_theme_exists() {
 }
 
 gtk_reload_theme() {
-    local target_theme="${gtk_theme_name:-adw-gtk3-dark}"
+    local target_theme="${gtk_theme_name:-anto426}"
 
-    command -v gsettings >/dev/null 2>&1 || return 0
+    # --- gsettings (works even under Hyprland for GTK's internal theme tracking) ---
+    if command -v gsettings >/dev/null 2>&1; then
+        gsettings set org.gnome.desktop.interface gtk-theme "Adwaita" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
+        sleep 0.15
+        gsettings set org.gnome.desktop.interface gtk-theme "$target_theme" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme "WhiteSur-dark" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface cursor-theme "macOS" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface font-name "Segoe UI Variable Static Text 12" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 12" 2>/dev/null || true
+    fi
 
-    # Force immediate reload in running GTK3/GTK4 apps by bouncing the theme and color scheme
-    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
-    sleep 0.1
+    # --- Force running GTK apps to reload their stylesheet via SIGUSR2 ---
+    # GTK3 apps respond to SIGUSR2 by re-reading the theme CSS
+    local gtk_procs=(thunar nautilus nemo caja pcmanfm-qt dolphin gedit mousepad
+                     xfce4-terminal xfce4-panel xfce4-taskmanager thunar-volman
+                     nm-applet blueman-applet pavucontrol gnome-text-editor)
+    for proc in "${gtk_procs[@]}"; do
+        pkill -SIGUSR2 -x "$proc" 2>/dev/null || true
+    done
 
-    gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface gtk-theme "$target_theme" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface icon-theme "WhiteSur-dark" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface cursor-theme "macOS" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface font-name "Segoe UI Variable Static Text 12" 2>/dev/null || true
-    gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 12" 2>/dev/null || true
+    # GTK4 / Libadwaita apps: touch the gtk-4.0 css to force re-read
+    touch "${gtk4_dir}/gtk.css" 2>/dev/null || true
 }
 
 restart_gtk_portals() {
@@ -221,12 +232,20 @@ patch_gtk_base_css() {
     local orig_rgb_mid2="129, 117, 144"
     local orig_rgb_muted="185, 196, 210"
 
+    # Additional mid-dark hex colors from the compiled theme
+    local orig_mid_dark="4b4761"     # #4b4761 darker surface
+    local orig_border2="817590"      # #817590 lighter border variant
+    local orig_sel="574a66"          # #574a66 selection/hover dark
+
     sed -i \
         -e "s/#${orig_accent}/${accent}/gI" \
         -e "s/#${orig_bg}/${background}/gI" \
         -e "s/#${orig_surface}/${surface}/gI" \
         -e "s/#${orig_mid}/${surface}/gI" \
+        -e "s/#${orig_mid_dark}/${background}/gI" \
         -e "s/#${orig_mid2}/${border}/gI" \
+        -e "s/#${orig_border2}/${border}/gI" \
+        -e "s/#${orig_sel}/${select}/gI" \
         -e "s/#${orig_fg}/${foreground}/gI" \
         -e "s/rgba(${orig_rgb_accent},/rgba(${rgb_accent},/g" \
         -e "s/rgba(${orig_rgb_bg},/rgba(${rgb_bg},/g" \
