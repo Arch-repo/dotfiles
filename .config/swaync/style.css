@@ -32,8 +32,13 @@
     background: transparent;
 }
 
+.floating-notifications {
+    margin-top: 10px;
+    margin-bottom: 0;
+}
+
 .floating-notifications .notification-row {
-    margin: 7px 8px 12px;
+    margin: 0 8px 12px;
     padding: 0;
     background: transparent;
 }
