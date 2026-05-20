@@ -93,19 +93,19 @@ configuration {
 
 #element.selected.normal {
     background-color: @accent;
-    text-color:       #f6f7fb;
+    text-color:       @selected-fg;
     border-color:     @border;
 }
 
 #element.selected.urgent {
     background-color: @selected-urgent-background;
-    text-color:       #f6f7fb;
+    text-color:       @selected-fg;
     border-color:     @border;
 }
 
 #element.selected.active {
     background-color: @selected-active-background;
-    text-color:       #f6f7fb;
+    text-color:       @selected-fg;
     border-color:     @border;
 }
 

@@ -18,8 +18,8 @@ configuration {
     background-color: @background-alpha;
     border: 2px;
     border-color: @border-alpha;
-    border-radius: 16px;
-    padding: 14px;
+    border-radius: 24px;
+    padding: 16px;
     width: 760px;
 }
 
@@ -33,7 +33,7 @@ configuration {
     padding: 9px 12px;
     border: 1px;
     border-color: @border;
-    border-radius: 10px;
+    border-radius: 14px;
     background-color: @surface;
 }
 
@@ -51,7 +51,7 @@ configuration {
 #message {
     border: 1px;
     border-color: @border-alpha;
-    border-radius: 10px;
+    border-radius: 16px;
     padding: 9px 12px;
     background-color: @surface-alpha;
 }
@@ -82,7 +82,7 @@ configuration {
 #element {
     border: 1px;
     border-color: transparent;
-    border-radius: 8px;
+    border-radius: 10px;
     padding: 5px 8px;
     background-color: transparent;
     text-color: @foreground;

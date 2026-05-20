@@ -424,7 +424,7 @@ write_widget_lock_hypr_rules() {
 
                 printf 'windowrule = match:class %s, float on\n' "$regex"
                 printf 'windowrule = match:class %s, size %s %s\n' "$regex" "$w" "$h"
-                printf 'windowrule = match:class %s, move onscreen %s %s\n' "$regex" "$x" "$y"
+                printf 'windowrule = match:class %s, move %s %s\n' "$regex" "$x" "$y"
                 printf 'windowrule = match:class %s, no_focus on\n' "$regex"
                 printf 'windowrule = match:class %s, no_follow_mouse on\n' "$regex"
                 printf 'windowrule = match:class %s, no_initial_focus on\n' "$regex"
