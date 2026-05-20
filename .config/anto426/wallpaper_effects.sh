@@ -8,6 +8,7 @@ destination_wallpaper_dir="$HOME/.cache/awww"
 colors_dir="$HOME/.config/colors"
 hypr_theme_file="$HOME/.config/hypr/conf/theme.generated.conf"
 ghostty_theme_dir="$HOME/.config/ghostty/themes"
+htop_config_dir="$HOME/.config/htop"
 gtk3_dir="$HOME/.config/gtk-3.0"
 gtk4_dir="$HOME/.config/gtk-4.0"
 kvantum_dir="$HOME/.config/Kvantum"
@@ -31,6 +32,7 @@ mkdir -p \
     "$destination_wallpaper_dir" \
     "$colors_dir" \
     "$ghostty_theme_dir" \
+    "$htop_config_dir" \
     "$gtk3_dir" \
     "$gtk4_dir" \
     "$kvantum_theme_dir" \

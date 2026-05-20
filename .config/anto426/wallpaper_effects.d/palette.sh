@@ -112,6 +112,7 @@ hypr=theme.generated.conf
 colors=colors.{css,rasi,sh}
 ghostty=dynamic.conf + themes/anto426
 zen=$HOME/.config/zen/anto426/{userChrome,userContent}.css
+htop=$HOME/.config/htop/htoprc
 
 [targets.apps]
 gtk3=$gtk3_dir/gtk.css
@@ -125,18 +126,15 @@ grub=$grub_theme_dir
 sddm=$sddm_background
 
 [zen.tokens]
-zen-primary-color=$accent
-zen-colors-primary=$background
-zen-colors-secondary=$base_alt
-zen-colors-tertiary=$base
-zen-colors-border=$border
-zen-colors-background=$background
-zen-colors-foreground=$foreground
-zen-colors-accent=$accent
-zen-sidebar-background=$(hex_to_css_rgba "$background" 0.96)
-zen-toolbar-background=$(hex_to_css_rgba "$base" 0.94)
-zen-urlbar-background=$(hex_to_css_rgba "$base_alt" 0.96)
-lwt-accent-color=$background
-tab-selected-bgcolor=$(hex_to_css_rgba "$select" 0.72)
+zen.theme.accent-color=$accent
+zen.theme.gradient=true
+zen.theme.gradient.show-custom-colors=true
+zen.view.compact.color-sidebar=true
+zen.view.compact.color-toolbar=true
+css-overrides=minimal
+
+[htop.tokens]
+color_scheme=0
+source=terminal-ansi-palette
 EOF
 }

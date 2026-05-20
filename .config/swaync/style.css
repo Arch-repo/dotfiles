@@ -33,7 +33,7 @@
 }
 
 .floating-notifications .notification-row {
-    margin: 8px 10px;
+    margin: 8px 10px 14px;
     padding: 0;
     background: transparent;
 }
@@ -50,9 +50,10 @@
 
 /* Notification Container */
 .notification-row .notification-background {
-    background: transparent;
+    background-color: alpha(@background, 0.95);
+    background-image: none;
     border-radius: 20px;
-    box-shadow: none;
+    box-shadow: 0 14px 34px alpha(black, 0.28);
     margin: 0;
     padding: 0;
 }
@@ -63,17 +64,18 @@
 
 /* Individual Notification Bubble */
 .notification {
-    background-color: alpha(@background, 0.74);
-    border: 2px solid @border-alpha;
+    background-color: alpha(@background, 0.96);
+    background-image: none;
+    border: 2px solid alpha(@border, 0.62);
     border-radius: 20px;
-    box-shadow: none;
+    box-shadow: inset 0 1px alpha(@foreground, 0.06);
     margin: 0;
 }
 
 .notification-row:focus .notification,
 .notification-row:hover .notification,
 .notification:hover {
-    background-color: @select-alpha;
+    background-color: alpha(@surface, 0.96);
     border-color: @accent-alpha;
 }
 
@@ -143,8 +145,8 @@
 
 /* Critical Notification Style */
 .notification.critical {
-    background-color: alpha(@red, 0.16);
-    border-color: alpha(@red, 0.42);
+    background-color: alpha(@red, 0.22);
+    border-color: alpha(@red, 0.72);
 }
 
 /* Close Button on Notifications */
