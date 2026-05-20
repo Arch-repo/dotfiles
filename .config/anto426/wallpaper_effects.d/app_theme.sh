@@ -527,7 +527,7 @@ write_qt_theme() {
     qt_muted="$(qt_argb "$muted")"
     qt_red="$(qt_argb "$red")"
     qt_purple="$(qt_argb "$purple")"
-    qt_shadow="$(qt_argb "$background" 80)"
+    qt_shadow="$(qt_argb "$background" 30)"
     qt_active_colors="$qt_fg, $qt_surface, $qt_select, $qt_border, $qt_bg, $qt_border, $qt_fg, $qt_fg, $qt_fg, $qt_base, $qt_surface, $qt_shadow, $qt_accent, $qt_selected_fg, $qt_accent, $qt_purple, $qt_base_alt, $qt_fg, $qt_surface, $qt_fg, $qt_shadow"
     qt_disabled_colors="$qt_muted, $qt_surface, $qt_select, $qt_border, $qt_bg, $qt_border, $qt_muted, $qt_fg, $qt_muted, $qt_base, $qt_surface, $qt_shadow, $qt_border, $qt_muted, $qt_accent, $qt_red, $qt_base_alt, $qt_fg, $qt_surface, $qt_muted, $qt_shadow"
     qt_inactive_colors="$qt_fg, $qt_surface, $qt_select, $qt_border, $qt_bg, $qt_border, $qt_fg, $qt_fg, $qt_fg, $qt_base, $qt_surface, $qt_shadow, $qt_accent, $qt_selected_fg, $qt_accent, $qt_purple, $qt_base_alt, $qt_fg, $qt_surface, $qt_fg, $qt_shadow"
@@ -639,6 +639,8 @@ write_kvantum_theme() {
             /#383c4a/ { gsub(/#383c4a/, base) }
             /#4b5162/ { gsub(/#4b5162/, bg) }
             /#5294e2/ { gsub(/#5294e2/, accent) }
+            /#0582ff/ { gsub(/#0582ff/, accent) }
+            /#b74aff/ { gsub(/#b74aff/, border) }
             /#d3dae3/ { gsub(/#d3dae3/, fg) }
             /#151515/ { gsub(/#151515/, border) }
             /#000000/ { gsub(/#000000/, border) }
@@ -701,6 +703,10 @@ EOF
             /^highlight.text.color=/ { print "highlight.text.color=" highlight_text; next }
             /^link.color=/ { print "link.color=" accent; next }
             /^link.visited.color=/ { print "link.visited.color=" select; next }
+            /^menu_shadow_depth=/ { print "menu_shadow_depth=0"; next }
+            /^tooltip_shadow_depth=/ { print "tooltip_shadow_depth=0"; next }
+            /^blurring=/ { print "blurring=false"; next }
+            /^popup_blurring=/ { print "popup_blurring=false"; next }
             { print }
         ' "$base_config" >"$k_dir/$k_theme.kvconfig"
     else
