@@ -11,6 +11,7 @@ runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
 lock_daemon_pid="$runtime_dir/lock-daemon.pid"
 delete_watcher_pid="$runtime_dir/delete-watcher.pid"
 managed_stop_marker="$runtime_dir/managed-stop"
+widget_hidden_workspace="${ANTO426_WIDGET_HIDDEN_WORKSPACE:-special:anto426-widgets-bg}"
 config_file="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets.env"
 cava_config="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/cava_widget.conf"
 colors_file="${XDG_CONFIG_HOME:-$HOME/.config}/colors/colors.sh"
@@ -384,6 +385,69 @@ widget_addresses() {
     done
 }
 
+active_workspace_arg() {
+    local json id name
+
+    json="$(hyprctl activeworkspace -j 2>/dev/null)" || return 1
+    id="$(printf '%s' "$json" | jq -r '.id // empty' 2>/dev/null)"
+    name="$(printf '%s' "$json" | jq -r '.name // empty' 2>/dev/null)"
+
+    if [[ -n "$name" ]]; then
+        if [[ "$name" =~ ^[0-9]+$ || "$name" == special:* ]]; then
+            printf '%s' "$name"
+        else
+            printf 'name:%s' "$name"
+        fi
+    else
+        printf '%s' "$id"
+    fi
+}
+
+locked_widgets_should_hide() {
+    local workspace_id
+
+    command -v hyprctl >/dev/null 2>&1 || return 1
+    command -v jq >/dev/null 2>&1 || return 1
+
+    workspace_id="$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.id // empty' 2>/dev/null)"
+    [[ "$workspace_id" =~ ^-?[0-9]+$ ]] || return 1
+
+    hyprctl clients -j 2>/dev/null |
+        jq -e --argjson workspace_id "$workspace_id" '
+            [
+                .[] |
+                select((.mapped // true) == true) |
+                select((.hidden // false) == false) |
+                select((.workspace.id // null) == $workspace_id) |
+                select(((.title // "") | length) > 0) |
+                select(
+                    ((.class // .initialClass // "") |
+                        test("^(anto426\\.widget\\.|clock-widget$|cava-widget$|system-widget$|rofi$|waybar$|swaync|swaync-control-center|wofi$|anto426-osd$)"; "i") |
+                        not
+                    )
+                )
+            ] | length > 0
+        ' >/dev/null 2>&1
+}
+
+move_widgets_to_workspace() {
+    local workspace="$1"
+    local addr
+
+    [[ -n "$workspace" ]] || return 1
+    for addr in $(widget_addresses); do
+        hyprctl dispatch movetoworkspacesilent "$workspace,address:$addr" >/dev/null 2>&1 || true
+    done
+}
+
+restore_widgets_to_active_workspace() {
+    local workspace
+
+    workspace="$(active_workspace_arg)"
+    [[ -n "$workspace" ]] || return 0
+    move_widgets_to_workspace "$workspace"
+}
+
 widget_class_regex() {
     printf '^%s$' "$(printf '%s' "$1" | sed -e 's/[.[\*^$()+?{}|\\]/\\&/g')"
 }
@@ -450,6 +514,15 @@ bury_widget_windows() {
 sync_locked_widgets() {
     ensure_config
     widgets_locked || return 0
+
+    if locked_widgets_should_hide; then
+        move_widgets_to_workspace "$widget_hidden_workspace"
+        apply_widgets_lock_state
+        bury_widget_windows
+        return 0
+    fi
+
+    restore_widgets_to_active_workspace
     apply_widget_layout >/dev/null 2>&1 || true
     apply_widgets_lock_state
     bury_widget_windows
@@ -654,6 +727,7 @@ set_widgets_lock() {
             stop_widgets_lock_daemon
             set_config_value ANTO426_WIDGETS_LOCKED 0
             write_widget_lock_hypr_rules unlock
+            restore_widgets_to_active_workspace
             apply_widgets_lock_state
             apply_widget_layout >/dev/null 2>&1 || true
             start_widget_delete_watcher
