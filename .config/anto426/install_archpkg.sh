@@ -17,7 +17,7 @@ pacman_packages=(
 
     # Qt, display manager, and theming
     sddm qt5ct qt6ct qt5-wayland qt6-wayland nwg-look adw-gtk-theme kvantum-qt5
-    sassc gnome-themes-extra gtk-engine-murrine
+    sassc gnome-themes-extra
 
     # Input method
     fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
