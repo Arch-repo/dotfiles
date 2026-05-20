@@ -28,13 +28,21 @@ STATE_FILE = Path(
         f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/anto426-osd.state",
     )
 )
+PID_FILE = Path(
+    os.environ.get(
+        "ANTO426_OSD_PID",
+        f"{os.environ.get('XDG_RUNTIME_DIR', '/tmp')}/anto426-osd.pid",
+    )
+)
 CSS_FILE = Path(__file__).with_name("style.css")
 COLORS_FILE = Path(
     os.environ.get("XDG_CONFIG_HOME", str(Path.home() / ".config"))
 ) / "colors" / "colors.css"
 HIDE_MS = 1400
-OSD_WIDTH = 400
-OSD_HEIGHT = 120
+OSD_WIDTH = 340
+OSD_HEIGHT = 84
+BAR_WIDTH = 280
+BOTTOM_MARGIN = 48
 
 FALLBACK_CSS = b"""
 @define-color background #1e1e2e;
@@ -101,14 +109,11 @@ class OsdWindow(Gtk.Window):
         self.value_label.get_style_context().add_class("osd-value")
         text_col.pack_start(self.value_label, False, False, 0)
 
-        self.track = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        self.track.get_style_context().add_class("osd-track")
-        self.track.set_size_request(316, 10)
-        outer.pack_start(self.track, False, False, 0)
-
-        self.fill = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        self.fill.get_style_context().add_class("osd-fill")
-        self.track.pack_start(self.fill, False, False, 0)
+        self.progress = Gtk.ProgressBar()
+        self.progress.set_show_text(False)
+        self.progress.set_size_request(BAR_WIDTH, 8)
+        self.progress.get_style_context().add_class("osd-track")
+        outer.pack_start(self.progress, False, False, 0)
 
         self._hide_id: int | None = None
         self.show_all()
@@ -156,8 +161,8 @@ class OsdWindow(Gtk.Window):
             GtkLayerShell.set_layer(self, GtkLayerShell.Layer.OVERLAY)
             GtkLayerShell.set_keyboard_mode(self, GtkLayerShell.KeyboardMode.NONE)
             GtkLayerShell.set_exclusive_zone(self, -1)
-            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.TOP, True)
             GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.LEFT, True)
+            GtkLayerShell.set_anchor(self, GtkLayerShell.Edge.BOTTOM, True)
             return
 
         self.set_position(Gtk.WindowPosition.CENTER)
@@ -171,12 +176,12 @@ class OsdWindow(Gtk.Window):
             return
         geo = monitor.get_geometry()
         x = max(0, (geo.width - OSD_WIDTH) // 2)
-        y = max(0, (geo.height - OSD_HEIGHT) // 2)
         if HAS_LAYER_SHELL and GtkLayerShell is not None:
             GtkLayerShell.set_margin(self, GtkLayerShell.Edge.LEFT, x)
-            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.TOP, y)
+            GtkLayerShell.set_margin(self, GtkLayerShell.Edge.BOTTOM, BOTTOM_MARGIN)
             return
 
+        y = max(0, geo.height - OSD_HEIGHT - BOTTOM_MARGIN)
         window = self.get_window()
         if window is not None:
             window.move(geo.x + x, geo.y + y)
@@ -199,12 +204,11 @@ class OsdWindow(Gtk.Window):
         self.title_label.set_text(TITLES[kind])
         self.value_label.set_text("Muto" if muted else f"{value}%")
 
-        fill_width = 0 if muted else int(316 * value / 100)
-        self.fill.set_size_request(max(0, fill_width), 10)
+        self.progress.set_fraction(0.0 if muted else value / 100)
         if muted:
-            self.fill.get_style_context().add_class("muted")
+            self.progress.get_style_context().add_class("muted")
         else:
-            self.fill.get_style_context().remove_class("muted")
+            self.progress.get_style_context().remove_class("muted")
 
         if not self.get_visible():
             self.show_all()
@@ -236,6 +240,18 @@ def write_state(kind: str, value: int, muted: bool = False) -> None:
     )
 
 
+def cleanup_pid_file() -> None:
+    try:
+        current = PID_FILE.read_text(encoding="utf-8").strip()
+    except OSError:
+        return
+    if current == str(os.getpid()):
+        try:
+            PID_FILE.unlink()
+        except OSError:
+            pass
+
+
 def main() -> int:
     if len(sys.argv) >= 2 and sys.argv[1] != "daemon":
         kind = sys.argv[1]
@@ -247,13 +263,20 @@ def main() -> int:
     win = OsdWindow()
     win.update(kind, value, muted)
 
-    def on_usr1(*_args: object) -> None:
+    def refresh_from_state() -> bool:
         k, v, m = read_state()
         win.update(k, v, m)
+        return False
+
+    def on_usr1(*_args: object) -> None:
+        GLib.idle_add(refresh_from_state)
 
     signal.signal(signal.SIGUSR1, on_usr1)
-    Gtk.main()
-    return 0
+    try:
+        Gtk.main()
+        return 0
+    finally:
+        cleanup_pid_file()
 
 
 if __name__ == "__main__":

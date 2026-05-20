@@ -1,52 +1,59 @@
 window.osd-root {
-  background-color: alpha(@background, 0.94);
-  border: 2px solid alpha(@accent, 0.72);
-  border-radius: 999px;
-  padding: 18px 24px;
-  box-shadow: 0 18px 44px alpha(@background, 0.58);
+  background-color: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 box.osd-box {
-  min-width: 360px;
-  min-height: 88px;
+  min-width: 300px;
+  min-height: 50px;
+  padding: 12px 18px;
+  background-color: @background;
+  border: 1px solid alpha(@accent, 0.58);
+  border-radius: 18px;
+  box-shadow: none;
 }
 
 label.osd-icon {
   font-family: "JetBrainsMono Nerd Font";
-  font-size: 28px;
+  font-size: 21px;
   font-weight: bold;
   color: @accent;
-  margin-right: 14px;
+  margin-right: 12px;
 }
 
 label.osd-title {
   font-family: "JetBrainsMono Nerd Font";
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 600;
   color: @muted;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 
 label.osd-value {
   font-family: "JetBrainsMono Nerd Font";
-  font-size: 26px;
+  font-size: 19px;
   font-weight: bold;
   color: @foreground;
 }
 
-box.osd-track {
-  min-height: 10px;
-  margin-top: 12px;
-  background-color: alpha(@foreground, 0.18);
-  border-radius: 999px;
+progressbar.osd-track {
+  min-height: 8px;
+  margin-top: 8px;
 }
 
-box.osd-fill {
-  min-height: 10px;
+progressbar.osd-track trough {
+  min-height: 8px;
+  background-color: alpha(@foreground, 0.16);
+  border-radius: 8px;
+}
+
+progressbar.osd-track progress {
+  min-height: 8px;
   background-color: @accent;
-  border-radius: 999px;
+  border-radius: 8px;
 }
 
-box.osd-fill.muted {
+progressbar.osd-track.muted progress {
   background-color: alpha(@muted, 0.55);
 }

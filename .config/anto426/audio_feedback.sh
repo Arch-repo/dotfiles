@@ -28,20 +28,34 @@ muted_state() {
     wpctl get-volume "$1" 2>/dev/null | grep -q '\[MUTED\]'
 }
 
+muted_flag() {
+    if muted_state "$1"; then
+        printf '1'
+    else
+        printf '0'
+    fi
+}
+
 change_volume() {
     local direction="$1"
-    local before after
+    local before after muted
 
     before="$(volume_percent "$target_sink")"
     [[ -n "$before" ]] || before=0
 
     case "$direction" in
         up)
-            ((before >= 100)) && return 0
+            if ((before >= 100)); then
+                show_osd volume "$before" "$(muted_flag "$target_sink")"
+                return 0
+            fi
             wpctl set-volume -l 1 "$target_sink" 5%+
             ;;
         down)
-            ((before <= 0)) && return 0
+            if ((before <= 0)); then
+                show_osd volume "$before" "$(muted_flag "$target_sink")"
+                return 0
+            fi
             wpctl set-volume "$target_sink" 5%-
             ;;
         *)
@@ -51,9 +65,13 @@ change_volume() {
 
     after="$(volume_percent "$target_sink")"
     [[ -n "$after" ]] || after="$before"
-    [[ "$after" == "$before" ]] && return 0
+    muted="$(muted_flag "$target_sink")"
+    [[ "$after" == "$before" ]] && {
+        show_osd volume "$after" "$muted"
+        return 0
+    }
 
-    show_osd volume "$after" 0
+    show_osd volume "$after" "$muted"
 }
 
 case "${1:-}" in

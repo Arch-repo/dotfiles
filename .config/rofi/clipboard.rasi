@@ -1,0 +1,54 @@
+/* Clipboard picker: compact, solid, driven by ~/.config/colors/colors.rasi */
+
+@import "~/.config/rofi/control_menu.rasi"
+
+#window {
+    location:         center;
+    anchor:           center;
+    width:            520px;
+    padding:          16px;
+    background-color: @background;
+    border:           1px;
+    border-color:     @border;
+    border-radius:    16px;
+}
+
+#mainbox {
+    spacing:          10px;
+}
+
+#inputbar {
+    padding:          9px 12px;
+    background-color: @surface;
+    border:           1px;
+    border-color:     @border-alpha;
+    border-radius:    12px;
+}
+
+#listview {
+    lines:            10;
+    spacing:          6px;
+}
+
+#element {
+    padding:          8px 11px;
+    border:           1px;
+    border-color:     transparent;
+    border-radius:    10px;
+}
+
+#element.selected.active {
+    background-color: @select;
+    text-color:       @foreground;
+    border-color:     @accent;
+}
+
+#element.selected.normal {
+    background-color: @select;
+    text-color:       @foreground;
+    border-color:     @accent;
+}
+
+#element-text {
+    font:             "JetBrainsMono Nerd Font Medium 10.5";
+}
