@@ -51,18 +51,24 @@ FALLBACK_CSS = b"""
 @define-color muted #b9c4d2;
 @define-color accent #8cb8e4;
 @define-color border #6c7086;
+@define-color background-alpha rgba(30, 30, 46, 0.60);
+@define-color surface-alpha rgba(49, 50, 68, 0.78);
 """
 
 ICONS = {
     "volume": "󰕾",
     "brightness": "󰃠",
     "mic": "󰍬",
+    "clipboard": "󰅌",
+    "toast": "󰅌",
 }
 
 TITLES = {
     "volume": "Volume",
     "brightness": "Luminosità",
     "mic": "Microfono",
+    "clipboard": "Clipboard",
+    "toast": "Info",
 }
 
 
@@ -87,12 +93,12 @@ class OsdWindow(Gtk.Window):
 
         self._load_css()
 
-        outer = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
-        outer.get_style_context().add_class("osd-box")
-        self.add(outer)
+        self.box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=0)
+        self.box.get_style_context().add_class("osd-box")
+        self.add(self.box)
 
         header = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
-        outer.pack_start(header, False, False, 0)
+        self.box.pack_start(header, False, False, 0)
 
         self.icon_label = Gtk.Label()
         self.icon_label.get_style_context().add_class("osd-icon")
@@ -113,7 +119,7 @@ class OsdWindow(Gtk.Window):
         self.progress.set_show_text(False)
         self.progress.set_size_request(BAR_WIDTH, 8)
         self.progress.get_style_context().add_class("osd-track")
-        outer.pack_start(self.progress, False, False, 0)
+        self.box.pack_start(self.progress, False, False, 0)
 
         self._hide_id: int | None = None
         self.show_all()
@@ -195,10 +201,34 @@ class OsdWindow(Gtk.Window):
         Gtk.main_quit()
         return False
 
-    def update(self, kind: str, value: int, muted: bool = False) -> None:
+    def update(
+        self,
+        kind: str,
+        value: int,
+        muted: bool = False,
+        message: str = "",
+    ) -> None:
         kind = kind if kind in ICONS else "volume"
         value = max(0, min(100, int(value)))
         muted = bool(muted)
+
+        if kind in {"clipboard", "toast"}:
+            self.box.get_style_context().add_class("toast")
+            self.icon_label.set_text(ICONS[kind])
+            self.title_label.hide()
+            self.value_label.set_text(message or TITLES[kind])
+            self.progress.hide()
+            if not self.get_visible():
+                self.show_all()
+                self.progress.hide()
+                self.title_label.hide()
+            self._centre()
+            self._schedule_hide()
+            return
+
+        self.box.get_style_context().remove_class("toast")
+        self.title_label.show()
+        self.progress.show()
 
         self.icon_label.set_text("󰝟" if muted else ICONS[kind])
         self.title_label.set_text(TITLES[kind])
@@ -216,26 +246,32 @@ class OsdWindow(Gtk.Window):
         self._schedule_hide()
 
 
-def read_state() -> tuple[str, int, bool]:
+def read_state() -> tuple[str, int, bool, str]:
     try:
         raw = STATE_FILE.read_text(encoding="utf-8").strip().split()
     except OSError:
         raw = []
     if len(raw) < 2:
-        return "volume", 0, False
+        return "volume", 0, False, ""
     kind = raw[0]
     try:
         value = int(float(raw[1]))
     except ValueError:
         value = 0
     muted = len(raw) > 2 and raw[2] in {"1", "true", "yes", "muted"}
-    return kind, value, muted
+    message = " ".join(raw[3:]) if len(raw) > 3 else ""
+    return kind, value, muted, message
 
 
-def write_state(kind: str, value: int, muted: bool = False) -> None:
+def write_state(
+    kind: str,
+    value: int,
+    muted: bool = False,
+    message: str = "",
+) -> None:
     STATE_FILE.parent.mkdir(parents=True, exist_ok=True)
     STATE_FILE.write_text(
-        f"{kind} {value} {1 if muted else 0}\n",
+        f"{kind} {value} {1 if muted else 0} {message}\n",
         encoding="utf-8",
     )
 
@@ -255,17 +291,20 @@ def cleanup_pid_file() -> None:
 def main() -> int:
     if len(sys.argv) >= 2 and sys.argv[1] != "daemon":
         kind = sys.argv[1]
-        value = int(sys.argv[2]) if len(sys.argv) > 2 else 0
-        muted = len(sys.argv) > 3 and sys.argv[3] in {"1", "true", "muted"}
-        write_state(kind, value, muted)
+        if kind in {"clipboard", "toast"}:
+            write_state(kind, 0, False, " ".join(sys.argv[2:]))
+        else:
+            value = int(sys.argv[2]) if len(sys.argv) > 2 else 0
+            muted = len(sys.argv) > 3 and sys.argv[3] in {"1", "true", "muted"}
+            write_state(kind, value, muted)
 
-    kind, value, muted = read_state()
+    kind, value, muted, message = read_state()
     win = OsdWindow()
-    win.update(kind, value, muted)
+    win.update(kind, value, muted, message)
 
     def refresh_from_state() -> bool:
-        k, v, m = read_state()
-        win.update(k, v, m)
+        k, v, m, msg = read_state()
+        win.update(k, v, m, msg)
         return False
 
     def on_usr1(*_args: object) -> None:

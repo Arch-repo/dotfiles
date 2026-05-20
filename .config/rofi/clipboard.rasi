@@ -37,13 +37,8 @@
     border-radius:    10px;
 }
 
+#element.selected.normal,
 #element.selected.active {
-    background-color: @select;
-    text-color:       @foreground;
-    border-color:     @accent;
-}
-
-#element.selected.normal {
     background-color: @select;
     text-color:       @foreground;
     border-color:     @accent;

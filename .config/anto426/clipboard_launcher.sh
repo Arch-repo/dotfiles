@@ -4,9 +4,12 @@ if pgrep -x rofi > /dev/null; then
     pkill -x rofi
 fi
 
-THEME="$HOME/.config/rofi/clipboard.rasi"
+THEME="$HOME/.config/rofi/control_menu.rasi"
+OSD_SCRIPT="$HOME/.config/anto426/osd_show.sh"
 
 choice="$(cliphist list | rofi -dmenu -p "Clipboard" -theme "$THEME")"
 [[ -n "$choice" ]] || exit 0
 
-printf '%s' "$choice" | cliphist decode | wl-copy
+if printf '%s' "$choice" | cliphist decode | wl-copy; then
+    [[ -x "$OSD_SCRIPT" ]] && "$OSD_SCRIPT" clipboard "Copied to clipboard"
+fi

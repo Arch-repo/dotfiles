@@ -8,10 +8,16 @@ box.osd-box {
   min-width: 300px;
   min-height: 50px;
   padding: 12px 18px;
-  background-color: @background;
-  border: 1px solid alpha(@accent, 0.58);
+  background-color: @background-alpha;
+  border: 1px solid alpha(@accent, 0.64);
   border-radius: 18px;
   box-shadow: none;
+}
+
+box.osd-box.toast {
+  min-width: 236px;
+  min-height: 34px;
+  padding: 10px 16px;
 }
 
 label.osd-icon {
@@ -35,6 +41,10 @@ label.osd-value {
   font-size: 19px;
   font-weight: bold;
   color: @foreground;
+}
+
+box.osd-box.toast label.osd-value {
+  font-size: 17px;
 }
 
 progressbar.osd-track {
