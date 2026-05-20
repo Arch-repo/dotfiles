@@ -603,12 +603,13 @@ audio_volume_slider() {
     local prompt="$2"
     local message="$3"
     local slider_name="$4"
+    local live_target="$5"
     local current value
 
     current="$(audio_volume_percent "$target")"
     [[ -n "$current" ]] || current=0
 
-    value="$(rofi_slider_pick "$slider_name" "$prompt" "$message" "$current")"
+    value="$(rofi_slider_pick "$slider_name" "$prompt" "$message" "$current" 0 100 1 "$live_target")"
     [[ -z "$value" ]] && return 0
     ((value < 0)) && value=0
     ((value > 100)) && value=100
@@ -723,9 +724,9 @@ audio_menu() {
 
         case "$choice" in
             *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "Output: $sink_desc\nVolume: $sink_vol" "slider-volume" ;;
+            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "Output: $sink_desc\nVolume: $sink_vol" "slider-volume" "output-volume" ;;
             *"Silenzia/Attiva Microfono") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "Input: $source_desc\nVolume: $source_vol" "slider-mic" ;;
+            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "Input: $source_desc\nVolume: $source_vol" "slider-mic" "input-volume" ;;
             *"Seleziona dispositivo Output") audio_choose_sink ;;
             *"Seleziona dispositivo Input") audio_choose_source ;;
             "󰌍 Indietro")

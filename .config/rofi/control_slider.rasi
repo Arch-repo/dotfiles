@@ -5,16 +5,21 @@
 @import "~/.config/rofi/control_menu.rasi"
 
 #window {
-    width: 380px;
+    width: 360px;
+    padding: 18px;
 }
 
 #mainbox {
-    children: [message, slider-panel, inputbar];
+    children: [message, control-slider-panel];
+    spacing: 16px;
 }
 
-slider-panel {
-    orientation: vertical;
-    spacing: 10px;
+control-slider-panel {
+    orientation: horizontal;
+    spacing: 0px;
+    padding: 8px 8px 10px 8px;
+    margin: 0px;
+    background-color: transparent;
 }
 
 slider-volume,
@@ -26,11 +31,12 @@ slider-brightness {
     value: 50;
     length: 300px;
     orientation: horizontal;
-    track-width: 6px;
-    handle-width: 16px;
+    track-width: 8px;
+    handle-width: 20px;
+    padding: 12px 4px;
     track-color: @border-alpha;
     fill-color: @accent;
-    handle-color: @accent;
+    handle-color: @foreground;
     track-rounded-corners: true;
     handle-rounded-corners: true;
 }
@@ -43,6 +49,6 @@ slider-brightness {
     border: 0px;
 }
 
-#entry {
-    placeholder: "Invio per confermare, Esc per annullare";
+#inputbar {
+    enabled: false;
 }
