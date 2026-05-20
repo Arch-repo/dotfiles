@@ -81,7 +81,7 @@ move_or_tile() {
 
 resize_direction() {
     local direction="$1"
-    local current_w current_h new_w new_h step=80
+    local current_w current_h new_w new_h step=80 dw=0 dh=0
 
     case "$direction" in
         left | l | right | r | up | u | down | d) ;;
@@ -95,16 +95,27 @@ resize_direction() {
     new_h="$current_h"
 
     case "$direction" in
-        left | l) new_w=$((current_w - step)) ;;
-        right | r) new_w=$((current_w + step)) ;;
-        up | u) new_h=$((current_h - step)) ;;
-        down | d) new_h=$((current_h + step)) ;;
+        left | l)
+            new_w=$((current_w - step))
+            dw=$((-step))
+            ;;
+        right | r)
+            new_w=$((current_w + step))
+            dw="$step"
+            ;;
+        up | u)
+            new_h=$((current_h - step))
+            dh=$((-step))
+            ;;
+        down | d)
+            new_h=$((current_h + step))
+            dh="$step"
+            ;;
     esac
 
-    ((new_w < 240)) && new_w=240
-    ((new_h < 160)) && new_h=160
+    ((new_w < 240 || new_h < 160)) && return 0
 
-    resize_exact "$new_w" "$new_h"
+    dispatch resizeactive "$dw $dh" || resize_exact "$new_w" "$new_h"
 }
 
 center_window() {
