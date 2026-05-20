@@ -7,7 +7,7 @@ configuration {
 @import "~/.config/colors/colors.rasi"
 
 * {
-    font: "JetBrainsMono Nerd Font SemiBold 12";
+    font: "JetBrainsMono Nerd Font SemiBold 10";
     background-color: transparent;
     text-color: @foreground;
 }
@@ -18,28 +18,28 @@ configuration {
     background-color: @background-alpha;
     border: 2px;
     border-color: @border-alpha;
-    border-radius: 24px;
-    padding: 24px;
-    width: 940px;
+    border-radius: 16px;
+    padding: 14px;
+    width: 760px;
 }
 
 #mainbox {
-    spacing: 16px;
+    spacing: 10px;
     background-color: transparent;
 }
 
 #inputbar {
     spacing: 8px;
-    padding: 12px 16px;
+    padding: 9px 12px;
     border: 1px;
     border-color: @border;
-    border-radius: 14px;
+    border-radius: 10px;
     background-color: @surface;
 }
 
 #prompt {
     text-color: @accent;
-    font: "JetBrainsMono Nerd Font Bold 13";
+    font: "JetBrainsMono Nerd Font Bold 11";
 }
 
 #entry {
@@ -51,21 +51,21 @@ configuration {
 #message {
     border: 1px;
     border-color: @border-alpha;
-    border-radius: 16px;
-    padding: 14px 16px;
+    border-radius: 10px;
+    padding: 9px 12px;
     background-color: @surface-alpha;
 }
 
 #textbox {
     text-color: @foreground;
-    font: "JetBrainsMono Nerd Font Medium 11";
+    font: "JetBrainsMono Nerd Font Medium 10";
 }
 
 #listview {
     columns: 1;
-    lines: 22;
+    lines: 16;
     fixed-height: true;
-    spacing: 6px;
+    spacing: 3px;
     padding: 2px;
     scrollbar: true;
     background-color: transparent;
@@ -82,8 +82,8 @@ configuration {
 #element {
     border: 1px;
     border-color: transparent;
-    border-radius: 12px;
-    padding: 8px 12px;
+    border-radius: 8px;
+    padding: 5px 8px;
     background-color: transparent;
     text-color: @foreground;
 }
@@ -97,5 +97,5 @@ configuration {
 #element-text {
     background-color: inherit;
     text-color: inherit;
-    font: "JetBrainsMono Nerd Font SemiBold 12";
+    font: "JetBrainsMono Nerd Font SemiBold 10";
 }

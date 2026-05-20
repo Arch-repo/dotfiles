@@ -3,9 +3,17 @@ set -uo pipefail
 
 THEME="$HOME/.config/rofi/control_menu.rasi"
 padding="${ANTO426_FLOATING_PADDING:-32}"
+move_step="${ANTO426_FLOATING_MOVE_STEP:-80}"
 
 notify() {
     notify-send "Floating" "$*" 2>/dev/null || true
+}
+
+go_back() {
+    if [[ "${ANTO426_MENU_PARENT:-}" == "control" ]]; then
+        exec "$HOME/.config/anto426/control_menu.sh" main
+    fi
+    return 0
 }
 
 active_json() {
@@ -32,7 +40,16 @@ dispatch() {
 }
 
 ensure_floating() {
-    active_flag floating || dispatch togglefloating
+    active_flag floating || dispatch setfloating active
+}
+
+toggle_floating() {
+    if active_flag floating; then
+        dispatch settiled active
+    else
+        dispatch setfloating active
+        dispatch alterzorder top
+    fi
 }
 
 move_exact() {
@@ -41,6 +58,40 @@ move_exact() {
 
 resize_exact() {
     dispatch resizeactive "exact $1 $2"
+}
+
+move_or_tile() {
+    local direction="$1"
+    local dx=0 dy=0 tiled_direction
+
+    case "$direction" in
+        left | l) dx=$((-move_step)); tiled_direction="l" ;;
+        right | r) dx="$move_step"; tiled_direction="r" ;;
+        up | u) dy=$((-move_step)); tiled_direction="u" ;;
+        down | d) dy="$move_step"; tiled_direction="d" ;;
+        *) return 1 ;;
+    esac
+
+    if active_flag floating; then
+        dispatch moveactive "$dx $dy"
+    else
+        dispatch movewindow "$tiled_direction"
+    fi
+}
+
+resize_direction() {
+    local direction="$1"
+    local dx=0 dy=0
+
+    case "$direction" in
+        left | l) dx=-80 ;;
+        right | r) dx=80 ;;
+        up | u) dy=-80 ;;
+        down | d) dy=80 ;;
+        *) return 1 ;;
+    esac
+
+    dispatch resizeactive "$dx $dy"
 }
 
 center_window() {
@@ -154,7 +205,7 @@ menu() {
     )"
 
     case "$choice" in
-        *"Toggle"*) dispatch togglefloating ;;
+        *"Toggle"*) toggle_floating ;;
         *"Centra"*) center_window ;;
         *"Compatta"*) resize_preset small ;;
         *"Comoda"*) resize_preset medium ;;
@@ -168,22 +219,30 @@ menu() {
                 *"Alto destra"*) move_corner tr ;;
                 *"Basso sinistra"*) move_corner bl ;;
                 *"Basso destra"*) move_corner br ;;
-                *"Indietro"*) return 0 ;;
+                *"Indietro"*) go_back ;;
             esac
             ;;
         *"Reset"*) reset_window ;;
         *"Chiudi"*) dispatch killactive ;;
-        *"Indietro"*) return 0 ;;
+        *"Indietro"*) go_back ;;
     esac
 }
 
 case "${1:-menu}" in
     menu) menu ;;
-    toggle) dispatch togglefloating ;;
+    toggle) toggle_floating ;;
     center) center_window ;;
     small) resize_preset small ;;
     medium) resize_preset medium ;;
     large) resize_preset large ;;
+    move-left) move_or_tile left ;;
+    move-right) move_or_tile right ;;
+    move-up) move_or_tile up ;;
+    move-down) move_or_tile down ;;
+    resize-left) resize_direction left ;;
+    resize-right) resize_direction right ;;
+    resize-up) resize_direction up ;;
+    resize-down) resize_direction down ;;
     pin) dispatch pin ;;
     top) dispatch alterzorder top ;;
     reset) reset_window ;;
@@ -193,7 +252,7 @@ case "${1:-menu}" in
     corner-bl) move_corner bl ;;
     corner-br) move_corner br ;;
     *)
-        printf 'Uso: %s [menu|toggle|center|small|medium|large|pin|top|reset|close|corner-tl|corner-tr|corner-bl|corner-br]\n' "$0" >&2
+        printf 'Uso: %s [menu|toggle|center|small|medium|large|move-left|move-right|move-up|move-down|resize-left|resize-right|resize-up|resize-down|pin|top|reset|close|corner-tl|corner-tr|corner-bl|corner-br]\n' "$0" >&2
         exit 2
         ;;
 esac

@@ -7,6 +7,13 @@ notify() {
     notify-send "Schermi" "$*" 2>/dev/null || true
 }
 
+go_back() {
+    if [[ "${ANTO426_MENU_PARENT:-}" == "control" ]]; then
+        exec "$HOME/.config/anto426/control_menu.sh" main
+    fi
+    exit 0
+}
+
 require_jq() {
     command -v jq >/dev/null 2>&1 || {
         notify "jq non trovato"
@@ -129,5 +136,5 @@ case "$choice" in
     *"Duplica"*) duplicate_displays "$primary" "$external" ;;
     *"Estendi"*) extend_displays "$primary" "$external" ;;
     *"esterno"*) only_external "$primary" "$external" ;;
-    *"Indietro") exit 0 ;;
+    *"Indietro") go_back ;;
 esac

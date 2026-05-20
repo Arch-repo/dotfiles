@@ -3,6 +3,7 @@ set -uo pipefail
 
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
 config_file="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets.env"
+desktop_widgets_script="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/desktop_widgets.py"
 mkdir -p "$runtime_dir"
 
 ensure_config() {
@@ -13,6 +14,9 @@ export ANTO426_WIDGETS_AUTOSTART=1
 
 # Available widgets: clock cava system
 export ANTO426_WIDGETS_ENABLED="clock cava system"
+
+# layer = desktop layer-shell widgets; terminal = legacy app-window fallback.
+export ANTO426_WIDGETS_BACKEND="layer"
 EOF
     fi
 
@@ -87,6 +91,39 @@ is_running() {
     pid="$(cat "$pid_file" 2>/dev/null || true)"
     [[ "$pid" =~ ^[0-9]+$ ]] || return 1
     kill -0 "$pid" 2>/dev/null
+}
+
+start_layer_widgets() {
+    local pid_file
+
+    pid_file="$(pid_file layer)"
+    is_running layer && return 0
+
+    if [[ ! -x "$desktop_widgets_script" && ! -r "$desktop_widgets_script" ]]; then
+        notify "Script widget layer non trovato"
+        return 1
+    fi
+
+    if ! python3 "$desktop_widgets_script" --check >/dev/null 2>&1; then
+        notify "Installa python-gobject, gtk3 e gtk-layer-shell per i widget desktop"
+        return 1
+    fi
+
+    ANTO426_WIDGETS_ENABLED="${ANTO426_WIDGETS_ENABLED:-clock cava system}" \
+        python3 "$desktop_widgets_script" >/dev/null 2>&1 &
+    printf '%s\n' "$!" >"$pid_file"
+}
+
+stop_layer_widgets() {
+    local pid_file pid
+
+    pid_file="$(pid_file layer)"
+    pid="$(cat "$pid_file" 2>/dev/null || true)"
+    if [[ "$pid" =~ ^[0-9]+$ ]]; then
+        kill "$pid" 2>/dev/null || true
+    fi
+    pkill -f -- "$desktop_widgets_script" 2>/dev/null || true
+    rm -f "$pid_file"
 }
 
 launch_widget() {
@@ -200,6 +237,15 @@ start_widgets() {
 
     ensure_config
 
+    if [[ "${ANTO426_WIDGETS_BACKEND:-layer}" == "layer" ]]; then
+        stop_widget clock clock-widget
+        stop_widget cava cava-widget
+        stop_widget system system-widget
+        start_layer_widgets || return 1
+        [[ "$quiet" == "quiet" ]] || notify "Widget desktop avviati"
+        return 0
+    fi
+
     for widget in ${ANTO426_WIDGETS_ENABLED:-clock cava system}; do
         case "$widget" in
             clock) launch_widget clock clock-widget "Clock Widget" "$clock_command" ;;
@@ -214,6 +260,7 @@ start_widgets() {
 stop_widgets() {
     local quiet="${1:-false}"
 
+    stop_layer_widgets
     stop_widget clock clock-widget
     stop_widget cava cava-widget
     stop_widget system system-widget
@@ -221,7 +268,7 @@ stop_widgets() {
 }
 
 any_running() {
-    is_running clock || is_running cava || is_running system
+    is_running layer || is_running clock || is_running cava || is_running system
 }
 
 case "${1:-toggle}" in

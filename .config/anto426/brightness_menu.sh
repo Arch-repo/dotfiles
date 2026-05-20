@@ -16,6 +16,13 @@ current_percent() {
     brightnessctl -m 2>/dev/null | awk -F, '{gsub(/%/, "", $4); print int($4); exit}'
 }
 
+go_back() {
+    if [[ "${ANTO426_MENU_PARENT:-}" == "control" ]]; then
+        exec "$HOME/.config/anto426/control_menu.sh" main
+    fi
+    exit 0
+}
+
 brightness_bar() {
     local value="$1"
     local filled=$((value / 10))
@@ -126,7 +133,7 @@ case "${1:-menu}" in
             *"Aumenta"*) adjust_brightness up ;;
             *"Diminuisci"*) adjust_brightness down ;;
             *"Valori"*) exit 0 ;;
-            *"Indietro"*) exit 0 ;;
+            *"Indietro"*) go_back ;;
             *"% "* | *"%")
                 if [[ "$choice" =~ ([0-9]{1,3})% ]]; then
                     set_brightness "$((10#${BASH_REMATCH[1]}))%"

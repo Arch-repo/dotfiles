@@ -1728,15 +1728,15 @@ main_menu() {
             "$bluetooth") MENU_STATE="bluetooth"; return 0 ;;
             "$wifi") MENU_STATE="wifi"; return 0 ;;
             "$audio") MENU_STATE="audio"; return 0 ;;
-            "$brightness") "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
+            "$brightness") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
             "$battery") MENU_STATE="battery"; return 0 ;;
             "$keyboard") MENU_STATE="keyboard"; return 0 ;;
             "$notifications") MENU_STATE="notifications"; return 0 ;;
             "$calendar") MENU_STATE="calendar"; return 0 ;;
-            "$wallpapers") "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
-            "$display") "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
+            "$wallpapers") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
+            "$display") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
             "$widgets") "$HOME/.config/anto426/widgets.sh" toggle; return 0 ;;
-            "$floating") "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
+            "$floating") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
             "$power") MENU_STATE="power"; return 0 ;;
             *) return 0 ;;
         esac

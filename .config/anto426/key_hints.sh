@@ -31,8 +31,8 @@ menu_rows() {
     row "SUPER Q" "Chiudi finestra"
     row "SUPER Shift Q" "Forza chiusura PID"
     row "SUPER Frecce" "Sposta focus"
-    row "SUPER Shift Frecce" "Muovi finestra"
-    row "SUPER Ctrl Frecce" "Ridimensiona"
+    row "SUPER Shift Frecce" "Muovi / sposta floating"
+    row "SUPER Ctrl Frecce" "Ridimensiona a pixel"
     row "SUPER P" "Pseudo tiling"
     row "SUPER J" "Toggle split"
     printf '\n'

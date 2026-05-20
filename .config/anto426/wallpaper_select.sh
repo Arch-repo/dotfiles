@@ -14,6 +14,13 @@ notify() {
     notify-send "Wallpaper" "$*" 2>/dev/null || true
 }
 
+go_back() {
+    if [[ "${ANTO426_MENU_PARENT:-}" == "control" ]]; then
+        exec "$HOME/.config/anto426/control_menu.sh" main
+    fi
+    exit 0
+}
+
 wallpaper_files() {
     [[ -d "$wallpapers_dir" ]] || return 0
     find "$wallpapers_dir" -maxdepth "$depth" -type f \
@@ -79,7 +86,7 @@ case "$choice" in
         open_wallpaper_dir
         ;;
     *"Indietro")
-        exit 0
+        go_back
         ;;
     "── Wallpaper ──")
         exit 0
