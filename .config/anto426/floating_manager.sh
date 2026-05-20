@@ -36,26 +36,16 @@ ensure_floating() {
 }
 
 move_exact() {
-    dispatch movewindowpixel "exact $1 $2,activewindow"
+    dispatch moveactive "exact $1 $2"
 }
 
 resize_exact() {
-    dispatch resizewindowpixel "exact $1 $2,activewindow"
+    dispatch resizeactive "exact $1 $2"
 }
 
 center_window() {
-    local mx my mw mh ww wh x y
-
     ensure_floating
-    read -r mx my mw mh < <(monitor_geometry)
-    read -r ww wh < <(window_size)
-    [[ -n "${mw:-}" && -n "${ww:-}" ]] || return 1
-
-    x=$((mx + (mw - ww) / 2))
-    y=$((my + (mh - wh) / 2))
-    ((x < mx + padding)) && x=$((mx + padding))
-    ((y < my + padding)) && y=$((my + padding))
-    move_exact "$x" "$y"
+    dispatch centerwindow 1 || dispatch centerwindow
 }
 
 resize_preset() {
@@ -115,8 +105,20 @@ reset_window() {
     active_flag pinned && dispatch pin
 
     if active_flag floating; then
-        dispatch togglefloating
+        dispatch settiled active
     fi
+}
+
+active_summary() {
+    active_json |
+        jq -r '
+            if (.class == null) then
+                "Nessuna finestra attiva"
+            else
+                "Finestra: \(.class) - \(.title)\nFloating: \(.floating)  Pinned: \(.pinned)"
+            end
+        ' 2>/dev/null ||
+        printf 'Nessuna finestra attiva'
 }
 
 pick_corner() {
@@ -124,7 +126,8 @@ pick_corner() {
         "󰁝 Alto sinistra" \
         "󰁔 Alto destra" \
         "󰁅 Basso sinistra" \
-        "󰁜 Basso destra" |
+        "󰁜 Basso destra" \
+        "󰌍 Indietro" |
         rofi -dmenu -i -matching fuzzy -p "Angolo" -theme "$THEME"
 }
 
@@ -134,37 +137,43 @@ menu() {
     choice="$(
         printf '%s\n' \
             "󰱒 Toggle floating" \
-            "󰁌 Centra finestra" \
-            "󰾆 Resize small" \
-            "󰾅 Resize medium" \
-            "󰓡 Resize large" \
+            "󰁌 Centra" \
+            "󰾆 Compatta 45%" \
+            "󰾅 Comoda 62%" \
+            "󰓡 Grande 78%" \
             "󰐃 Pin / unpin" \
             "󰓌 Porta sopra" \
-            "󰘕 Sposta ad angolo" \
-            "󰅖 Reset floating" \
-            "󰅙 Chiudi finestra" |
-            rofi -dmenu -i -matching fuzzy -p "Floating Manager" -theme "$THEME"
+            "󰘕 Sposta agli angoli" \
+            "󰅖 Reset: tiled + unpin" \
+            "󰅙 Chiudi finestra" \
+            "󰌍 Indietro" |
+            rofi -dmenu -i -matching fuzzy \
+                -p "Floating Manager" \
+                -mesg "$(active_summary)" \
+                -theme "$THEME"
     )"
 
     case "$choice" in
         *"Toggle"*) dispatch togglefloating ;;
         *"Centra"*) center_window ;;
-        *"small"*) resize_preset small ;;
-        *"medium"*) resize_preset medium ;;
-        *"large"*) resize_preset large ;;
+        *"Compatta"*) resize_preset small ;;
+        *"Comoda"*) resize_preset medium ;;
+        *"Grande"*) resize_preset large ;;
         *"Pin"*) dispatch pin ;;
         *"Porta sopra"*) dispatch alterzorder top ;;
-        *"angolo"*)
+        *"angoli"*)
             corner="$(pick_corner)"
             case "$corner" in
                 *"Alto sinistra"*) move_corner tl ;;
                 *"Alto destra"*) move_corner tr ;;
                 *"Basso sinistra"*) move_corner bl ;;
                 *"Basso destra"*) move_corner br ;;
+                *"Indietro"*) return 0 ;;
             esac
             ;;
         *"Reset"*) reset_window ;;
         *"Chiudi"*) dispatch killactive ;;
+        *"Indietro"*) return 0 ;;
     esac
 }
 

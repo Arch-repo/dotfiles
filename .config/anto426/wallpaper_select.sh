@@ -43,6 +43,7 @@ choice="$(
         printf '󰒟 Wallpaper casuale\n'
         printf '󰑓 Rigenera tema corrente\n'
         printf ' Apri cartella wallpaper\n'
+        printf '󰌍 Indietro\n'
         printf '── Wallpaper ──\n'
 
         wallpaper_files | while IFS= read -r file; do
@@ -76,6 +77,9 @@ case "$choice" in
         ;;
     *"Apri cartella")
         open_wallpaper_dir
+        ;;
+    *"Indietro")
+        exit 0
         ;;
     "── Wallpaper ──")
         exit 0

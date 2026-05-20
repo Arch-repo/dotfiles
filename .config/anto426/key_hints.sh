@@ -46,10 +46,13 @@ menu_rows() {
     printf '\n'
 
     header "Screenshot e registrazione"
-    row "Print" "Menu screenshot"
-    row "Shift Print" "Screenshot area"
-    row "Alt Print" "Screenshot finestra"
+    row "Print" "Screenshot area rapido"
+    row "Shift Print" "Screenshot finestra"
     row "Ctrl Print" "Screenshot schermo"
+    row "Alt Print" "Menu screenshot"
+    row "F9" "Pannello registrazione"
+    row "F11" "Pannello screenshot"
+    row "SUPER Shift S" "Menu screenshot"
     row "SUPER Shift R" "Menu registrazione"
     printf '\n'
 
@@ -98,6 +101,7 @@ menu_rows() {
     printf '󰍹 Apri Proietta schermo\n'
     printf '󱓞 Toggle widget\n'
     printf '󰈙 Apri keybinding.conf\n'
+    printf '󰌍 Indietro\n'
 }
 
 choice="$(
@@ -114,4 +118,5 @@ case "$choice" in
     *"Proietta") "$HOME/.config/anto426/projection_menu.sh" ;;
     *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle ;;
     *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & ;;
+    *"Indietro") exit 0 ;;
 esac

@@ -116,7 +116,8 @@ choice="$(
         "󰍹 Solo schermo principale" \
         "󰍺 Duplica" \
         "󰹑 Estendi" \
-        "󰶐 Solo schermo esterno" |
+        "󰶐 Solo schermo esterno" \
+        "󰌍 Indietro" |
         rofi -dmenu -i -matching fuzzy \
             -p "Proietta" \
             -mesg "Principale: ${primary:-?}\nEsterno: ${external:-non rilevato}" \
@@ -128,4 +129,5 @@ case "$choice" in
     *"Duplica"*) duplicate_displays "$primary" "$external" ;;
     *"Estendi"*) extend_displays "$primary" "$external" ;;
     *"esterno"*) only_external "$primary" "$external" ;;
+    *"Indietro") exit 0 ;;
 esac

@@ -380,11 +380,43 @@ pick_action() {
             "󰑊 Registra schermo attivo" \
             "󰕾 Registra schermo + audio" \
             " Apri screenshot" \
-            " Apri registrazioni"
+            " Apri registrazioni" \
+            "󰌍 Indietro"
         if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
             printf '%s\n' "󰐌 Apri OBS Studio"
         fi
     } | rofi_pick_msg "Cattura" "$(recording_status)"
+}
+
+pick_record_action() {
+    local stop_line=""
+    if recording_pid >/dev/null; then
+        stop_line="󰓛 Ferma registrazione"
+    fi
+
+    {
+        [[ -n "$stop_line" ]] && printf '%s\n' "$stop_line"
+        printf '%s\n' \
+            "󰑊 Registra area" \
+            "󰑊 Registra finestra" \
+            "󰑊 Registra schermo attivo" \
+            "󰕾 Registra schermo + audio" \
+            " Apri registrazioni" \
+            "󰌍 Indietro"
+        if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
+            printf '%s\n' "󰐌 Apri OBS Studio"
+        fi
+    } | rofi_pick_msg "Registra" "$(recording_status)"
+}
+
+pick_screenshot_action() {
+    printf '%s\n' \
+        "󰆞 Screenshot area" \
+        "󰖲 Screenshot finestra" \
+        "󰍹 Screenshot schermo intero" \
+        " Apri screenshot" \
+        "󰌍 Indietro" |
+        rofi_pick_msg "Screenshot" "Cartella: $SCREENSHOT_DIR"
 }
 
 run_menu() {
@@ -420,6 +452,51 @@ run_menu() {
         *"Apri OBS Studio")
             obs >/dev/null 2>&1 &
             ;;
+        *"Indietro")
+            return 0
+            ;;
+    esac
+}
+
+run_screenshot_menu() {
+    local choice
+
+    choice="$(pick_screenshot_action)"
+    [[ -n "$choice" ]] || return 0
+
+    case "$choice" in
+        *"Screenshot area")
+            mkdir -p "$SCREENSHOT_DIR"
+            save_screenshot area "$(default_screenshot_path)"
+            ;;
+        *"Screenshot finestra")
+            mkdir -p "$SCREENSHOT_DIR"
+            save_screenshot window "$(default_screenshot_path)"
+            ;;
+        *"Screenshot schermo intero")
+            mkdir -p "$SCREENSHOT_DIR"
+            save_screenshot monitor "$(default_screenshot_path)"
+            ;;
+        *"Apri screenshot") open_folder "$SCREENSHOT_DIR" ;;
+        *"Indietro") return 0 ;;
+    esac
+}
+
+run_record_menu() {
+    local choice
+
+    choice="$(pick_record_action)"
+    [[ -n "$choice" ]] || return 0
+
+    case "$choice" in
+        *"Ferma registrazione") stop_recording ;;
+        *"Registra area") start_recording area false ;;
+        *"Registra finestra") start_recording window false ;;
+        *"Registra schermo attivo") start_recording monitor false ;;
+        *"Registra schermo + audio") start_recording monitor true ;;
+        *"Apri registrazioni") open_folder "$RECORDING_DIR" ;;
+        *"Apri OBS Studio") obs >/dev/null 2>&1 & ;;
+        *"Indietro") return 0 ;;
     esac
 }
 
@@ -427,6 +504,9 @@ mode="${1:-menu}"
 case "$mode" in
     menu)
         run_menu
+        ;;
+    screenshot-menu)
+        run_screenshot_menu
         ;;
     quick-area)
         mkdir -p "$SCREENSHOT_DIR"
@@ -441,7 +521,7 @@ case "$mode" in
         save_screenshot monitor "$(default_screenshot_path)"
         ;;
     record-menu)
-        run_menu
+        run_record_menu
         ;;
     record-area)
         start_recording area false
