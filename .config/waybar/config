@@ -23,9 +23,10 @@
   "custom/background-apps": {
     "exec": "$HOME/.config/anto426/background_apps.sh status",
     "return-type": "json",
-    "interval": 2,
+    "interval": 1,
     "tooltip": true,
-    "on-click": "$HOME/.config/anto426/background_apps.sh menu"
+    "on-click": "$HOME/.config/anto426/background_apps.sh menu",
+    "on-click-right": "$HOME/.config/anto426/background_apps.sh menu"
   },
   "custom/power": {
     "format": "",

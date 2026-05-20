@@ -1,11 +1,15 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OSD_SCRIPT="$SCRIPT_DIR/osd_show.sh"
+
 target_sink="@DEFAULT_AUDIO_SINK@"
 target_source="@DEFAULT_AUDIO_SOURCE@"
 
-notify() {
-    notify-send "$1" "$2" ${3:+-h "int:value:$3"} 2>/dev/null || true
+show_osd() {
+    [[ -x "$OSD_SCRIPT" ]] || return 0
+    "$OSD_SCRIPT" "$@"
 }
 
 volume_percent() {
@@ -49,7 +53,7 @@ change_volume() {
     [[ -n "$after" ]] || after="$before"
     [[ "$after" == "$before" ]] && return 0
 
-    notify "Volume" "${after}%" "$after"
+    show_osd volume "$after" 0
 }
 
 case "${1:-}" in
@@ -62,19 +66,17 @@ case "${1:-}" in
     mute)
         wpctl set-mute "$target_sink" toggle
         if muted_state "$target_sink"; then
-            notify "Volume" "Muto"
+            show_osd volume 0 1
         else
-            value="$(volume_percent "$target_sink")"
-            notify "Volume" "${value:-?}%" "${value:-}"
+            show_osd volume "$(volume_percent "$target_sink")" 0
         fi
         ;;
     mic-mute)
         wpctl set-mute "$target_source" toggle
         if muted_state "$target_source"; then
-            notify "Microfono" "Muto"
+            show_osd mic 0 1
         else
-            value="$(volume_percent "$target_source")"
-            notify "Microfono" "${value:-?}%" "${value:-}"
+            show_osd mic "$(volume_percent "$target_source")" 0
         fi
         ;;
     *)

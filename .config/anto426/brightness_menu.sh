@@ -2,15 +2,19 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+OSD_SCRIPT="$SCRIPT_DIR/osd_show.sh"
 # shellcheck source=rofi_slider.sh
 source "$SCRIPT_DIR/rofi_slider.sh"
+
+show_osd() {
+    local value="${1:-0}"
+    [[ -x "$OSD_SCRIPT" ]] && "$OSD_SCRIPT" brightness "$value" 0
+}
 
 notify() {
     local value="${1:-}"
     if [[ "$value" =~ ^[0-9]+$ ]]; then
-        notify-send -h "int:value:$value" "Luminosità" "${value}%" 2>/dev/null || true
-    else
-        notify-send "Luminosità" "$*" 2>/dev/null || true
+        show_osd "$value"
     fi
 }
 
@@ -83,8 +87,10 @@ pick_slider() {
 
     value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Schermo principale" "$current" 0 100 1 "brightness")"
     [[ -z "$value" ]] && return 0
-    command -v brightnessctl >/dev/null 2>&1 &&
+    if command -v brightnessctl >/dev/null 2>&1; then
         brightnessctl set "${value}%" >/dev/null 2>&1 || true
+        show_osd "$value"
+    fi
 }
 
 case "${1:-menu}" in

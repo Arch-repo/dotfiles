@@ -2,6 +2,7 @@
 set -uo pipefail
 
 THEME="${ROFI_BACKGROUND_APPS_THEME:-$HOME/.config/rofi/control_menu.rasi}"
+MAP_FILE="${XDG_RUNTIME_DIR:-/tmp}/anto426-bg-apps.map"
 
 json_escape() {
     local value="${1:-}"
@@ -32,7 +33,7 @@ background_clients_filter='
         (.mapped // true) == true
         and (.hidden // false) == false
         and ((.address // "") != $active_address)
-        and ((.class // .initialClass // "") | test("^(rofi|waybar|swaync|swaync-control-center|wofi)$"; "i") | not)
+        and ((.class // .initialClass // "") | test("^(rofi|waybar|swaync|swaync-control-center|wofi|anto426-osd)$"; "i") | not)
         and ((.title // "") | length > 0)
     ))
 '
@@ -125,11 +126,11 @@ desktop_icon_for_class() {
     printf '%s' "${class_lc:-application-x-executable}"
 }
 
-menu_rows() {
-    local line address class initial_class title workspace icon label
-    local active
+build_menu_map() {
+    local active address class initial_class title workspace icon label
 
     active="$(active_address)"
+    : >"$MAP_FILE"
 
     clients_json |
         jq -r --arg active_address "$active" "$background_clients_filter | sort_by(.workspace.name, .class, .title) |
@@ -146,19 +147,9 @@ menu_rows() {
             label="${class}"
             [[ -n "$title" ]] && label="${label}  ${title}"
             label="${label}  [${workspace}]"
+            printf '%s\t%s\n' "$label" "$address" >>"$MAP_FILE"
             printf '%s\0icon\x1f%s\n' "$label" "$icon"
         done
-}
-
-address_for_index() {
-    local index="$1"
-    local active
-    active="$(active_address)"
-
-    clients_json |
-        jq -r --arg active_address "$active" --argjson index "$index" "$background_clients_filter |
-            sort_by(.workspace.name, .class, .title) |
-            .[\$index].address // empty" 2>/dev/null
 }
 
 open_menu() {
@@ -178,14 +169,16 @@ open_menu() {
 
     pkill -x rofi 2>/dev/null || true
     choice="$(
-        menu_rows |
-            rofi -dmenu -i -matching fuzzy -show-icons -format i \
-                -p "App background" \
+        build_menu_map |
+            rofi -dmenu -i -matching fuzzy -show-icons \
+                -p "App background ($count)" \
                 -theme "$THEME"
     )"
 
-    [[ "$choice" =~ ^[0-9]+$ ]] || return 0
-    address="$(address_for_index "$choice")"
+    [[ -n "$choice" ]] || return 0
+    address="$(
+        awk -F'\t' -v label="$choice" '$1 == label { print $2; exit }' "$MAP_FILE" 2>/dev/null
+    )"
     [[ -n "$address" ]] || return 0
 
     hyprctl dispatch focuswindow "address:$address" >/dev/null 2>&1 || true

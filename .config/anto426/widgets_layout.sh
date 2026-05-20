@@ -5,9 +5,25 @@ widget_layout_file() {
     printf '%s' "${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets_layout.env"
 }
 
+widget_is_builtin() {
+    case "${1:-}" in
+        clock | cava | system) return 0 ;;
+        *) return 1 ;;
+    esac
+}
+
 widget_meta() {
     local name="$1"
     local field="$2"
+
+    if ! widget_is_builtin "$name"; then
+        if [[ -f "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh" ]]; then
+            # shellcheck disable=SC1091
+            source "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh"
+            custom_widget_meta "$name" "$field" && return 0
+        fi
+        return 1
+    fi
 
     case "$name" in
         clock)
@@ -44,7 +60,14 @@ widget_meta() {
 }
 
 widget_order_default() {
-    printf '%s' "${ANTO426_WIDGET_ORDER:-clock cava system}"
+    local base custom
+    base="${ANTO426_WIDGET_ORDER:-clock cava system}"
+    if [[ -f "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh" ]]; then
+        # shellcheck disable=SC1091
+        source "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh"
+        custom="$(custom_widget_ids | tr '\n' ' ')"
+    fi
+    printf '%s' "$base ${custom:-}"
 }
 
 layout_ensure_file() {
@@ -183,30 +206,27 @@ apply_widget_layout() {
     while ((attempts < 24)); do
         local ready=0 total=0
         for name in $order; do
-            case "$name" in clock | cava | system) total=$((total + 1)) ;; esac
+            [[ -n "$name" ]] && total=$((total + 1))
         done
 
         for name in $order; do
-            case "$name" in
-                clock | cava | system)
-                    local x y w h
-                    x="$(layout_var "$name" x)"
-                    y="$(layout_var "$name" y)"
-                    w="$(layout_var "$name" w)"
-                    h="$(layout_var "$name" h)"
+            [[ -n "$name" ]] || continue
+            local x y w h
+            x="$(layout_var "$name" x)"
+            y="$(layout_var "$name" y)"
+            w="$(layout_var "$name" w)"
+            h="$(layout_var "$name" h)"
 
-                    [[ -z "$x" || -z "$y" ]] && {
-                        x="$(widget_meta "$name" dx)"
-                        y="$(widget_meta "$name" dy)"
-                    }
-                    [[ -z "$w" ]] && w="$(widget_meta "$name" w)"
-                    [[ -z "$h" ]] && h="$(widget_meta "$name" h)"
+            [[ -z "$x" || -z "$y" ]] && {
+                x="$(widget_meta "$name" dx 2>/dev/null || widget_meta "$name" w)"
+                y="$(widget_meta "$name" dy 2>/dev/null || printf '72')"
+            }
+            [[ -z "$w" ]] && w="$(widget_meta "$name" w)"
+            [[ -z "$h" ]] && h="$(widget_meta "$name" h)"
 
-                    if apply_widget_geometry "$name" "$x" "$y" "$w" "$h"; then
-                        ready=$((ready + 1))
-                    fi
-                    ;;
-            esac
+            if apply_widget_geometry "$name" "$x" "$y" "$w" "$h"; then
+                ready=$((ready + 1))
+            fi
         done
 
         ((ready >= total)) && ((total > 0)) && return 0
@@ -225,12 +245,8 @@ save_widget_layout() {
     file="$(widget_layout_file)"
     order="$(widget_order_default)"
 
-    for name in $order clock cava system; do
-        case "$name" in
-            clock | cava | system) ;;
-            *) continue ;;
-        esac
-
+    for name in $order; do
+        [[ -n "$name" ]] || continue
         addr="$(widget_client_address "$name")"
         [[ -n "$addr" ]] || continue
 

@@ -4,6 +4,8 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=widgets_layout.sh
 source "$SCRIPT_DIR/widgets_layout.sh"
+# shellcheck source=widgets_apps.sh
+source "$SCRIPT_DIR/widgets_apps.sh"
 
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
 config_file="${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets.env"
@@ -284,6 +286,10 @@ start_widgets() {
         esac
     done
 
+    for widget in $(custom_widget_ids); do
+        [[ -n "$widget" ]] && launch_custom_widget "$widget"
+    done
+
     (
         apply_widget_layout || layout_default_stack && apply_widget_layout
     ) &
@@ -300,11 +306,19 @@ stop_widgets() {
     stop_widget clock "$(widget_meta clock class)"
     stop_widget cava "$(widget_meta cava class)"
     stop_widget system "$(widget_meta system class)"
+    for widget in $(custom_widget_ids); do
+        [[ -n "$widget" ]] && stop_custom_widget "$widget"
+    done
     [[ "$quiet" == "quiet" ]] || notify "Widget chiusi — layout salvato"
 }
 
 any_running() {
-    is_running clock || is_running cava || is_running system
+    local widget
+    is_running clock || is_running cava || is_running system && return 0
+    for widget in $(custom_widget_ids); do
+        [[ -n "$widget" ]] && widget_client_address "$widget" | grep -q . && return 0
+    done
+    return 1
 }
 
 arrange_widgets() {
@@ -321,12 +335,17 @@ arrange_widgets() {
             printf '%s\n' "󰒓 Applica layout salvato"
             printf '%s\n' "󰑐 Reset posizioni"
             printf '%s\n' "󰆓 Salva posizioni attuali"
+            printf '%s\n' "󰐕 Aggiungi widget da app"
             printf '%s\n' "── Ordine ──"
             for name in $order; do
                 case "$name" in
                     clock) printf '󰥔 Orologio\n' ;;
                     cava) printf '󰎈 Musica\n' ;;
                     system) printf '󰍛 Sistema\n' ;;
+                    *)
+                        label="$(custom_widget_meta "$name" name 2>/dev/null || printf '%s' "$name")"
+                        printf '󰧖 %s\n' "$label"
+                        ;;
                 esac
             done
             printf '%s\n' "󰅖 Sposta selezionato su"
@@ -341,6 +360,14 @@ arrange_widgets() {
         *"Applica layout"*) apply_widget_layout && notify "Layout applicato" ;;
         *"Reset posizioni"*) reset_widget_layout && notify "Layout resettato" ;;
         *"Salva posizioni"*) save_widget_layout && notify "Layout salvato" ;;
+        *"Aggiungi widget"*)
+            if new_id="$(pick_app_for_widget)"; then
+                launch_custom_widget "$new_id"
+                layout_default_stack
+                apply_widget_layout
+                notify "Widget app aggiunto"
+            fi
+            ;;
         *"Sposta selezionato su")
             selected="$(
                 for name in $order; do

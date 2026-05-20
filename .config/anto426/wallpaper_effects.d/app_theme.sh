@@ -49,6 +49,50 @@ restart_gtk_portals() {
     pkill -x xdg-desktop-portal 2>/dev/null || true
 }
 
+ensure_qt_environment() {
+    local env_dir="${XDG_CONFIG_HOME:-$HOME/.config}/environment.d"
+    local env_file="$env_dir/99-anto426-qt.conf"
+
+    mkdir -p "$env_dir"
+    cat >"$env_file" <<'EOF'
+QT_QPA_PLATFORMTHEME=qt6ct
+QT_STYLE_OVERRIDE=kvantum
+EOF
+}
+
+qt_reload_theme() {
+    local theme="anto426"
+
+    ensure_qt_environment
+
+    if command -v kvantummanager >/dev/null 2>&1; then
+        kvantummanager --set "$theme" >/dev/null 2>&1 || true
+    fi
+
+    if command -v qdbus6 >/dev/null 2>&1; then
+        qdbus6 org.kde.KvantumCtrl org.kde.kvantum.changeTheme "$theme" >/dev/null 2>&1 || true
+    elif command -v qdbus >/dev/null 2>&1; then
+        qdbus org.kde.KvantumCtrl org.kde.kvantum.changeTheme "$theme" >/dev/null 2>&1 || true
+    fi
+
+    if ! pgrep -x kvantumd >/dev/null 2>&1 && command -v kvantumd >/dev/null 2>&1; then
+        kvantumd >/dev/null 2>&1 &
+    fi
+
+    if command -v kbuildsycoca6 >/dev/null 2>&1; then
+        kbuildsycoca6 --noincremental >/dev/null 2>&1 || true
+    elif command -v kbuildsycoca5 >/dev/null 2>&1; then
+        kbuildsycoca5 --noincremental >/dev/null 2>&1 || true
+    fi
+
+    local qt_app
+    for qt_app in dolphin konsole kate gwenview ark plasmashell systemsettings pcmanfm-qt; do
+        pkill -SIGUSR1 -x "$qt_app" 2>/dev/null || true
+    done
+
+    log "Qt/Kvantum theme forzato: $theme"
+}
+
 ensure_gtk_palette_roles() {
     : "${base:=$background}"
     : "${base_alt:=$surface}"
@@ -863,5 +907,6 @@ write_app_theme() {
     write_qt_theme
     write_kvantum_theme
     gtk_reload_theme
+    qt_reload_theme
     restart_gtk_portals
 }
