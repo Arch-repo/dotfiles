@@ -105,7 +105,7 @@ write_hypr_theme() {
 
 \$anto426_active_border = $(hypr_rgba "$accent" ee)
 \$anto426_inactive_border = $(hypr_rgba "$background" aa)
-\$anto426_shadow = rgba(000000aa)
+\$anto426_shadow = rgba(00000055)
 \$anto426_foreground_strong = $(hypr_rgba "$foreground" e6)
 \$anto426_accent_strong = $(hypr_rgba "$accent" f2)
 \$anto426_accent_soft = $(hypr_rgba "$accent" cc)

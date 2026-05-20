@@ -191,6 +191,8 @@ popover.background,
   -webkit-backdrop-filter: blur(22px) saturate(1.3);
   border: 1px solid $(hex_to_css_rgba "$border" 0.45);
   border-radius: 12px;
+  box-shadow: none;
+  margin: 0;
 }
 
 dialog.background,
@@ -199,6 +201,7 @@ messagedialog.background,
   background-color: $(hex_to_css_rgba "$base_alt" "$gtk_dialog_alpha");
   backdrop-filter: blur(24px) saturate(1.2);
   -webkit-backdrop-filter: blur(24px) saturate(1.2);
+  box-shadow: none;
 }
 
 .nemo-window .view,
@@ -711,8 +714,8 @@ left_tabs=true
 attach_active_tab=true
 mirror_doc_tabs=true
 composite=true
-menu_shadow_depth=5
-tooltip_shadow_depth=6
+menu_shadow_depth=0
+tooltip_shadow_depth=0
 scroll_width=9
 scroll_arrows=false
 slider_width=6
