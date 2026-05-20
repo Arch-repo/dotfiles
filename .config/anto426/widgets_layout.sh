@@ -60,14 +60,20 @@ widget_meta() {
 }
 
 widget_order_default() {
-    local base custom
+    local base custom name
     base="${ANTO426_WIDGET_ORDER:-clock cava system}"
     if [[ -f "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh" ]]; then
         # shellcheck disable=SC1091
         source "$(dirname "${BASH_SOURCE[0]}")/widgets_apps.sh"
         custom="$(custom_widget_ids | tr '\n' ' ')"
     fi
-    printf '%s' "$base ${custom:-}"
+    for name in ${custom:-}; do
+        case " $base " in
+            *" $name "*) ;;
+            *) base="${base:+$base }$name" ;;
+        esac
+    done
+    printf '%s' "$base"
 }
 
 layout_ensure_file() {
@@ -154,8 +160,7 @@ apply_widget_geometry() {
     addr="$(widget_client_address "$name")"
     [[ -n "$addr" ]] || return 1
 
-    hyprctl --batch "dispatch resizewindowpixel exact $w $h,address:$addr; dispatch movewindowpixel exact $x $y,address:$addr" >/dev/null 2>&1
-    hyprctl dispatch setfloating "address:$addr" >/dev/null 2>&1
+    hyprctl --batch "dispatch setfloating address:$addr; dispatch resizewindowpixel exact $w $h,address:$addr; dispatch movewindowpixel exact $x $y,address:$addr; dispatch alterzorder bottom,address:$addr" >/dev/null 2>&1
     return 0
 }
 

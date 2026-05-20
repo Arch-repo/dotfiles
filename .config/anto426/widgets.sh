@@ -321,37 +321,123 @@ any_running() {
     return 1
 }
 
+widget_label() {
+    local name="$1"
+    local label
+
+    case "$name" in
+        clock) printf '󰥔 Orologio' ;;
+        cava) printf '󰎈 Musica' ;;
+        system) printf '󰍛 Sistema' ;;
+        *)
+            label="$(custom_widget_meta "$name" name 2>/dev/null || printf '%s' "$name")"
+            printf '󰧖 %s' "$label"
+            ;;
+    esac
+}
+
+select_widget_from_order() {
+    local theme="$1"
+    local prompt="$2"
+    local order choice name
+
+    order="$(widget_order_default)"
+    choice="$(
+        for name in $order; do
+            [[ -n "$name" ]] && widget_label "$name" && printf '\n'
+        done | rofi -dmenu -i -p "$prompt" -theme "$theme"
+    )"
+    [[ -n "$choice" ]] || return 1
+
+    for name in $order; do
+        [[ "$choice" == "$(widget_label "$name")" ]] && {
+            printf '%s' "$name"
+            return 0
+        }
+    done
+
+    return 1
+}
+
+write_widget_order() {
+    local order="$1"
+    local file tmp
+
+    file="$(widget_layout_file)"
+    tmp="$(mktemp)"
+    awk -v order="$order" '
+        /^export ANTO426_WIDGET_ORDER=/ {
+            print "export ANTO426_WIDGET_ORDER=\"" order "\""
+            next
+        }
+        { print }
+    ' "$file" >"$tmp" && mv "$tmp" "$file"
+    # shellcheck disable=SC1090
+    source "$file"
+}
+
+move_widget_in_order() {
+    local name="$1"
+    local direction="$2"
+    local order idx count i tmp new_order
+    local -a items
+
+    order="$(widget_order_default)"
+    read -ra items <<<"$order"
+    count="${#items[@]}"
+    for ((i = 0; i < count; i++)); do
+        [[ "${items[i]}" == "$name" ]] && idx=$i && break
+    done
+
+    case "$direction" in
+        up)
+            [[ -n "${idx:-}" && "$idx" -gt 0 ]] || return 0
+            tmp="${items[idx]}"
+            items[idx]="${items[idx - 1]}"
+            items[idx - 1]="$tmp"
+            ;;
+        down)
+            [[ -n "${idx:-}" && "$idx" -lt $((count - 1)) ]] || return 0
+            tmp="${items[idx]}"
+            items[idx]="${items[idx + 1]}"
+            items[idx + 1]="$tmp"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    new_order="${items[*]}"
+    write_widget_order "$new_order"
+    layout_default_stack
+    apply_widget_layout
+    notify "Ordine aggiornato"
+}
+
 arrange_widgets() {
     local theme="$HOME/.config/rofi/control_menu.rasi"
-    local order choice name file tmp new_order line selected idx count i
+    local order choice name new_id selected
 
     ensure_config
     layout_load
     order="$(widget_order_default)"
-    file="$(widget_layout_file)"
 
     choice="$(
         {
             printf '%s\n' "󰒓 Applica layout salvato"
             printf '%s\n' "󰑐 Reset posizioni"
             printf '%s\n' "󰆓 Salva posizioni attuali"
-            printf '%s\n' "󰐕 Aggiungi widget da app"
+            printf '%s\n' "󰐕 Aggiungi widget terminale"
+            printf '%s\n' "󰣖 Aggiungi widget da app"
+            printf '%s\n' "󰅙 Rimuovi widget"
             printf '%s\n' "── Ordine ──"
             for name in $order; do
-                case "$name" in
-                    clock) printf '󰥔 Orologio\n' ;;
-                    cava) printf '󰎈 Musica\n' ;;
-                    system) printf '󰍛 Sistema\n' ;;
-                    *)
-                        label="$(custom_widget_meta "$name" name 2>/dev/null || printf '%s' "$name")"
-                        printf '󰧖 %s\n' "$label"
-                        ;;
-                esac
+                [[ -n "$name" ]] && widget_label "$name" && printf '\n'
             done
             printf '%s\n' "󰅖 Sposta selezionato su"
             printf '%s\n' "󰅁 Sposta selezionato giù"
         } | rofi -dmenu -i -matching fuzzy -p "Widget" \
-            -mesg "Trascina: Super + click sinistro\nSalva: Super + Alt + G" -theme "$theme"
+            -mesg "Trascina: Super + click sinistro\nSalva: Super + Alt + G\nNuovo terminale: scrivi qualsiasi comando/processo" -theme "$theme"
     )"
 
     [[ -z "$choice" ]] && return 0
@@ -360,7 +446,15 @@ arrange_widgets() {
         *"Applica layout"*) apply_widget_layout && notify "Layout applicato" ;;
         *"Reset posizioni"*) reset_widget_layout && notify "Layout resettato" ;;
         *"Salva posizioni"*) save_widget_layout && notify "Layout salvato" ;;
-        *"Aggiungi widget"*)
+        *"Aggiungi widget terminale"*)
+            if new_id="$(pick_terminal_widget)"; then
+                launch_custom_widget "$new_id"
+                layout_default_stack
+                apply_widget_layout
+                notify "Widget terminale aggiunto"
+            fi
+            ;;
+        *"Aggiungi widget da app"*)
             if new_id="$(pick_app_for_widget)"; then
                 launch_custom_widget "$new_id"
                 layout_default_stack
@@ -368,85 +462,24 @@ arrange_widgets() {
                 notify "Widget app aggiunto"
             fi
             ;;
-        *"Sposta selezionato su")
-            selected="$(
-                for name in $order; do
-                    case "$name" in
-                        clock) printf '󰥔 Orologio\n' ;;
-                        cava) printf '󰎈 Musica\n' ;;
-                        system) printf '󰍛 Sistema\n' ;;
-                    esac
-                done | rofi -dmenu -i -p "Quale widget" -theme "$theme"
-            )"
-            [[ -z "$selected" ]] && return 0
-            case "$selected" in
-                *Orologio) name=clock ;;
-                *Musica*) name=cava ;;
-                *) name=system ;;
-            esac
-            read -ra items <<<"$order"
-            count="${#items[@]}"
-            for ((i = 0; i < count; i++)); do
-                [[ "${items[i]}" == "$name" ]] && idx=$i && break
-            done
-            [[ -n "${idx:-}" && "$idx" -gt 0 ]] || return 0
-            tmp="${items[idx]}"
-            items[idx]="${items[idx - 1]}"
-            items[idx - 1]="$tmp"
-            new_order="${items[*]}"
-            tmp="$(mktemp)"
-            awk -v order="$new_order" '
-                /^export ANTO426_WIDGET_ORDER=/ {
-                    print "export ANTO426_WIDGET_ORDER=\"" order "\""
-                    next
-                }
-                { print }
-            ' "$file" >"$tmp" && mv "$tmp" "$file"
-            # shellcheck disable=SC1090
-            source "$file"
+        *"Rimuovi widget"*)
+            selected="$(select_widget_from_order "$theme" "Rimuovi widget")" || return 0
+            if widget_is_builtin "$selected"; then
+                notify "I widget base si disattivano da widgets.env"
+                return 0
+            fi
+            remove_custom_widget "$selected"
             layout_default_stack
             apply_widget_layout
-            notify "Ordine aggiornato"
+            notify "Widget rimosso"
+            ;;
+        *"Sposta selezionato su")
+            selected="$(select_widget_from_order "$theme" "Quale widget")" || return 0
+            move_widget_in_order "$selected" up
             ;;
         *"Sposta selezionato giù")
-            selected="$(
-                for name in $order; do
-                    case "$name" in
-                        clock) printf '󰥔 Orologio\n' ;;
-                        cava) printf '󰎈 Musica\n' ;;
-                        system) printf '󰍛 Sistema\n' ;;
-                    esac
-                done | rofi -dmenu -i -p "Quale widget" -theme "$theme"
-            )"
-            [[ -z "$selected" ]] && return 0
-            case "$selected" in
-                *Orologio) name=clock ;;
-                *Musica*) name=cava ;;
-                *) name=system ;;
-            esac
-            read -ra items <<<"$order"
-            count="${#items[@]}"
-            for ((i = 0; i < count; i++)); do
-                [[ "${items[i]}" == "$name" ]] && idx=$i && break
-            done
-            [[ -n "${idx:-}" && "$idx" -lt $((count - 1)) ]] || return 0
-            tmp="${items[idx]}"
-            items[idx]="${items[idx + 1]}"
-            items[idx + 1]="$tmp"
-            new_order="${items[*]}"
-            tmp="$(mktemp)"
-            awk -v order="$new_order" '
-                /^export ANTO426_WIDGET_ORDER=/ {
-                    print "export ANTO426_WIDGET_ORDER=\"" order "\""
-                    next
-                }
-                { print }
-            ' "$file" >"$tmp" && mv "$tmp" "$file"
-            # shellcheck disable=SC1090
-            source "$file"
-            layout_default_stack
-            apply_widget_layout
-            notify "Ordine aggiornato"
+            selected="$(select_widget_from_order "$theme" "Quale widget")" || return 0
+            move_widget_in_order "$selected" down
             ;;
         "── Ordine ──") ;;
         *) ;;
