@@ -256,10 +256,27 @@ write_zen_theme() {
   color-scheme: dark !important;
   --zen-primary-color: $accent !important;
   --zen-colors-primary: $accent !important;
-  --zen-colors-secondary: $select !important;
-  --zen-colors-tertiary: $surface !important;
+  --zen-colors-primary-foreground: $selected_fg !important;
+  --zen-colors-primary-fg: $selected_fg !important;
+  --zen-primary-color-foreground: $selected_fg !important;
+  --zen-colors-secondary: $base !important;
+  --zen-colors-tertiary: $background !important;
   --zen-colors-border: $border !important;
   --zen-colors-input: $base !important;
+  --zen-colors-background: $background !important;
+  --zen-colors-foreground: $foreground !important;
+  --zen-colors-text: $foreground !important;
+  --zen-colors-accent: $accent !important;
+  --zen-colors-theme-accent: $accent !important;
+  --zen-colors-primary-accent: $accent !important;
+  --zen-colors-primary-accent-hover: $select !important;
+  --zen-colors-primary-accent-text: $selected_fg !important;
+  --zen-sidebar-background: $background !important;
+  --zen-sidebar-text: $foreground !important;
+  --zen-sidebar-border: $border !important;
+  --zen-toolbar-background: $(hex_to_css_rgba "$background" 0.72) !important;
+  --zen-toolbar-text: $foreground !important;
+  --zen-toolbar-border: $border !important;
   --zen-themed-toolbar-bg: $(hex_to_css_rgba "$background" 0.72) !important;
   --zen-themed-toolbar-bg-transparent: $(hex_to_css_rgba "$background" 0.72) !important;
   --zen-main-browser-background: $background !important;
@@ -274,7 +291,7 @@ write_zen_theme() {
   --lwt-sidebar-background-color: $background !important;
   --lwt-sidebar-text-color: $foreground !important;
   --lwt-selected-tab-background-color: $(hex_to_css_rgba "$accent" 0.36) !important;
-  --toolbar-bgcolor: $(hex_to_css_rgba "$surface" 0.72) !important;
+  --toolbar-bgcolor: $(hex_to_css_rgba "$background" 0.72) !important;
   --toolbar-color: $foreground !important;
   --toolbar-field-background-color: $(hex_to_css_rgba "$base" 0.90) !important;
   --toolbar-field-color: $foreground !important;
@@ -298,6 +315,16 @@ write_zen_theme() {
 #zen-tabbox-wrapper,
 #zen-appcontent-navbar-container,
 #zen-sidebar-top-buttons,
+#zen-sidebar-foot-buttons,
+#zen-sidebar,
+.zen-sidebar,
+#zen-sidebar-web-panels-wrapper,
+#zen-sidebar-web-panels,
+#titlebar,
+#titlebar-buttonbox-container,
+#zen-tabs-container,
+#tabbrowser-tabs,
+#tabbrowser-tabs-container,
 #sidebar-box,
 #sidebar,
 #sidebar-header,
@@ -327,15 +354,39 @@ write_zen_theme() {
 #searchbar,
 menupopup,
 panel {
-  background-color: $(hex_to_css_rgba "$popover" 0.92) !important;
+  background-color: $(hex_to_css_rgba "$base" 0.90) !important;
   color: $foreground !important;
-  border-color: $border !important;
+  border: 1px solid $(hex_to_css_rgba "$border" 0.65) !important;
+  border-radius: 8px !important;
+}
+
+.tabbrowser-tab,
+.tabbrowser-tab .tab-stack,
+.tabbrowser-tab .tab-background {
+  background-color: transparent !important;
+  border-radius: 8px !important;
+  transition: all 0.2s ease-in-out !important;
 }
 
 .tabbrowser-tab[selected] .tab-background,
+.tabbrowser-tab[selected] .tab-stack,
+.tabbrowser-tab[selected],
+#zen-workspaces-button[selected],
+.zen-workspace-button[selected],
+#zen-workspaces-button[active],
+.zen-workspace-button[active] {
+  background-color: $(hex_to_css_rgba "$accent" 0.32) !important;
+  color: $foreground !important;
+  border: 1px solid $(hex_to_css_rgba "$accent" 0.45) !important;
+}
+
+.tabbrowser-tab:hover .tab-background,
+.tabbrowser-tab:hover,
 #zen-workspaces-button:hover,
+.zen-workspace-button:hover,
+#zen-create-new-button:hover,
 toolbarbutton:hover {
-  background-color: $(hex_to_css_rgba "$accent" 0.28) !important;
+  background-color: $(hex_to_css_rgba "$select" 0.40) !important;
 }
 EOF
 
@@ -356,6 +407,7 @@ EOF
 EOF
 
     for root in \
+        "$HOME/.config/zen" \
         "$HOME/.zen" \
         "$HOME/.zen-browser" \
         "$HOME/.zen-beta" \
