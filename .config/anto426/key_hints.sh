@@ -108,6 +108,7 @@ menu_rows() {
     printf '󰃠 Apri menu luminosità\n'
     printf '󰍹 Apri Proietta schermo\n'
     printf '󱓞 Toggle widget\n'
+    printf '󱓞 Gestione widget\n'
     printf '󰈙 Apri keybinding.conf\n'
     printf '󰌍 Indietro\n'
 }
@@ -125,6 +126,7 @@ case "$choice" in
     *"luminosità") "$HOME/.config/anto426/brightness_menu.sh" menu ;;
     *"Proietta") "$HOME/.config/anto426/projection_menu.sh" ;;
     *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle ;;
+    *"Gestione widget") "$HOME/.config/anto426/widgets.sh" arrange ;;
     *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & ;;
     *"Indietro") exit 0 ;;
 esac
