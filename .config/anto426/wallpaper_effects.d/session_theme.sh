@@ -121,6 +121,9 @@ cursor-text = ${background#\#}
 selection-background = ${select#\#}
 selection-foreground = ${foreground#\#}
 EOF
+
+    # Touch Ghostty main config to trigger immediate live configuration reload
+    [[ -f "$HOME/.config/ghostty/config" ]] && touch "$HOME/.config/ghostty/config"
 }
 
 write_session_theme() {

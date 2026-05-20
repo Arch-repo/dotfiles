@@ -10,23 +10,13 @@ gtk_theme_exists() {
 
 gtk_reload_theme() {
     local target_theme="${gtk_theme_name:-adw-gtk3-dark}"
-    local bounce_theme=""
-    local candidate
 
     command -v gsettings >/dev/null 2>&1 || return 0
 
-    for candidate in adw-gtk3-dark adw-gtk3 Adwaita-dark Adwaita; do
-        if [[ "$candidate" != "$target_theme" ]] && gtk_theme_exists "$candidate"; then
-            bounce_theme="$candidate"
-            break
-        fi
-    done
-
-    if [[ -n "$bounce_theme" ]]; then
-        gsettings set org.gnome.desktop.interface gtk-theme "$bounce_theme" 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
-        sleep 0.08
-    fi
+    # Force immediate reload in running GTK3/GTK4 apps by bouncing the theme and color scheme
+    gsettings set org.gnome.desktop.interface gtk-theme "Adwaita" 2>/dev/null || true
+    gsettings set org.gnome.desktop.interface color-scheme "default" 2>/dev/null || true
+    sleep 0.1
 
     gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
     gsettings set org.gnome.desktop.interface gtk-theme "$target_theme" 2>/dev/null || true
