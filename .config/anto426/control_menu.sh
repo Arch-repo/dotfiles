@@ -13,6 +13,9 @@ WIFI_CACHE_DIR="$DATA_DIR/wifi"
 WIFI_CACHE_FILE="$WIFI_CACHE_DIR/networks.tsv"
 WIFI_CACHE_MAX_AGE=90
 THEME_MENU="$HOME/.config/rofi/control_menu.rasi"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=rofi_slider.sh
+source "$SCRIPT_DIR/rofi_slider.sh"
 THEME_CALENDAR="$HOME/.config/rofi/control_calendar.rasi"
 REMOTE_SYNC_SCRIPT="$HOME/.config/anto426/remote_sync.sh"
 
@@ -595,56 +598,21 @@ audio_volume_percent() {
     '
 }
 
-audio_slider_bar() {
-    local value="$1"
-    local filled=$((value / 10))
-    local bar=""
-    local i
-
-    for ((i = 0; i < 10; i++)); do
-        if ((i < filled)); then
-            bar+="━"
-        else
-            bar+="─"
-        fi
-    done
-
-    printf '%s' "$bar"
-}
-
 audio_volume_slider() {
     local target="$1"
     local prompt="$2"
     local message="$3"
-    local current selected choice value pct marker
+    local slider_name="$4"
+    local current value
 
     current="$(audio_volume_percent "$target")"
     [[ -n "$current" ]] || current=0
-    selected=$(((current + 2) / 5))
-    message="$(printf '%b' "$message")"
 
-    choice="$(
-        for pct in $(seq 0 5 100); do
-            marker=" "
-            ((pct == selected * 5)) && marker="*"
-            printf '%s %3d%%  %s\n' "$marker" "$pct" "$(audio_slider_bar "$pct")"
-        done |
-            rofi -dmenu -i -matching fuzzy \
-                -p "$prompt" \
-                -mesg "$message" \
-                -selected-row "$selected" \
-                -theme "$THEME_MENU"
-    )"
-
-    [[ -z "$choice" ]] && return 0
-
-    if [[ "$choice" =~ ([0-9]{1,3}) ]]; then
-        value="${BASH_REMATCH[1]}"
-        value=$((10#$value))
-        ((value < 0)) && value=0
-        ((value > 100)) && value=100
-        run_or_notify "$prompt impostato a $value%" wpctl set-volume -l 1 "$target" "$value%"
-    fi
+    value="$(rofi_slider_pick "$slider_name" "$prompt" "$message" "$current")"
+    [[ -z "$value" ]] && return 0
+    ((value < 0)) && value=0
+    ((value > 100)) && value=100
+    run_or_notify "$prompt impostato a ${value}%" wpctl set-volume -l 1 "$target" "${value}%"
 }
 
 audio_default_sink() {
@@ -742,13 +710,9 @@ audio_menu() {
         choice="$(
             printf '%s\n' \
                 "󰖁 Silenzia/Attiva Output" \
-                "󰕾 Regola volume Output" \
-                "󰕾 Output +5%" \
-                "󰕿 Output -5%" \
+                "󰕾 Volume Output" \
                 "󰍭 Silenzia/Attiva Microfono" \
-                "󰍬 Regola volume Microfono" \
-                "󰍬 Microfono +5%" \
-                "󰍬 Microfono -5%" \
+                "󰍬 Volume Microfono" \
                 "󰓃 Seleziona dispositivo Output" \
                 "󰍬 Seleziona dispositivo Input" \
                 "󰌍 Indietro" |
@@ -759,13 +723,9 @@ audio_menu() {
 
         case "$choice" in
             *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            *"Regola volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "Output: $sink_desc\nVolume: $sink_vol" ;;
-            *"Output +5%") wpctl set-volume -l 1 @DEFAULT_AUDIO_SINK@ 5%+ ;;
-            *"Output -5%") wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%- ;;
+            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "Output: $sink_desc\nVolume: $sink_vol" "slider-volume" ;;
             *"Silenzia/Attiva Microfono") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            *"Regola volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "Input: $source_desc\nVolume: $source_vol" ;;
-            *"Microfono +5%") wpctl set-volume -l 1 @DEFAULT_AUDIO_SOURCE@ 5%+ ;;
-            *"Microfono -5%") wpctl set-volume @DEFAULT_AUDIO_SOURCE@ 5%- ;;
+            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "Input: $source_desc\nVolume: $source_vol" "slider-mic" ;;
             *"Seleziona dispositivo Output") audio_choose_sink ;;
             *"Seleziona dispositivo Input") audio_choose_source ;;
             "󰌍 Indietro")

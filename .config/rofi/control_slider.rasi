@@ -1,0 +1,48 @@
+/* =============================================================================
+   ROFI SLIDER PANEL (volume, mic, brightness)
+   ============================================================================= */
+
+@import "~/.config/rofi/control_menu.rasi"
+
+#window {
+    width: 380px;
+}
+
+#mainbox {
+    children: [message, slider-panel, inputbar];
+}
+
+slider-panel {
+    orientation: vertical;
+    spacing: 10px;
+}
+
+slider-volume,
+slider-mic,
+slider-brightness {
+    min: 0;
+    max: 100;
+    step: 1;
+    value: 50;
+    length: 280px;
+    orientation: horizontal;
+    track-width: 6px;
+    handle-width: 16px;
+    track-color: @border-alpha;
+    fill-color: @accent;
+    handle-color: @accent;
+    track-rounded-corners: true;
+    handle-rounded-corners: true;
+}
+
+#listview {
+    lines: 0;
+    spacing: 0px;
+    padding: 0px;
+    margin: 0px;
+    border: 0px;
+}
+
+#entry {
+    placeholder: "Invio per confermare, Esc per annullare";
+}

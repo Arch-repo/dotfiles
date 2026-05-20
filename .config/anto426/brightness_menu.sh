@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
-THEME="$HOME/.config/rofi/control_menu.rasi"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=rofi_slider.sh
+source "$SCRIPT_DIR/rofi_slider.sh"
 
 notify() {
     local value="${1:-}"
@@ -21,23 +23,6 @@ go_back() {
         exec "$HOME/.config/anto426/control_menu.sh" main
     fi
     exit 0
-}
-
-brightness_bar() {
-    local value="$1"
-    local filled=$((value / 10))
-    local bar=""
-    local i
-
-    for ((i = 0; i < 10; i++)); do
-        if ((i < filled)); then
-            bar+="━"
-        else
-            bar+="─"
-        fi
-    done
-
-    printf '%s' "$bar"
 }
 
 set_brightness() {
@@ -91,33 +76,14 @@ adjust_brightness() {
     esac
 }
 
-pick_action() {
-    local current selected pct marker
+pick_slider() {
+    local current value
     current="$(current_percent)"
     [[ -n "$current" ]] || current=0
-    selected=$((7 + ((current + 2) / 5)))
 
-    {
-        printf '%s\n' \
-            "󰃠 Aumenta +10%" \
-            "󰃞 Diminuisci -10%" \
-            "󱩎 25%" \
-            "󱩏 50%" \
-            "󱩐 75%" \
-            "󰛨 100%" \
-            "── Valori ──"
-        for pct in $(seq 0 5 100); do
-            marker=" "
-            ((pct == ((current + 2) / 5) * 5)) && marker="*"
-            printf '%s %3d%%  %s\n' "$marker" "$pct" "$(brightness_bar "$pct")"
-        done
-        printf '%s\n' "󰌍 Indietro"
-    } |
-        rofi -dmenu -i -matching fuzzy \
-            -p "Luminosità" \
-            -mesg "Valore attuale: ${current}%" \
-            -selected-row "$selected" \
-            -theme "$THEME"
+    value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Valore attuale: ${current}%\nTrascina lo slider e premi Invio." "$current")"
+    [[ -z "$value" ]] && return 0
+    set_brightness "${value}%"
 }
 
 case "${1:-menu}" in
@@ -127,20 +93,7 @@ case "${1:-menu}" in
     50 | 50%) set_brightness "50%" ;;
     75 | 75%) set_brightness "75%" ;;
     100 | 100%) set_brightness "100%" ;;
-    menu)
-        choice="$(pick_action)"
-        case "$choice" in
-            *"Aumenta"*) adjust_brightness up ;;
-            *"Diminuisci"*) adjust_brightness down ;;
-            *"Valori"*) exit 0 ;;
-            *"Indietro"*) go_back ;;
-            *"% "* | *"%")
-                if [[ "$choice" =~ ([0-9]{1,3})% ]]; then
-                    set_brightness "$((10#${BASH_REMATCH[1]}))%"
-                fi
-                ;;
-        esac
-        ;;
+    menu) pick_slider ;;
     *)
         printf 'Uso: %s [menu|up|down|25|50|75|100]\n' "$0" >&2
         exit 2
