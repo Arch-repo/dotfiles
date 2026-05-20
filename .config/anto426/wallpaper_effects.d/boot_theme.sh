@@ -25,6 +25,59 @@ write_sddm_theme() {
     install_file "$tmp_dir/sddm-theme.conf" "$sddm_theme" "SDDM theme" || true
 }
 
+normalize_grub_timeout_layout() {
+    local file="$1"
+    local normalized="$tmp_dir/grub-theme-normalized.txt"
+
+    awk '
+        function flush_label(    i, has_timeout) {
+            has_timeout = 0
+
+            for (i = 1; i <= label_lines; i++) {
+                if (label[i] ~ /^[[:space:]]*id[[:space:]]*=[[:space:]]*"__timeout__"/) {
+                    has_timeout = 1
+                }
+            }
+
+            for (i = 1; i <= label_lines; i++) {
+                if (has_timeout && label[i] ~ /^[[:space:]]*top[[:space:]]*=/) {
+                    print "  top = 86%"
+                } else {
+                    print label[i]
+                }
+            }
+
+            label_lines = 0
+        }
+
+        /^\+[[:space:]]*label[[:space:]]*{/ {
+            in_label = 1
+            label_lines = 1
+            label[label_lines] = $0
+            next
+        }
+
+        in_label {
+            label[++label_lines] = $0
+            if ($0 ~ /^}/) {
+                flush_label()
+                in_label = 0
+            }
+            next
+        }
+
+        { print }
+
+        END {
+            if (in_label) {
+                flush_label()
+            }
+        }
+    ' "$file" >"$normalized"
+
+    mv "$normalized" "$file"
+}
+
 write_grub_theme() {
     make_grub_background "$current_wallpaper_path" "$canvas_size" "$tmp_dir/grub-background.jpg"
     install_file "$tmp_dir/grub-background.jpg" "$grub_background" "GRUB background" || true
@@ -180,7 +233,7 @@ terminal-border: "0"
 }
 
 + label {
-  top = 82%
+  top = 86%
   left = 24%
   width = 52%
   align = "center"
@@ -191,6 +244,7 @@ terminal-border: "0"
 }
 EOF
     fi
+    normalize_grub_timeout_layout "$tmp_dir/grub-theme.txt"
     install_file "$tmp_dir/grub-theme.txt" "$grub_theme" "GRUB theme" || true
 }
 
