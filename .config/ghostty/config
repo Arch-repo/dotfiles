@@ -4,6 +4,7 @@ font-size = 13
 theme = anto426
 background-opacity = 0.82
 background-blur = true
+config-file = ~/.config/ghostty/dynamic.conf
 
 keybind = ctrl+shift+v=ignore
 keybind = performable:ctrl+v=paste_from_clipboard
