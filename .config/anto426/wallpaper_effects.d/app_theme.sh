@@ -114,6 +114,37 @@ write_gtk_css_file() {
 * {
   caret-color: @accent_color;
 }
+
+/* --- Glassmorphism / Blur effects (GTK4 / Libadwaita) --- */
+headerbar,
+.titlebar {
+  background-color: $(hex_to_css_rgba "$surface" 0.72);
+  backdrop-filter: blur(18px) saturate(1.4);
+  -webkit-backdrop-filter: blur(18px) saturate(1.4);
+  border-bottom: 1px solid $(hex_to_css_rgba "$border" 0.55);
+}
+
+popover > contents,
+popover.background,
+.background.popup {
+  background-color: $(hex_to_css_rgba "$surface" 0.80);
+  backdrop-filter: blur(22px) saturate(1.3);
+  -webkit-backdrop-filter: blur(22px) saturate(1.3);
+  border: 1px solid $(hex_to_css_rgba "$border" 0.45);
+  border-radius: 12px;
+}
+
+dialog.background,
+messagedialog.background,
+.dialog-content {
+  background-color: $(hex_to_css_rgba "$background" 0.85);
+  backdrop-filter: blur(24px) saturate(1.2);
+  -webkit-backdrop-filter: blur(24px) saturate(1.2);
+}
+
+window.background {
+  background-color: $(hex_to_css_rgba "$background" 0.90);
+}
 EOF
     } >"$output"
 }
