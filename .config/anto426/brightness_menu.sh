@@ -81,7 +81,7 @@ pick_slider() {
     current="$(current_percent)"
     [[ -n "$current" ]] || current=0
 
-    value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Valore attuale: ${current}%" "$current" 0 100 1 "brightness")"
+    value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Schermo principale" "$current" 0 100 1 "brightness")"
     [[ -z "$value" ]] && return 0
     set_brightness "${value}%"
 }

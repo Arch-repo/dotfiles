@@ -357,68 +357,7 @@ read -r ar ag ab < <(
         info:
 )
 
-read -r background surface select accent border foreground muted red orange yellow green pink purple gray base base_alt titlebar titlebar_backdrop popover selected_fg < <(
-    awk -v r="$r" -v g="$g" -v b="$b" -v ar="$ar" -v ag="$ag" -v ab="$ab" '
-        function clamp(v) { return v < 0 ? 0 : (v > 255 ? 255 : int(v + 0.5)) }
-        function hex(rr, gg, bb) { return sprintf("#%02x%02x%02x", clamp(rr), clamp(gg), clamp(bb)) }
-        function mix(a, b, ratio) { return a * (1 - ratio) + b * ratio }
-        function brightness(rr, gg, bb) { return (299 * rr + 587 * gg + 114 * bb) / 1000 }
-        BEGIN {
-            bg_r = clamp(r * 0.44)
-            bg_g = clamp(g * 0.44)
-            bg_b = clamp(b * 0.44)
-
-            surface_r = clamp(r * 0.70 + 255 * 0.14)
-            surface_g = clamp(g * 0.70 + 255 * 0.14)
-            surface_b = clamp(b * 0.70 + 255 * 0.14)
-
-            select_r = clamp(r * 0.78 + 255 * 0.22)
-            select_g = clamp(g * 0.78 + 255 * 0.22)
-            select_b = clamp(b * 0.78 + 255 * 0.22)
-
-            accent_r = clamp(ar * 0.70 + 255 * 0.30)
-            accent_g = clamp(ag * 0.70 + 255 * 0.30)
-            accent_b = clamp(ab * 0.70 + 255 * 0.30)
-
-            border_r = clamp(r * 0.58 + 255 * 0.30)
-            border_g = clamp(g * 0.58 + 255 * 0.30)
-            border_b = clamp(b * 0.58 + 255 * 0.30)
-
-            bg_brightness = brightness(bg_r, bg_g, bg_b)
-            fg = bg_brightness > 155 ? "#11111b" : "#f6f7fb"
-            muted = bg_brightness > 155 ? "#343746" : "#b9c4d2"
-
-            background = hex(bg_r, bg_g, bg_b)
-            surface = hex(surface_r, surface_g, surface_b)
-            select = hex(select_r, select_g, select_b)
-            accent = hex(accent_r, accent_g, accent_b)
-            border = hex(border_r, border_g, border_b)
-
-            base = hex(mix(bg_r, surface_r, 0.22), mix(bg_g, surface_g, 0.22), mix(bg_b, surface_b, 0.22))
-            base_alt = hex(mix(bg_r, surface_r, 0.58), mix(bg_g, surface_g, 0.58), mix(bg_b, surface_b, 0.58))
-            titlebar = surface
-            titlebar_backdrop = hex(mix(bg_r, surface_r, 0.78), mix(bg_g, surface_g, 0.78), mix(bg_b, surface_b, 0.78))
-            popover = hex(mix(bg_r, surface_r, 0.78), mix(bg_g, surface_g, 0.78), mix(bg_b, surface_b, 0.78))
-            selected_fg = brightness(accent_r, accent_g, accent_b) > 155 ? "#11111b" : "#f6f7fb"
-
-            red = hex(243, 139, 168)
-            orange = hex(ar * 0.48 + 250 * 0.52, ag * 0.30 + 179 * 0.70, ab * 0.22 + 135 * 0.78)
-            yellow = hex(ar * 0.35 + 249 * 0.65, ag * 0.36 + 226 * 0.64, ab * 0.20 + 175 * 0.80)
-            green = hex(ar * 0.25 + 166 * 0.75, ag * 0.42 + 227 * 0.58, ab * 0.25 + 161 * 0.75)
-            pink = hex(ar * 0.34 + 245 * 0.66, ag * 0.28 + 194 * 0.72, ab * 0.42 + 231 * 0.58)
-            purple = hex(ar * 0.40 + 203 * 0.60, ag * 0.34 + 166 * 0.66, ab * 0.50 + 247 * 0.50)
-            gray = hex(r * 0.25 + 69 * 0.75, g * 0.25 + 71 * 0.75, b * 0.25 + 90 * 0.75)
-
-            print background, surface, select, accent, border, fg, muted, red, orange, yellow, green, pink, purple, gray, base, base_alt, titlebar, titlebar_backdrop, popover, selected_fg
-        }
-    '
-)
-
-background_alpha="$(hex_to_rofi_rgba "$background" 60)"
-surface_alpha="$(hex_to_rofi_rgba "$surface" 78)"
-select_alpha="$(hex_to_rofi_rgba "$select" 76)"
-accent_alpha="$(hex_to_rofi_rgba "$accent" 84)"
-border_alpha="$(hex_to_rofi_rgba "$border" 55)"
+generate_palette_from_samples "$r" "$g" "$b" "$ar" "$ag" "$ab"
 
 write_session_theme
 write_app_theme

@@ -14,6 +14,15 @@
     spacing: 16px;
 }
 
+#message {
+    border:           1px;
+    border-color:     @border-alpha;
+    border-radius:    16px;
+    padding:          16px 14px 10px 14px;
+    background-color: @surface-alpha;
+    text-color:       @foreground;
+}
+
 control-slider-panel {
     orientation: horizontal;
     spacing: 0px;

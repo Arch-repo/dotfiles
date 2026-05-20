@@ -172,20 +172,23 @@ selection-foreground = ${foreground#\#}
 EOF
 }
 
+zen_theme_revision() {
+    printf '%s' "${palette_revision:-$(printf '%s' "$accent$surface$background" | cksum | awk '{print $1}')}"
+}
+
 prepend_css_import() {
     local target="$1"
     local import_line="$2"
+    local marker="${3:-anto426-theme}"
     local tmp
 
     mkdir -p "$(dirname "$target")"
     touch "$target"
 
-    grep -Fqx "$import_line" "$target" 2>/dev/null && return 0
-
     tmp="$(mktemp)"
     {
         printf '%s\n' "$import_line"
-        cat "$target"
+        grep -Fv "$marker" "$target" 2>/dev/null || true
     } >"$tmp"
     mv "$tmp" "$target"
 }
@@ -227,26 +230,46 @@ enable_zen_profile_theme() {
     local user_js="$profile/user.js"
     local chrome_import="$2"
     local content_import="$3"
+    local revision="$4"
 
     [[ -f "$profile/prefs.js" || -f "$profile/times.json" ]] || return 0
 
     mkdir -p "$chrome_dir"
-    prepend_css_import "$chrome_dir/userChrome.css" "$chrome_import"
-    prepend_css_import "$chrome_dir/userContent.css" "$content_import"
+    prepend_css_import "$chrome_dir/userChrome.css" "$chrome_import" "anto426-theme"
+    prepend_css_import "$chrome_dir/userContent.css" "$content_import" "anto426-theme"
 
     set_user_pref "$user_js" "toolkit.legacyUserProfileCustomizations.stylesheets" "true"
     set_user_pref "$user_js" "browser.theme.content-theme" "0"
     set_user_pref "$user_js" "browser.theme.toolbar-theme" "0"
     set_user_pref "$user_js" "zen.theme.accent-color" "\"$accent\""
+    set_user_pref "$user_js" "browser.display.background_color" "\"${background#\#}\""
+    set_user_pref "$user_js" "browser.display.foreground_color" "\"${foreground#\#}\""
+    set_user_pref "$user_js" "layout.css.color-scheme.enabled" "true"
+    set_user_pref "$user_js" "ui.systemUsesDarkTheme" "1"
+}
+
+reload_zen_live() {
+    local proc
+
+    for proc in zen zen-browser zen-beta; do
+        if pgrep -x "$proc" >/dev/null 2>&1; then
+            pkill -USR1 -x "$proc" 2>/dev/null || true
+        fi
+    done
 }
 
 write_zen_theme() {
     local zen_theme_dir="$HOME/.config/zen/anto426"
     local zen_chrome_css="$zen_theme_dir/userChrome.css"
     local zen_content_css="$zen_theme_dir/userContent.css"
-    local chrome_import="@import url(\"$(css_file_url "$zen_chrome_css")\");"
-    local content_import="@import url(\"$(css_file_url "$zen_content_css")\");"
+    local revision
+    local chrome_import content_import
     local root profile
+
+    revision="$(zen_theme_revision)"
+    palette_revision="$revision"
+    chrome_import="@import url(\"$(css_file_url "$zen_chrome_css")?v=${revision}\");"
+    content_import="@import url(\"$(css_file_url "$zen_content_css")?v=${revision}\");"
 
     mkdir -p "$zen_theme_dir"
 
@@ -417,17 +440,18 @@ EOF
         "$HOME/.var/app/io.github.zen_browser.zen/.zen-beta"; do
         [[ -d "$root" ]] || continue
         while IFS= read -r -d '' profile; do
-            enable_zen_profile_theme "$profile" "$chrome_import" "$content_import"
+            enable_zen_profile_theme "$profile" "$chrome_import" "$content_import" "$revision"
         done < <(find "$root" -mindepth 1 -maxdepth 2 -type d -print0 2>/dev/null)
     done
 
     while IFS= read -r -d '' root; do
         while IFS= read -r -d '' profile; do
-            enable_zen_profile_theme "$profile" "$chrome_import" "$content_import"
+            enable_zen_profile_theme "$profile" "$chrome_import" "$content_import" "$revision"
         done < <(find "$root" -mindepth 1 -maxdepth 2 -type d -print0 2>/dev/null)
     done < <(find "$HOME/.var/app" -mindepth 2 -maxdepth 3 -type d -name '.zen*' -path '*zen*' -print0 2>/dev/null)
 
-    log "Zen Browser palette aggiornata: $zen_theme_dir"
+    reload_zen_live
+    log "Zen Browser palette aggiornata (rev=$revision): $zen_theme_dir"
 }
 
 write_session_theme() {
@@ -435,4 +459,5 @@ write_session_theme() {
     write_hypr_theme
     write_terminal_theme
     write_zen_theme
+    write_palette_map "$state_dir/palette.map"
 }

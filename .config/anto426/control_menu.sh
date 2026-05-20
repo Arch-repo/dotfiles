@@ -332,7 +332,7 @@ wifi_network_rows() {
             security = ($3 == "" || $3 == "--") ? "open" : $3
             lock = (security == "open") ? "" : "  󰌿"
             active_str = ($1 == "yes") ? " (Connesso)" : ""
-            label = sprintf("%s  %s%s%s", marker, $2, lock, active_str)
+            label = sprintf("%s  %s%s%s  %d%%", marker, $2, lock, active_str, sig)
 
             labels[ssid] = label
             securities[ssid] = security
@@ -586,6 +586,22 @@ audio_volume() {
     wpctl get-volume "$1" 2>/dev/null | sed 's/^Volume: //'
 }
 
+audio_muted_label() {
+    wpctl get-volume "$1" 2>/dev/null | grep -q '\[MUTED\]' && printf 'sì' || printf 'no'
+}
+
+audio_volume_label() {
+    local value muted
+    value="$(audio_volume_percent "$1")"
+    muted="$(audio_muted_label "$1")"
+    [[ -n "$value" ]] || value=0
+    if [[ "$muted" == "sì" ]]; then
+        printf 'muto'
+    else
+        printf '%s%%' "$value"
+    fi
+}
+
 audio_volume_percent() {
     wpctl get-volume "$1" 2>/dev/null | awk '
         /^Volume:/ {
@@ -705,15 +721,15 @@ audio_menu() {
         local sink_desc source_desc sink_vol source_vol choice
         sink_desc="$(audio_current_sink_desc)"
         source_desc="$(audio_current_source_desc)"
-        sink_vol="$(audio_volume "@DEFAULT_AUDIO_SINK@")"
-        source_vol="$(audio_volume "@DEFAULT_AUDIO_SOURCE@")"
+        sink_vol="$(audio_volume_label "@DEFAULT_AUDIO_SINK@")"
+        source_vol="$(audio_volume_label "@DEFAULT_AUDIO_SOURCE@")"
 
         choice="$(
             printf '%s\n' \
                 "󰖁 Silenzia/Attiva Output" \
-                "󰕾 Volume Output" \
+                "󰕾 Volume Output ($(audio_volume_percent "@DEFAULT_AUDIO_SINK@")%)" \
                 "󰍭 Silenzia/Attiva Microfono" \
-                "󰍬 Volume Microfono" \
+                "󰍬 Volume Microfono ($(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")%)" \
                 "󰓃 Seleziona dispositivo Output" \
                 "󰍬 Seleziona dispositivo Input" \
                 "󰌍 Indietro" |
@@ -724,9 +740,15 @@ audio_menu() {
 
         case "$choice" in
             *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            *"Volume Output") audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" "" "slider-volume" "output-volume" ;;
+            *"Volume Output"*)
+                audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" \
+                    "Output: $sink_desc" "slider-volume" "output-volume"
+                ;;
             *"Silenzia/Attiva Microfono") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            *"Volume Microfono") audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" "" "slider-mic" "input-volume" ;;
+            *"Volume Microfono"*)
+                audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" \
+                    "Input: $source_desc" "slider-mic" "input-volume"
+                ;;
             *"Seleziona dispositivo Output") audio_choose_sink ;;
             *"Seleziona dispositivo Input") audio_choose_source ;;
             "󰌍 Indietro")

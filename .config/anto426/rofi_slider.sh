@@ -88,6 +88,14 @@ rofi_slider_pick() {
     current="$(_rofi_slider_clamp "$current" "$min" "$max" "$step")"
     message="$(printf '%b' "$message")"
 
+    if [[ "$message" != *"{value}"* ]]; then
+        if [[ -n "$message" ]]; then
+            message="${message}\n<b><span size='x-large'>{value}%</span></b>"
+        else
+            message="<b><span size='x-large'>{value}%</span></b>"
+        fi
+    fi
+
     local theme_str
     if [[ -n "$message" ]]; then
         theme_str="mainbox { children: [message, ${panel_children}]; } ${panel_children} { children: [${slider_name}]; } ${slider_name} { min: ${min}; max: ${max}; step: ${step}; value: ${current}; }"
