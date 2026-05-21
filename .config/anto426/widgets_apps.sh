@@ -367,7 +367,7 @@ preset_widget_rows() {
         printf '%s|%s|%s|%s|%s\n' \
             "󰈺 Acquario ASCII" \
             "acquario_ascii" \
-            "asciiquarium" \
+            "asciiquarium -t" \
             760 420
     command -v pipes.sh >/dev/null 2>&1 &&
         printf '%s|%s|%s|%s|%s\n' \
@@ -375,6 +375,18 @@ preset_widget_rows() {
             "tubi_animati" \
             "pipes.sh -t 2 -r 0 -R" \
             700 360
+    command -v cbonsai >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰔱 Bonsai Zen" \
+            "bonsai_zen" \
+            "cbonsai -l -i -w 12 -L 38 -M 5" \
+            540 380
+    command -v cmatrix >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰫐 Pioggia Matrix" \
+            "pioggia_matrix" \
+            "cmatrix -a -b -u 2" \
+            620 360
 }
 
 pick_preset_widget() {
