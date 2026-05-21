@@ -74,6 +74,17 @@ terminal_cmd() {
     return 1
 }
 
+dispatch_exec() {
+    local command_line
+
+    command_line="$(printf '%q ' "$@")"
+    if command -v hyprctl >/dev/null 2>&1; then
+        hyprctl dispatch exec "$command_line" >/dev/null 2>&1 &
+    else
+        nohup "$@" >/dev/null 2>&1 &
+    fi
+}
+
 launch_terminal() {
     local terminal="$1"
     local class="$2"
@@ -82,7 +93,7 @@ launch_terminal() {
 
     case "$terminal" in
         ghostty)
-            "$terminal" \
+            dispatch_exec "$terminal" \
                 --class="$class" \
                 --title="$title" \
                 --font-size=11 \
@@ -92,23 +103,23 @@ launch_terminal() {
                 --background-opacity=0.74 \
                 --window-decoration=false \
                 --confirm-close-surface=false \
-                -e bash -lc "$command" >/dev/null 2>&1 &
+                -e bash -lc "$command"
             ;;
         kitty)
-            "$terminal" \
+            dispatch_exec "$terminal" \
                 --class "$class" \
                 --title "$title" \
                 --override "font_size=11" \
                 --override "window_padding_width=14" \
                 --override "background_opacity=0.74" \
                 --override "hide_window_decorations=yes" \
-                bash -lc "$command" >/dev/null 2>&1 &
+                bash -lc "$command"
             ;;
         foot)
-            "$terminal" --app-id "$class" --title "$title" bash -lc "$command" >/dev/null 2>&1 &
+            dispatch_exec "$terminal" --app-id "$class" --title "$title" bash -lc "$command"
             ;;
         alacritty)
-            "$terminal" --class "$class","$class" --title "$title" -e bash -lc "$command" >/dev/null 2>&1 &
+            dispatch_exec "$terminal" --class "$class","$class" --title "$title" -e bash -lc "$command"
             ;;
         *)
             return 1
@@ -218,10 +229,13 @@ update_cava_theme_colors() {
 }
 
 layout_needs_defaults() {
-    local name
-    for name in clock cava system; do
+    local name found=0
+
+    for name in $(widget_order_default); do
+        found=1
         [[ -z "$(layout_var "$name" x)" || -z "$(layout_var "$name" y)" ]] && return 0
     done
+    [[ "$found" == "0" ]] && return 1
     return 1
 }
 
@@ -270,6 +284,7 @@ done
 start_widgets() {
     local widget
     local quiet="${1:-false}"
+    local started=0
 
     ensure_config
     layout_load
@@ -283,23 +298,32 @@ start_widgets() {
         layout_default_stack
     fi
 
-    for widget in ${ANTO426_WIDGETS_ENABLED:-clock cava system}; do
+    for widget in $(enabled_builtin_widgets); do
         case "$widget" in
             clock)
-                launch_widget clock "$(widget_meta clock class)" "$(widget_meta clock title)" "$clock_command"
+                launch_widget clock "$(widget_meta clock class)" "$(widget_meta clock title)" "$clock_command" && started=1
                 ;;
             cava)
-                launch_widget cava "$(widget_meta cava class)" "$(widget_meta cava title)" "$cava_command"
+                launch_widget cava "$(widget_meta cava class)" "$(widget_meta cava title)" "$cava_command" && started=1
                 ;;
             system)
-                launch_widget system "$(widget_meta system class)" "$(widget_meta system title)" "$system_command"
+                launch_widget system "$(widget_meta system class)" "$(widget_meta system title)" "$system_command" && started=1
                 ;;
         esac
     done
 
     for widget in $(custom_widget_ids); do
-        [[ -n "$widget" ]] && launch_custom_widget "$widget"
+        [[ -n "$widget" ]] || continue
+        launch_custom_widget "$widget" && started=1
     done
+
+    if [[ "$started" == "0" ]]; then
+        rm -f "$managed_stop_marker"
+        stop_widget_delete_watcher
+        stop_widgets_lock_daemon
+        [[ "$quiet" == "quiet" ]] || notify "Nessun widget configurato — aggiungine uno dal menu"
+        return 0
+    fi
 
     (
         if ! apply_widget_layout_locked; then
@@ -339,7 +363,7 @@ stop_widgets() {
 any_running() {
     local widget
 
-    for widget in $(widget_order_default); do
+    for widget in $(all_known_widget_ids); do
         [[ -n "$widget" ]] || continue
         widget_client_address "$widget" | grep -q . && return 0
         is_running "$widget" && return 0
@@ -430,6 +454,90 @@ locked_widgets_should_hide() {
         ' >/dev/null 2>&1
 }
 
+workspace_id_for_monitor() {
+    local monitor="$1"
+
+    hyprctl monitors -j 2>/dev/null |
+        jq -r --arg monitor "$monitor" '
+            .[] |
+            select((($monitor == "") and (.focused == true)) or (.name == $monitor)) |
+            .activeWorkspace.id
+        ' 2>/dev/null |
+        sed -n '1p'
+}
+
+workspace_arg_for_monitor() {
+    local monitor="$1"
+
+    hyprctl monitors -j 2>/dev/null |
+        jq -r --arg monitor "$monitor" '
+            .[] |
+            select((($monitor == "") and (.focused == true)) or (.name == $monitor)) |
+            .activeWorkspace |
+            if ((.name // "") | length) > 0 then
+                if ((.name | test("^[0-9]+$")) or (.name | startswith("special:"))) then
+                    .name
+                else
+                    "name:\(.name)"
+                end
+            else
+                (.id | tostring)
+            end
+        ' 2>/dev/null |
+        sed -n '1p'
+}
+
+workspace_has_real_clients() {
+    local workspace_id="$1"
+
+    [[ "$workspace_id" =~ ^-?[0-9]+$ ]] || return 1
+    hyprctl clients -j 2>/dev/null |
+        jq -e --argjson workspace_id "$workspace_id" '
+            [
+                .[] |
+                select((.mapped // true) == true) |
+                select((.hidden // false) == false) |
+                select((.workspace.id // null) == $workspace_id) |
+                select(((.title // "") | length) > 0) |
+                select(
+                    ((.class // .initialClass // "") |
+                        test("^(anto426\\.widget\\.|clock-widget$|cava-widget$|system-widget$|rofi$|waybar$|swaync|swaync-control-center|wofi$|anto426-osd$)"; "i") |
+                        not
+                    )
+                )
+            ] | length > 0
+        ' >/dev/null 2>&1
+}
+
+sync_locked_widget_visibility() {
+    local name="$1"
+    local addr monitor workspace_id workspace_arg x y w h
+
+    addr="$(widget_client_address "$name")"
+    [[ -n "$addr" ]] || return 0
+
+    monitor="$(layout_monitor_for_widget "$name")"
+    workspace_id="$(workspace_id_for_monitor "$monitor")"
+    workspace_arg="$(workspace_arg_for_monitor "$monitor")"
+    [[ -n "$workspace_arg" ]] || workspace_arg="$(active_workspace_arg)"
+
+    if workspace_has_real_clients "$workspace_id"; then
+        hyprctl dispatch movetoworkspacesilent "$widget_hidden_workspace,address:$addr" >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    hyprctl dispatch movetoworkspacesilent "$workspace_arg,address:$addr" >/dev/null 2>&1 || true
+    x="$(layout_var "$name" x)"
+    y="$(layout_var "$name" y)"
+    w="$(layout_var "$name" w)"
+    h="$(layout_var "$name" h)"
+    [[ -n "$x" ]] || x="$(widget_meta "$name" dx 2>/dev/null || printf '40')"
+    [[ -n "$y" ]] || y="$(widget_meta "$name" dy 2>/dev/null || printf '72')"
+    [[ -n "$w" ]] || w="$(widget_meta "$name" w)"
+    [[ -n "$h" ]] || h="$(widget_meta "$name" h)"
+    apply_widget_geometry "$name" "$x" "$y" "$w" "$h" >/dev/null 2>&1 || true
+}
+
 move_widgets_to_workspace() {
     local workspace="$1"
     local addr
@@ -441,11 +549,19 @@ move_widgets_to_workspace() {
 }
 
 restore_widgets_to_active_workspace() {
-    local workspace
+    local name addr monitor workspace
 
-    workspace="$(active_workspace_arg)"
-    [[ -n "$workspace" ]] || return 0
-    move_widgets_to_workspace "$workspace"
+    layout_load
+    for name in $(widget_order_default); do
+        [[ -n "$name" ]] || continue
+        addr="$(widget_client_address "$name")"
+        [[ -n "$addr" ]] || continue
+        monitor="$(layout_monitor_for_widget "$name")"
+        workspace="$(workspace_arg_for_monitor "$monitor")"
+        [[ -n "$workspace" ]] || workspace="$(active_workspace_arg)"
+        [[ -n "$workspace" ]] || continue
+        hyprctl dispatch movetoworkspacesilent "$workspace,address:$addr" >/dev/null 2>&1 || true
+    done
 }
 
 widget_class_regex() {
@@ -512,18 +628,16 @@ bury_widget_windows() {
 }
 
 sync_locked_widgets() {
+    local name
+
     ensure_config
     widgets_locked || return 0
+    layout_load
 
-    if locked_widgets_should_hide; then
-        move_widgets_to_workspace "$widget_hidden_workspace"
-        apply_widgets_lock_state
-        bury_widget_windows
-        return 0
-    fi
-
-    restore_widgets_to_active_workspace
-    apply_widget_layout >/dev/null 2>&1 || true
+    for name in $(widget_order_default); do
+        [[ -n "$name" ]] || continue
+        sync_locked_widget_visibility "$name"
+    done
     apply_widgets_lock_state
     bury_widget_windows
 }
@@ -606,7 +720,7 @@ run_widget_delete_watcher() {
         widgets_locked && break
         [[ -f "$managed_stop_marker" ]] && break
 
-        for id in $(custom_widget_ids); do
+        for id in $(widget_order_default); do
             [[ -n "$id" ]] || continue
             addr="$(widget_client_address "$id")"
             if [[ -n "$addr" ]]; then
@@ -615,8 +729,8 @@ run_widget_delete_watcher() {
             fi
 
             if [[ "${seen[$id]:-0}" == "1" ]]; then
-                label="$(custom_widget_meta "$id" name 2>/dev/null || printf '%s' "$id")"
-                remove_custom_widget "$id" >/dev/null 2>&1 || true
+                label="$(widget_label "$id")"
+                disable_named_widget "$id" >/dev/null 2>&1 || true
                 unset "seen[$id]"
                 notify "Widget eliminato: $label"
             fi
@@ -798,21 +912,139 @@ widget_name_from_label() {
     return 1
 }
 
+widget_name_from_builtin_label() {
+    local label="$1"
+    local name
+
+    for name in $(builtin_widget_ids); do
+        [[ "$label" == "$(widget_label "$name")" ]] && {
+            printf '%s' "$name"
+            return 0
+        }
+    done
+
+    return 1
+}
+
 write_widget_order() {
     local order="$1"
     local file tmp
 
+    layout_ensure_file
     file="$(widget_layout_file)"
     tmp="$(mktemp)"
     awk -v order="$order" '
+        BEGIN { found = 0 }
         /^export ANTO426_WIDGET_ORDER=/ {
             print "export ANTO426_WIDGET_ORDER=\"" order "\""
+            found = 1
             next
         }
         { print }
+        END {
+            if (!found) print "export ANTO426_WIDGET_ORDER=\"" order "\""
+        }
     ' "$file" >"$tmp" && mv "$tmp" "$file"
     # shellcheck disable=SC1090
     source "$file"
+}
+
+config_list_without() {
+    local remove="$1"
+    shift
+    local item out
+
+    out=""
+    for item in "$@"; do
+        [[ -n "$item" && "$item" != "$remove" ]] || continue
+        case " $out " in
+            *" $item "*) ;;
+            *) out="${out:+$out }$item" ;;
+        esac
+    done
+    printf '%s' "$out"
+}
+
+set_builtin_widget_enabled() {
+    local name="$1"
+    local state="$2"
+    local current new
+    local -a current_items
+
+    widget_is_builtin "$name" || return 1
+    current="$(enabled_builtin_widgets | tr '\n' ' ')"
+    case "$state" in
+        1 | on | enable | enabled | true)
+            case " $current " in
+                *" $name "*) new="$current" ;;
+                *) new="${current:+$current }$name" ;;
+            esac
+            ;;
+        0 | off | disable | disabled | false)
+            read -ra current_items <<<"$current"
+            new="$(config_list_without "$name" "${current_items[@]}")"
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+
+    set_config_value ANTO426_WIDGETS_ENABLED "$new"
+}
+
+remove_widget_from_saved_order() {
+    local remove="$1"
+    local order item out
+
+    out=""
+    layout_load
+    order="${ANTO426_WIDGET_ORDER-}"
+    for item in $order; do
+        [[ -n "$item" && "$item" != "$remove" ]] || continue
+        case " $out " in
+            *" $item "*) ;;
+            *) out="${out:+$out }$item" ;;
+        esac
+    done
+    write_widget_order "$out"
+}
+
+disable_named_widget() {
+    local name="$1"
+
+    if widget_is_builtin "$name"; then
+        set_builtin_widget_enabled "$name" 0
+        stop_widget "$name" "$(widget_meta "$name" class)" 2>/dev/null || true
+        remove_widget_from_saved_order "$name"
+    else
+        remove_custom_widget "$name"
+        remove_widget_from_saved_order "$name"
+    fi
+    write_custom_widget_hypr_rules
+    write_widget_lock_hypr_rules current
+}
+
+enable_builtin_widget_from_menu() {
+    local theme="$1"
+    local choice name monitor
+
+    choice="$(
+        for name in $(builtin_widget_ids); do
+            case " $(enabled_builtin_widgets | tr '\n' ' ') " in
+                *" $name "*) continue ;;
+            esac
+            widget_label "$name"
+            printf '\n'
+        done | rofi -dmenu -i -p "Aggiungi widget base" -theme "$theme"
+    )"
+    [[ -n "$choice" ]] || return 1
+
+    name="$(widget_name_from_builtin_label "$choice")" || return 1
+    monitor="$(pick_widget_monitor)" || return 1
+    set_builtin_widget_enabled "$name" 1
+    layout_place_widget_default "$name" "$monitor"
+    write_widget_order "$(widget_order_default)"
+    launch_named_widget "$name"
 }
 
 move_widget_in_order() {
@@ -873,17 +1105,16 @@ arrange_widgets() {
             printf '%s\n' "󰒓 Applica layout salvato"
             printf '%s\n' "󰑐 Reset posizioni"
             printf '%s\n' "󰆓 Salva posizioni attuali"
-            printf '%s\n' "󰐕 Aggiungi widget terminale"
-            printf '%s\n' "󰣖 Aggiungi widget da app"
+            printf '%s\n' "󰐕 Aggiungi widget visuale"
+            printf '%s\n' "󰐕 Aggiungi comando terminale"
+            printf '%s\n' "󰣖 Aggiungi app carina"
+            printf '%s\n' "󰐕 Aggiungi widget base"
             printf '%s\n' "󰅙 Rimuovi widget"
-            printf '%s\n' "── Ordine ──"
             for name in $order; do
                 [[ -n "$name" ]] && widget_label "$name" && printf '\n'
             done
-            printf '%s\n' "󰅖 Sposta selezionato su"
-            printf '%s\n' "󰅁 Sposta selezionato giù"
         } | rofi -dmenu -i -matching fuzzy -p "Widget" \
-            -mesg "Trascina: Super + click sinistro\nSalva: Super + Alt + G\nNuovo terminale: scrivi qualsiasi comando/processo" -theme "$theme"
+            -mesg "Consigliato: Widget visuale\nLe app sono filtrate, ma restano programmi normali" -theme "$theme"
     )"
 
     [[ -z "$choice" ]] && return 0
@@ -906,42 +1137,42 @@ arrange_widgets() {
         *"Applica layout"*) apply_widget_layout_locked && notify "Layout applicato" ;;
         *"Reset posizioni"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout resettato" ;;
         *"Salva posizioni"*) save_widget_layout && apply_widget_layout_locked && notify "Layout salvato" ;;
-        *"Aggiungi widget terminale"*)
-            if new_id="$(pick_terminal_widget)"; then
+        *"Aggiungi widget visuale"*)
+            if new_id="$(pick_preset_widget)"; then
                 launch_custom_widget "$new_id"
-                layout_default_stack
+                layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
+                write_widget_order "$(widget_order_default)"
                 apply_widget_layout_locked
-                notify "Widget terminale aggiunto"
+                notify "Widget visuale aggiunto"
             fi
             ;;
-        *"Aggiungi widget da app"*)
+        *"Aggiungi comando terminale"*)
+            if new_id="$(pick_terminal_widget)"; then
+                launch_custom_widget "$new_id"
+                layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
+                write_widget_order "$(widget_order_default)"
+                apply_widget_layout_locked
+                notify "Comando widget aggiunto"
+            fi
+            ;;
+        *"Aggiungi app carina"*)
             if new_id="$(pick_app_for_widget)"; then
                 launch_custom_widget "$new_id"
-                layout_default_stack
+                layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
+                write_widget_order "$(widget_order_default)"
                 apply_widget_layout_locked
-                notify "Widget app aggiunto"
+                notify "App widget aggiunta"
             fi
+            ;;
+        *"Aggiungi widget base"*)
+            enable_builtin_widget_from_menu "$theme" && notify "Widget base aggiunto"
             ;;
         *"Rimuovi widget"*)
             selected="$(select_widget_from_order "$theme" "Rimuovi widget")" || return 0
-            if widget_is_builtin "$selected"; then
-                notify "I widget base si disattivano da widgets.env"
-                return 0
-            fi
-            remove_custom_widget "$selected"
-            layout_default_stack
+            disable_named_widget "$selected"
             apply_widget_layout_locked
             notify "Widget rimosso"
             ;;
-        *"Sposta selezionato su")
-            selected="$(select_widget_from_order "$theme" "Quale widget")" || return 0
-            move_widget_in_order "$selected" up
-            ;;
-        *"Sposta selezionato giù")
-            selected="$(select_widget_from_order "$theme" "Quale widget")" || return 0
-            move_widget_in_order "$selected" down
-            ;;
-        "── Ordine ──") ;;
         *)
             if selected="$(widget_name_from_label "$choice")"; then
                 show_named_widget "$selected"

@@ -15,6 +15,7 @@ custom_widget_env_file() {
 ensure_custom_widgets_file() {
     local file
     file="$(custom_widgets_file)"
+    mkdir -p "$(dirname "$file")"
     [[ -f "$file" ]] || cat >"$file" <<'EOF'
 # Custom widgets list. Per-widget config lives in ~/.config/anto426/widgets.d/<id>.env
 # Legacy lines in the form id|Name|StartupWMClass|exec command are still supported.
@@ -132,6 +133,7 @@ write_custom_widget_env() {
     local mode="${5:-app}"
     local width="${6:-520}"
     local height="${7:-360}"
+    local monitor="${8:-}"
     local file
 
     mkdir -p "$(custom_widgets_dir)"
@@ -144,6 +146,7 @@ write_custom_widget_env() {
         printf 'ANTO426_WIDGET_MODE=%q\n' "$mode"
         printf 'ANTO426_WIDGET_WIDTH=%q\n' "$width"
         printf 'ANTO426_WIDGET_HEIGHT=%q\n' "$height"
+        printf 'ANTO426_WIDGET_MONITOR=%q\n' "$monitor"
     } >"$file"
 }
 
@@ -158,7 +161,7 @@ legacy_custom_widget_line() {
 custom_widget_meta() {
     local id="$1"
     local field="$2"
-    local file line name class cmd mode width height
+    local file line name class cmd mode width height monitor
 
     ensure_custom_widgets_file
     file="$(custom_widget_env_file "$id")"
@@ -170,6 +173,7 @@ custom_widget_meta() {
         ANTO426_WIDGET_MODE=""
         ANTO426_WIDGET_WIDTH=""
         ANTO426_WIDGET_HEIGHT=""
+        ANTO426_WIDGET_MONITOR=""
         # shellcheck disable=SC1090
         source "$file"
         name="$ANTO426_WIDGET_NAME"
@@ -178,6 +182,7 @@ custom_widget_meta() {
         mode="${ANTO426_WIDGET_MODE:-app}"
         width="${ANTO426_WIDGET_WIDTH:-520}"
         height="${ANTO426_WIDGET_HEIGHT:-360}"
+        monitor="${ANTO426_WIDGET_MONITOR:-}"
     else
         line="$(legacy_custom_widget_line "$id")"
         [[ -n "$line" ]] || return 1
@@ -188,6 +193,7 @@ custom_widget_meta() {
         mode="app"
         width="520"
         height="360"
+        monitor=""
     fi
 
     case "$field" in
@@ -199,7 +205,36 @@ custom_widget_meta() {
         command) printf '%s' "$cmd" ;;
         w) printf '%s' "$width" ;;
         h) printf '%s' "$height" ;;
+        monitor) printf '%s' "$monitor" ;;
     esac
+}
+
+custom_widget_regex() {
+    printf '^%s$' "$(printf '%s' "$1" | sed -e 's/[.[\*^$()+?{}|\\]/\\&/g')"
+}
+
+pick_widget_monitor() {
+    local theme="$HOME/.config/rofi/control_menu.rasi"
+    local choice monitor
+
+    choice="$(
+        {
+            printf '%s\n' "Schermo attivo"
+            if command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1; then
+                hyprctl monitors -j 2>/dev/null |
+                    jq -r '.[] | "\(.name)  \(.width)x\(.height)  @ \(.x),\(.y)"'
+            fi
+        } | rofi -dmenu -i -matching fuzzy -p "Schermo widget" -theme "$theme"
+    )"
+    [[ -n "$choice" ]] || return 1
+
+    if [[ "$choice" == "Schermo attivo" ]]; then
+        monitor="$(focused_monitor_name 2>/dev/null || true)"
+    else
+        monitor="${choice%%  *}"
+    fi
+
+    printf '%s' "$monitor"
 }
 
 desktop_exec_line() {
@@ -222,15 +257,50 @@ desktop_exec_line() {
     printf '%s' "$exec_line"
 }
 
+pretty_app_desktop_ids() {
+    printf '%s\n' \
+        spotify-launcher.desktop \
+        zen.desktop \
+        brave-browser.desktop \
+        discord.desktop \
+        org.telegram.desktop.desktop \
+        steam.desktop \
+        org.gnome.Loupe.desktop \
+        vlc.desktop \
+        mpv.desktop \
+        gimp.desktop \
+        nemo.desktop
+}
+
+find_desktop_file_by_id() {
+    local desktop_id="$1"
+    local dir
+
+    for dir in "$HOME/.local/share/applications" /usr/share/applications; do
+        [[ -f "$dir/$desktop_id" ]] && {
+            printf '%s' "$dir/$desktop_id"
+            return 0
+        }
+    done
+    return 1
+}
+
+pretty_app_desktops() {
+    local desktop_id desktop
+
+    while IFS= read -r desktop_id; do
+        [[ -n "$desktop_id" ]] || continue
+        desktop="$(find_desktop_file_by_id "$desktop_id")" || continue
+        printf '%s\n' "$desktop"
+    done < <(pretty_app_desktop_ids)
+}
+
 pick_app_for_widget() {
     local theme="$HOME/.config/rofi/control_menu.rasi"
-    local choice desktop id name startup class exec_line file tmp
+    local choice desktop id name startup exec_line file monitor
 
     choice="$(
-        find \
-            "$HOME/.local/share/applications" \
-            /usr/share/applications \
-            -maxdepth 1 -type f -name '*.desktop' 2>/dev/null |
+        pretty_app_desktops |
             while read -r desktop; do
                 [[ "$(awk -F= '/^Type=/ {print tolower($2); exit}' "$desktop")" == "application" ]] || continue
                 [[ "$(awk -F= '/^NoDisplay=/ {print tolower($2); exit}' "$desktop")" == "true" ]] && continue
@@ -240,16 +310,15 @@ pick_app_for_widget() {
                 [[ -n "$name" ]] || continue
                 printf '%s\0icon\x1f%s\n' "$name" "${icon:-application-x-executable}"
             done |
-            rofi -dmenu -i -matching fuzzy -show-icons -p "Aggiungi widget app" -theme "$theme"
+            rofi -dmenu -i -matching fuzzy -show-icons -p "Aggiungi app carina" \
+                -mesg "Lista filtrata: evita tool tecnici e launcher brutti" \
+                -theme "$theme"
     )"
 
     [[ -n "$choice" ]] || return 1
 
     desktop="$(
-        find \
-            "$HOME/.local/share/applications" \
-            /usr/share/applications \
-            -maxdepth 1 -type f -name '*.desktop' 2>/dev/null |
+        pretty_app_desktops |
             while read -r file; do
                 name="$(awk -F= '/^Name=/{print substr($0,index($0,$2)); exit}' "$file")"
                 [[ "$name" == "$choice" ]] && {
@@ -266,12 +335,74 @@ pick_app_for_widget() {
         awk -F= 'tolower($1) == "startupwmclass" {print $2; exit}' "$desktop" 2>/dev/null
     )"
     [[ -n "$startup" ]] || startup="$(basename "${desktop%.desktop}")"
-    id="$(custom_widget_id_from_text "$startup")"
+    id="$(custom_widget_unique_id "$startup")"
+    monitor="$(pick_widget_monitor)" || return 1
 
-    write_custom_widget_env "$id" "$name" "$startup" "$exec_line" app 520 360
+    write_custom_widget_env "$id" "$name" "$startup" "$exec_line" app 520 360 "$monitor"
     custom_widget_list_add "$id"
     write_custom_widget_hypr_rules
     printf '%s' "$id"
+}
+
+preset_widget_rows() {
+    command -v cava >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰎈 Spettro audio" \
+            "spettro_audio" \
+            'cava -p "$HOME/.config/anto426/cava_widget.conf"' \
+            620 220
+    command -v btop >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰍛 Dashboard sistema" \
+            "dashboard_sistema" \
+            "btop" \
+            760 520
+    command -v fastfetch >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰌢 Scheda macchina" \
+            "scheda_macchina" \
+            'while true; do clear; image=$(find "$HOME/Pictures/neofetch" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) 2>/dev/null | shuf -n 1); if [[ -n "$image" ]]; then fastfetch --logo "$image" --logo-type kitty --logo-width 18 --logo-padding-left 1 --logo-padding-right 2 --logo-preserve-aspect-ratio true --structure Title:Separator:OS:Kernel:Uptime:Packages:WM:CPU:Memory:Battery; else fastfetch --logo small --structure Title:Separator:OS:Kernel:Uptime:Packages:WM:CPU:Memory:Battery; fi; sleep 12; done' \
+            620 320
+    command -v asciiquarium >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰈺 Acquario ASCII" \
+            "acquario_ascii" \
+            "asciiquarium" \
+            760 420
+    command -v pipes.sh >/dev/null 2>&1 &&
+        printf '%s|%s|%s|%s|%s\n' \
+            "󰕮 Tubi animati" \
+            "tubi_animati" \
+            "pipes.sh -t 2 -r 0 -R" \
+            700 360
+}
+
+pick_preset_widget() {
+    local theme="$HOME/.config/rofi/control_menu.rasi"
+    local choice id_base command width height monitor id class
+
+    choice="$(
+        preset_widget_rows |
+            awk -F'|' '{ print $1 }' |
+            rofi -dmenu -i -matching fuzzy -p "Widget visuale" \
+                -mesg "Preset controllati: belli da vedere e gia dimensionati" \
+                -theme "$theme"
+    )"
+    [[ -n "$choice" ]] || return 1
+
+    while IFS='|' read -r label id_base command width height; do
+        [[ "$label" == "$choice" ]] || continue
+        monitor="$(pick_widget_monitor)" || return 1
+        id="$(custom_widget_unique_id "$id_base")"
+        class="anto426.widget.cmd.$id"
+        write_custom_widget_env "$id" "$label" "$class" "$command" terminal "$width" "$height" "$monitor"
+        custom_widget_list_add "$id"
+        write_custom_widget_hypr_rules
+        printf '%s' "$id"
+        return 0
+    done < <(preset_widget_rows)
+
+    return 1
 }
 
 prompt_terminal_widget_value() {
@@ -283,7 +414,7 @@ prompt_terminal_widget_value() {
 }
 
 pick_terminal_widget() {
-    local id name command width height class
+    local id name command width height class monitor
 
     name="$(prompt_terminal_widget_value "Nome widget" "Esempio: Processi, Log pacman, Temperatura")"
     [[ -n "$name" ]] || return 1
@@ -296,10 +427,11 @@ pick_terminal_widget() {
     [[ "$width" =~ ^[0-9]+$ ]] || width=560
     [[ "$height" =~ ^[0-9]+$ ]] || height=320
 
+    monitor="$(pick_widget_monitor)" || return 1
     id="$(custom_widget_unique_id "$name")"
     class="anto426.widget.cmd.$id"
 
-    write_custom_widget_env "$id" "$name" "$class" "$command" terminal "$width" "$height"
+    write_custom_widget_env "$id" "$name" "$class" "$command" terminal "$width" "$height" "$monitor"
     custom_widget_list_add "$id"
     write_custom_widget_hypr_rules
     printf '%s' "$id"
@@ -316,22 +448,39 @@ remove_custom_widget() {
 
 write_custom_widget_hypr_rules() {
     local file="$HOME/.config/hypr/conf/widget-apps.generated.conf"
-    local id wm_class
+    local id wm_class regex monitor x y w h
 
     {
         printf '# Generated by widgets_apps.sh - custom widget window rules\n'
         for id in $(custom_widget_ids); do
             [[ -n "$id" ]] || continue
             wm_class="$(custom_widget_meta "$id" class 2>/dev/null)" || continue
-            printf 'windowrule = float on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = border_size 1, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = no_shadow on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = no_anim on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = no_initial_focus on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = no_follow_mouse on, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = focus_on_activate off, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = rounding 14, match:class ^%s$\n' "$wm_class"
-            printf 'windowrule = opacity 0.94 0.88, match:class ^%s$\n' "$wm_class"
+            regex="$(custom_widget_regex "$wm_class")"
+            monitor="$(custom_widget_meta "$id" monitor 2>/dev/null || true)"
+            w="$(custom_widget_meta "$id" w 2>/dev/null || printf '520')"
+            h="$(custom_widget_meta "$id" h 2>/dev/null || printf '360')"
+            x=""
+            y=""
+            if declare -F layout_var >/dev/null 2>&1; then
+                x="$(layout_var "$id" x)"
+                y="$(layout_var "$id" y)"
+                w="$(layout_var "$id" w || printf '%s' "$w")"
+                h="$(layout_var "$id" h || printf '%s' "$h")"
+                [[ -n "$w" ]] || w="$(custom_widget_meta "$id" w 2>/dev/null || printf '520')"
+                [[ -n "$h" ]] || h="$(custom_widget_meta "$id" h 2>/dev/null || printf '360')"
+            fi
+            printf 'windowrule = float on, match:class %s\n' "$regex"
+            [[ -n "$monitor" ]] && printf 'windowrule = monitor %s silent, match:class %s\n' "$monitor" "$regex"
+            printf 'windowrule = size %s %s, match:class %s\n' "$w" "$h" "$regex"
+            [[ -n "$x" && -n "$y" ]] && printf 'windowrule = move %s %s, match:class %s\n' "$x" "$y" "$regex"
+            printf 'windowrule = border_size 1, match:class %s\n' "$regex"
+            printf 'windowrule = no_shadow on, match:class %s\n' "$regex"
+            printf 'windowrule = no_anim on, match:class %s\n' "$regex"
+            printf 'windowrule = no_initial_focus on, match:class %s\n' "$regex"
+            printf 'windowrule = no_follow_mouse on, match:class %s\n' "$regex"
+            printf 'windowrule = focus_on_activate off, match:class %s\n' "$regex"
+            printf 'windowrule = rounding 14, match:class %s\n' "$regex"
+            printf 'windowrule = opacity 0.94 0.88, match:class %s\n' "$regex"
         done
     } >"$file"
 
@@ -340,7 +489,7 @@ write_custom_widget_hypr_rules() {
 
 launch_custom_widget() {
     local id="$1"
-    local mode class title command
+    local mode class title command monitor rules
 
     custom_widget_meta "$id" id >/dev/null || return 1
     write_custom_widget_hypr_rules
@@ -348,11 +497,14 @@ launch_custom_widget() {
     class="$(custom_widget_meta "$id" class)"
     title="$(custom_widget_meta "$id" title)"
     command="$(custom_widget_meta "$id" command)"
+    monitor="$(custom_widget_meta "$id" monitor 2>/dev/null || true)"
 
     if [[ "$mode" == "terminal" ]]; then
         launch_widget "$id" "$class" "$title" "$command"
     else
-        hyprctl dispatch exec "[float;size $(custom_widget_meta "$id" w) $(custom_widget_meta "$id" h)] $command" >/dev/null 2>&1 &
+        rules="float;size $(custom_widget_meta "$id" w) $(custom_widget_meta "$id" h)"
+        [[ -n "$monitor" ]] && rules="monitor $monitor silent;$rules"
+        hyprctl dispatch exec "[$rules] $command" >/dev/null 2>&1 &
     fi
 }
 
