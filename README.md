@@ -1,82 +1,88 @@
-<div align="center">
+<p align="center">
+  <img 
+    src="https://wsrv.nl/?url=avatars.githubusercontent.com/u/87477585?v=5&w=300&h=300&mask=circle&fit=cover" 
+    width="150"
+  />
+</p>
 
-# 🌌 anto426 dotfiles
+<p align="center">
+  <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=24&duration=3000&pause=1000&color=8cb8e4&center=true&vCenter=true&width=500&height=80&lines=Aesthetic+Dotfiles;Wayland+Hyprland+Ecosystem;Dynamic+Color+Theming" alt="Typing SVG" /></a>
+</p>
 
-[![Typing SVG](https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=28&duration=3000&pause=1000&color=8cb8e4&center=true&vCenter=true&width=435&lines=Welcome+to+my+Dotfiles;Aesthetic+Wayland+Setup;Dynamic+Color+Engine)](https://git.io/typing-svg)
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
+</p>
 
-A highly customized, aesthetic, and fully dynamic **Wayland/Hyprland** ecosystem. 
+# <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/icon.gif" width="60px" /> Features;
 
-</div>
+```sh
+root@anto426: ~/dotfiles (main⚡)$ neofetch --view features
 
----
+- 🎨 Dynamic Colors: Sourced instantly from the wallpaper to GTK, Qt, Rofi, Ghostty, VSCode, and Waybar.
+- 🧱 Stable Base: Built on top of the custom Anto426-theme fallback to avoid raw system theme breakages.
+- 🖼️ Boot Theme Sync: Generates custom GRUB and SDDM setups matching the wallpaper colors automatically.
+- ⚡ Wayland Native: Tuned strictly around modern, high-performance Wayland compositor tools.
+- 🧩 Rofi Control Panels: Sliding interactive menus for calendar, audio controls, live brightness, and power.
+```
 
-## ✨ Key Features
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
+</p>
 
-This setup is not just a collection of config files; it features a **fully dynamic theming engine** that extracts colors from the current wallpaper and propagates them instantly across the entire operating system.
+# <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/icon2.gif" width="70px" /> Applications & Tree;
 
-- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Ghostty, VSCode, and Waybar.
-- 🧱 **Theme Fallbacks**: Uses the separate [`Anto426-theme`](https://github.com/Anto426/Anto426-theme) repo as a stable GTK base before dynamic colors are generated.
-- 🖼️ **Boot Integration**: Custom SDDM and GRUB themes automatically generated to match the wallpaper.
-- ⚡ **Performance**: Built around modern, fast tools optimized for Wayland.
-- 🧩 **Modular Control Menu**: Integrated Rofi-based menus for audio, bluetooth, Wi-Fi, a synchronized calendar, live sliders, and background app switching.
+```sh
+root@anto426: ~/dotfiles (main⚡)$ btop --preset applications
 
----
++- window.manager                    -+     +- user.experience                   -+
+| Hyprland (Compositor/WM)            |     | Waybar (Status Bar)                |
+| Ghostty (Terminal Emulator)         |     | SwayNC (Notification Center)        |
+| Oh My Posh + Zsh (Prompt Shell)     |     | wlogout (Logout Menus)             |
+| Neovim / VS Code (IDE & Editing)    |     | Tmux (Multiplexer & Stow tools)     |
++-------------------------------------+     +-------------------------------------+
+```
 
-## 📦 Stack & Applications
+### 📂 Stow Structure
 
-| Category | Tool |
-|----------|------|
-| **Window Manager** | [Hyprland](https://hyprland.org/) |
-| **Status Bar** | [Waybar](https://github.com/Alexays/Waybar) |
-| **App Launcher** | [Anto426 Rofi](https://github.com/Anto426/rofi), built with Wayland and slider support |
-| **Terminal** | [Ghostty](https://github.com/mitchellh/ghostty) |
-| **Notifications** | [SwayNC](https://github.com/ErikReider/SwayNotificationCenter) |
-| **Editor** | [Neovim](https://neovim.io/) |
-| **Shell & Prompt**| [Zsh](https://www.zsh.org/) + [Oh My Posh](https://ohmyposh.dev/) |
-| **Multiplexer** | [Tmux](https://github.com/tmux/tmux) |
-| **Logout Menu** | [wlogout](https://github.com/ArtsyMacaw/wlogout) |
-
----
-
-## 📂 Repository Structure
-
-The repository is structured to be managed seamlessly with [GNU Stow](https://www.gnu.org/software/stow/).
+Managed seamlessly using [GNU Stow](https://www.gnu.org/software/stow/):
 
 ```plaintext
 .
 ├── .config/
-│   ├── anto426/        # Core theme engine & shell scripts
-│   ├── cava/           # Audio visualizer config
-│   ├── colors/         # Auto-generated color schemes
-│   ├── fontconfig/     # Font rendering configurations
-│   ├── ghostty/        # Terminal configs & dynamic palettes
-│   ├── hypr/           # Hyprland window manager rules & settings
-│   ├── nvim/           # Neovim IDE configuration
-│   ├── ohmyposh/       # Terminal prompt styling
-│   ├── rofi/           # Menus, calendar and app launcher themes
-│   ├── swaync/         # Notification center styling
-│   ├── waybar/         # Status bar layout and CSS
-│   └── wlogout/        # Power menu
-├── .stow-local-ignore  # Files ignored by Stow
-├── .tmux.conf          # Tmux configuration
-├── .zshrc              # Zsh shell configuration
-└── LICENSE             # MIT License
+│   ├── anto426/        # Core wallpaper engine & script configurations
+│   ├── cava/           # Audio visualizer layout
+│   ├── colors/         # Auto-generated runtime color palettes
+│   ├── fontconfig/     # Desktop font renderings
+│   ├── ghostty/        # Terminal styling and matching colors
+│   ├── hypr/           # Hyprland core rules and keybind configs
+│   ├── nvim/           # Custom Neovim IDE modules
+│   ├── ohmyposh/       # Terminal prompt skins
+│   ├── rofi/           # Custom panels, launchers and dynamic menu themes
+│   ├── swaync/         # Notifications center layouts
+│   ├── waybar/         # Status bar CSS styling
+│   └── wlogout/        # Action menu buttons
+├── .tmux.conf          # Window multiplexer rules
+└── .zshrc              # Interactive shell configuration
 ```
 
----
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
+</p>
 
-## 🚀 Installation
+# <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/icon3.gif" width="70px" /> Setup & Install;
 
-### 1. Base Packages
-On Arch, install the bootstrap tools first:
+```sh
+root@anto426: ~/dotfiles (main⚡)$ installer --run
+```
 
+### 1. Pacman Bootstrap
+Install standard utilities first:
 ```bash
 sudo pacman -S --needed base-devel git stow
 ```
 
-### 2. Clone & Stow
-Clone this repository into your home folder and use `stow` to create the symlinks:
-
+### 2. Stow Symlinks
+Clone this repo to your root `$HOME` and stow the symlinks:
 ```bash
 cd ~
 git clone https://github.com/Anto426/dotfiles.git
@@ -84,18 +90,17 @@ cd dotfiles
 stow --restow .
 ```
 
-### 3. Install Arch/Hyprland Packages
-The installer pulls the package set used by this Arch-Hyprland setup, installs AUR extras through `yay`, then builds the custom rofi used by the control menus:
-
+### 3. Deploy Packages & Custom Rofi
+Build packages and custom Rofi system-wide:
 ```bash
 ~/.config/anto426/install_archpkg.sh
 ```
 
-The script builds [`Anto426/rofi`](https://github.com/Anto426/rofi) and installs it directly over the system installation in `/usr` so it overrides `/usr/bin/rofi` cleanly, satisfies packages like `rofi-emoji`, and automatically adds `rofi` to `IgnorePkg` in `/etc/pacman.conf` to protect it from being overwritten during future system updates.
+> [!NOTE]
+> The installation script builds the customized Rofi build directly into `/usr`, satisfies standard package managers (`IgnorePkg`), and prevents normal pacman operations from overwriting your custom menus.
 
-### 4. Manual Rofi Build
-If you only want to rebuild the custom rofi system-wide:
-
+### 4. Custom Manual Rofi Compile
+If you only need to rebuild the custom slider-enabled Rofi system-wide:
 ```bash
 sudo pacman -S --needed base-devel git meson ninja pkgconf flex bison check pandoc doxygen \
   glib2 cairo pango gdk-pixbuf2 startup-notification libxkbcommon libxcb \
@@ -108,25 +113,21 @@ meson compile -C ~/Git/arch/rofi/build-anto426
 sudo meson install -C ~/Git/arch/rofi/build-anto426
 ```
 
-Verify the slider-enabled build:
-
+Confirm slider compatibility:
 ```bash
 rofi -help | grep slider
 ```
 
-### 5. Initialize the Theme Engine
-To generate the initial color palettes and apply the theme to the entire system (including GRUB, Qt, and the Anto426 VSCode theme), simply run the wallpaper engine once or select a wallpaper from the Rofi menu:
-
+### 5. Start Theme Engine
+Initialize palettes and wallpaper configuration:
 ```bash
 ~/.config/anto426/wallpaper_select.sh
 ```
 
----
+<p align="center">
+  <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
+</p>
 
 <div align="center">
   <i>Configured by anto426</i>
 </div>
-
-## Theme Base
-
-The GTK fallback/base theme lives in [`Anto426-theme`](https://github.com/Anto426/Anto426-theme), a renamed and tuned fork of [vinceliuice/Orchis-theme](https://github.com/vinceliuice/Orchis-theme).
