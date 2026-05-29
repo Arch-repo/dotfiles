@@ -10,14 +10,8 @@
   ],
   "modules-right": [
     "custom/background-apps",
-    "network",
-    "bluetooth",
-    "pulseaudio",
-    "battery",
-    "custom/keyboard",
-    "custom/notifications",
-    "custom/screenshot",
-    "custom/control",
+    "group/status",
+    "group/tools",
     "custom/power"
   ],
   "custom/background-apps": {
@@ -135,5 +129,23 @@
     "exec": "$HOME/.config/anto426/custom_clock.sh",
     "tooltip": false,
     "on-click": "$HOME/.config/anto426/control_menu.sh calendar"
+  },
+  "group/status": {
+    "orientation": "horizontal",
+    "modules": [
+      "network",
+      "bluetooth",
+      "pulseaudio",
+      "battery"
+    ]
+  },
+  "group/tools": {
+    "orientation": "horizontal",
+    "modules": [
+      "custom/keyboard",
+      "custom/notifications",
+      "custom/screenshot",
+      "custom/control"
+    ]
   }
 }

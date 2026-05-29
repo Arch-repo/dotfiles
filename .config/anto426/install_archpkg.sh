@@ -46,7 +46,7 @@ pacman_packages=(
     xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-wlr xdg-desktop-portal-gtk
 
     # System services and controls
-    brightnessctl network-manager-applet bluez bluez-utils blueman
+    brightnessctl iwd network-manager-applet bluez bluez-utils blueman
     pipewire pipewire-pulse wireplumber pavucontrol
 
     # Apps used by the dotfiles
@@ -98,6 +98,43 @@ ensure_yay() {
     rm -rf "$build_dir"
 }
 
+configure_networkmanager_iwd() {
+    local nm_conf="/etc/NetworkManager/conf.d/wifi_backend.conf"
+    local iwd_conf="/etc/iwd/main.conf"
+    local tmp
+
+    tmp="$(mktemp)"
+    printf '%s\n' \
+        '[device]' \
+        'wifi.backend=iwd' \
+        'wifi.iwd.autoconnect=false' > "$tmp"
+    sudo install -Dm644 "$tmp" "$nm_conf"
+    rm -f "$tmp"
+
+    if [[ ! -f "$iwd_conf" ]]; then
+        tmp="$(mktemp)"
+        printf '%s\n' \
+            '[General]' \
+            'EnableNetworkConfiguration=false' > "$tmp"
+        sudo install -Dm644 "$tmp" "$iwd_conf"
+        rm -f "$tmp"
+    fi
+
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl enable --now iwd.service >/dev/null 2>&1 || true
+        sudo systemctl disable --now wpa_supplicant.service >/dev/null 2>&1 || true
+
+        if [[ "${ANTO426_SKIP_NETWORK_RESTART:-0}" == "1" ]]; then
+            ui_note "NetworkManager restart skipped. Restart it later to activate the iwd backend."
+        else
+            sudo systemctl restart NetworkManager.service >/dev/null 2>&1 || \
+                ui_note "Could not restart NetworkManager automatically. Restart it to activate the iwd backend."
+        fi
+    fi
+
+    ui_ok "NetworkManager configured to use iwd for Wi-Fi."
+}
+
 build_anto426_rofi() {
     if [[ "${ANTO426_SKIP_ROFI_BUILD:-0}" == "1" ]]; then
         ui_note "Skipping Anto426 rofi build."
@@ -107,7 +144,7 @@ build_anto426_rofi() {
     local rofi_src="${ANTO426_ROFI_SRC:-$HOME/Git/arch/rofi}"
     local rofi_repo="${ANTO426_ROFI_REPO:-https://github.com/Anto426/rofi}"
     local build_dir="${ANTO426_ROFI_BUILD_DIR:-$rofi_src/build-anto426}"
-    local prefix="${ANTO426_ROFI_PREFIX:-$HOME/.local/rofi-anto426}"
+    local prefix="${ANTO426_ROFI_PREFIX:-/usr}"
 
     if [[ ! -d "$rofi_src/.git" ]]; then
         ui_note "Cloning Anto426 rofi into $rofi_src"
@@ -128,20 +165,24 @@ build_anto426_rofi() {
     fi
 
     meson compile -C "$build_dir"
-    meson install -C "$build_dir"
+    sudo meson install -C "$build_dir"
 
-    mkdir -p "$HOME/.local/bin"
-    ln -sfn "$prefix/bin/rofi" "$HOME/.local/bin/rofi"
+    # Clean up old local build if it exists
+    rm -rf "$HOME/.local/rofi-anto426"
+    rm -f "$HOME/.local/bin/rofi"
 
-    case ":$PATH:" in
-        *":$HOME/.local/bin:"*) ;;
-        *)
-            ui_note "Add $HOME/.local/bin before /usr/bin in PATH so Hyprland scripts use the custom rofi."
-            ;;
-    esac
+    # Prevent future system updates from overwriting the custom build
+    if ! grep -q "^IgnorePkg.*=.*rofi" /etc/pacman.conf; then
+        ui_note "Adding rofi to IgnorePkg in /etc/pacman.conf..."
+        if grep -q "^#IgnorePkg" /etc/pacman.conf; then
+            sudo sed -i 's/^#IgnorePkg\s*=/IgnorePkg = rofi/' /etc/pacman.conf
+        else
+            sudo sed -i '/\[options\]/a IgnorePkg = rofi' /etc/pacman.conf
+        fi
+    fi
 
-    if "$HOME/.local/bin/rofi" -help 2>&1 | grep -Fq -- "-slider-change-command"; then
-        ui_ok "Anto426 rofi installed with slider support: $HOME/.local/bin/rofi"
+    if "/usr/bin/rofi" -help 2>&1 | grep -Fq -- "-slider-change-command"; then
+        ui_ok "Anto426 rofi installed system-wide with slider support: /usr/bin/rofi"
     else
         ui_note "Anto426 rofi installed, but slider dmenu option was not detected in help output."
     fi
@@ -149,19 +190,22 @@ build_anto426_rofi() {
 
 ui_banner
 
-ui_step 1 5 "Installing base build tools"
+ui_step 1 6 "Installing base build tools"
 sudo pacman -S --needed --noconfirm base-devel git
 
-ui_step 2 5 "Checking AUR helper"
+ui_step 2 6 "Checking AUR helper"
 ensure_yay
 
-ui_step 3 5 "Installing official packages"
+ui_step 3 6 "Installing official packages"
 sudo pacman -S --needed --noconfirm "${pacman_packages[@]}"
 
-ui_step 4 5 "Installing AUR packages"
+ui_step 4 6 "Installing AUR packages"
 yay -S --needed --noconfirm "${aur_packages[@]}"
 
-ui_step 5 5 "Building Anto426 rofi"
+ui_step 5 6 "Building Anto426 rofi"
 build_anto426_rofi
+
+ui_step 6 6 "Configuring NetworkManager iwd backend"
+configure_networkmanager_iwd
 
 ui_ok "Package install complete."

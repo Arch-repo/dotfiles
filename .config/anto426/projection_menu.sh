@@ -21,6 +21,13 @@ require_jq() {
     }
 }
 
+require_hyprctl() {
+    command -v hyprctl >/dev/null 2>&1 || {
+        notify "hyprctl non trovato"
+        exit 1
+    }
+}
+
 monitors_json() {
     hyprctl monitors all -j 2>/dev/null
 }
@@ -113,28 +120,40 @@ duplicate_displays() {
     notify "Schermi duplicati"
 }
 
+require_hyprctl
 require_jq
 
 primary="$(primary_monitor)"
 external="$(external_monitor "$primary")"
+[[ -n "$primary" ]] || {
+    notify "Nessuno schermo rilevato"
+    exit 1
+}
 
-choice="$(
-    printf '%s\n' \
-        "󰍹 Solo schermo principale" \
-        "󰍺 Duplica" \
-        "󰹑 Estendi" \
-        "󰶐 Solo schermo esterno" \
-        "󰌍 Indietro" |
-        rofi -dmenu -i -matching fuzzy \
-            -p "Proietta" \
-            -mesg "Principale: ${primary:-?}\nEsterno: ${external:-non rilevato}" \
-            -theme "$THEME"
-)"
+while true; do
+    choice="$(
+        {
+            printf '  ── MODALITA SCHERMO ─────────────\n'
+            printf '%s\n' "󰍹 Solo schermo principale"
+            printf '%s\n' "󰍺 Duplica"
+            printf '%s\n' "󰹑 Estendi"
+            printf '%s\n' "󰶐 Solo schermo esterno"
+            printf '  ────────────────────────────────\n'
+            printf '%s\n' "󰌍 Indietro"
+        } |
+            rofi -dmenu -i -matching fuzzy \
+                -p "Proietta" \
+                -mesg "Principale: ${primary:-?}\nEsterno: ${external:-non rilevato}" \
+                -theme "$THEME"
+    )"
 
-case "$choice" in
-    *"principale"*) only_primary "$primary" ;;
-    *"Duplica"*) duplicate_displays "$primary" "$external" ;;
-    *"Estendi"*) extend_displays "$primary" "$external" ;;
-    *"esterno"*) only_external "$primary" "$external" ;;
-    *"Indietro") go_back ;;
-esac
+    case "$choice" in
+        "") exit 0 ;;
+        "  ──"*) continue ;;
+        *"principale"*) only_primary "$primary"; exit 0 ;;
+        *"Duplica"*) duplicate_displays "$primary" "$external"; exit 0 ;;
+        *"Estendi"*) extend_displays "$primary" "$external"; exit 0 ;;
+        *"esterno"*) only_external "$primary" "$external"; exit 0 ;;
+        *"Indietro") go_back ;;
+    esac
+done

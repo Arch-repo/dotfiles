@@ -236,10 +236,25 @@ layout_monitor_for_widget() {
 
 widget_client_address() {
     local name="$1"
-    local class title
+    local runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
+    local pid_file="$runtime_dir/$name.pid"
+    local pid class title
 
-    class="$(widget_meta "$name" class)"
-    title="$(widget_meta "$name" title)"
+    if [[ -r "$pid_file" ]]; then
+        pid="$(cat "$pid_file" 2>/dev/null || true)"
+        if [[ "$pid" =~ ^[0-9]+$ ]]; then
+            local addr
+            addr="$(hyprctl clients -j 2>/dev/null | jq -r --argjson pid "$pid" '.[] | select(.pid == $pid) | .address' | sed -n '1p')"
+            if [[ -n "$addr" ]]; then
+                printf '%s' "$addr"
+                return 0
+            fi
+        fi
+    fi
+
+    class="$(widget_meta "$name" class 2>/dev/null || true)"
+    title="$(widget_meta "$name" title 2>/dev/null || true)"
+    [[ -n "$class" ]] || return 1
 
     hyprctl clients -j 2>/dev/null |
         jq -r --arg class "$class" --arg title "$title" '

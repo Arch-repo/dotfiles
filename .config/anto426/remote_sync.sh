@@ -510,17 +510,27 @@ guided_calendar_config() {
     local choice url past_days future_days
 
     choice="$(
-        printf '%s\n' \
-            "󰁔 Incolla/aggiorna URL iCal" \
-            "󰅖 Disattiva Google Calendar" \
-            "󰌍 Indietro" |
+        {
+            printf '  ── GOOGLE CALENDAR ──────────────\n'
+            printf '%s\n' "󰁔 Incolla/aggiorna URL iCal"
+            printf '%s\n' "󰅖 Disattiva Google Calendar"
+            printf '  ────────────────────────────────\n'
+            printf '%s\n' "󰌍 Indietro"
+        } |
             rofi_pick_msg "Google Calendar" "Usa l'indirizzo segreto in formato iCal.\nGoogle Calendar -> Impostazioni calendario\nIntegra calendario -> Indirizzo segreto iCal."
     )"
 
     case "$choice" in
+        "  ──"*)
+            guided_calendar_config
+            ;;
         *"Incolla"*)
             url="$(rofi_input "URL iCal" "${ANTO426_GCAL_ICS_URL:-}" "Incolla il link segreto che finisce con basic.ics")"
             [[ -z "$url" ]] && return 0
+            if [[ ! "$url" =~ ^https?:// || "$url" != *".ics"* ]]; then
+                notify "URL iCal non valido"
+                return 1
+            fi
             past_days="$(rofi_input "Giorni passati" "${ANTO426_GCAL_SYNC_PAST_DAYS:-7}" "Quanti giorni nel passato sincronizzare")"
             future_days="$(rofi_input "Giorni futuri" "${ANTO426_GCAL_SYNC_FUTURE_DAYS:-120}" "Quanti giorni nel futuro sincronizzare")"
             [[ "$past_days" =~ ^[0-9]+$ ]] || past_days=7
@@ -539,22 +549,32 @@ guided_calendar_config() {
 }
 
 guided_interval_config() {
-    local choice
+    local choice custom
 
     choice="$(
-        printf '%s\n' \
-            "5 minuti" \
-            "15 minuti" \
-            "30 minuti" \
-            "1 ora" |
+        {
+            printf '  ── INTERVALLO ───────────────────\n'
+            printf '%s\n' "5 minuti"
+            printf '%s\n' "15 minuti"
+            printf '%s\n' "30 minuti"
+            printf '%s\n' "1 ora"
+            printf '%s\n' "Personalizzato"
+            printf '  ────────────────────────────────\n'
+            printf '%s\n' "󰌍 Indietro"
+        } |
             rofi_pick_msg "Intervallo sync" "Ogni quanto il daemon aggiorna Calendar"
     )"
 
     case "$choice" in
+        "  ──"*) guided_interval_config ;;
         "5 minuti") ANTO426_SYNC_INTERVAL=300 ;;
         "15 minuti") ANTO426_SYNC_INTERVAL=900 ;;
         "30 minuti") ANTO426_SYNC_INTERVAL=1800 ;;
         "1 ora") ANTO426_SYNC_INTERVAL=3600 ;;
+        "Personalizzato")
+            custom="$(rofi_input "Secondi sync" "${ANTO426_SYNC_INTERVAL:-900}" "Esempio: 900 = 15 minuti")"
+            [[ "$custom" =~ ^[0-9]+$ && "$custom" -ge 60 ]] && ANTO426_SYNC_INTERVAL="$custom" || notify "Intervallo non valido"
+            ;;
     esac
 }
 
@@ -578,16 +598,21 @@ guided_config() {
     while true; do
         local choice
         choice="$(
-            printf '%s\n' \
-                "󰃭 Configura Google Calendar" \
-                "󰔚 Intervallo sincronizzazione" \
-                "󰑓 Salva e testa tutto" \
-                "󰈙 Apri file avanzato" \
-                "󰌍 Esci" |
+            {
+                printf '  ── CALENDARIO ───────────────────\n'
+                printf '%s\n' "󰃭 Configura Google Calendar"
+                printf '%s\n' "󰔚 Intervallo sincronizzazione"
+                printf '  ── AZIONI ───────────────────────\n'
+                printf '%s\n' "󰑓 Salva e testa tutto"
+                printf '%s\n' "󰈙 Apri file avanzato"
+                printf '  ────────────────────────────────\n'
+                printf '%s\n' "󰌍 Esci"
+            } |
                 rofi_pick_msg "Config sync" "$(config_status_message)"
         )"
 
         case "$choice" in
+            "  ──"*) continue ;;
             *"Google Calendar")
                 guided_calendar_config
                 persist_current_config

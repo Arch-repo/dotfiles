@@ -371,20 +371,27 @@ pick_action() {
 
     {
         [[ -n "$stop_line" ]] && printf '%s\n' "$stop_line"
+        printf '  ── SCREENSHOT ───────────────────\n'
         printf '%s\n' \
             "󰆞 Screenshot area" \
             "󰖲 Screenshot finestra" \
-            "󰍹 Screenshot schermo intero" \
+            "󰍹 Screenshot schermo intero"
+        printf '  ── REGISTRAZIONE ────────────────\n'
+        printf '%s\n' \
             "󰑊 Registra area" \
             "󰑊 Registra finestra" \
             "󰑊 Registra schermo attivo" \
-            "󰕾 Registra schermo + audio" \
+            "󰕾 Registra schermo + audio"
+        printf '  ── CARTELLE ─────────────────────\n'
+        printf '%s\n' \
             " Apri screenshot" \
-            " Apri registrazioni" \
-            "󰌍 Indietro"
+            " Apri registrazioni"
         if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
+            printf '  ── STRUMENTI ────────────────────\n'
             printf '%s\n' "󰐌 Apri OBS Studio"
         fi
+        printf '  ────────────────────────────────\n'
+        printf '%s\n' "󰌍 Indietro"
     } | rofi_pick_msg "Cattura" "$(recording_status)"
 }
 
@@ -396,26 +403,34 @@ pick_record_action() {
 
     {
         [[ -n "$stop_line" ]] && printf '%s\n' "$stop_line"
+        printf '  ── REGISTRAZIONE ────────────────\n'
         printf '%s\n' \
             "󰑊 Registra area" \
             "󰑊 Registra finestra" \
             "󰑊 Registra schermo attivo" \
             "󰕾 Registra schermo + audio" \
-            " Apri registrazioni" \
-            "󰌍 Indietro"
+            " Apri registrazioni"
         if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
+            printf '  ── STRUMENTI ────────────────────\n'
             printf '%s\n' "󰐌 Apri OBS Studio"
         fi
+        printf '  ────────────────────────────────\n'
+        printf '%s\n' "󰌍 Indietro"
     } | rofi_pick_msg "Registra" "$(recording_status)"
 }
 
 pick_screenshot_action() {
-    printf '%s\n' \
-        "󰆞 Screenshot area" \
-        "󰖲 Screenshot finestra" \
-        "󰍹 Screenshot schermo intero" \
-        " Apri screenshot" \
-        "󰌍 Indietro" |
+    {
+        printf '  ── SCREENSHOT ───────────────────\n'
+        printf '%s\n' \
+            "󰆞 Screenshot area" \
+            "󰖲 Screenshot finestra" \
+            "󰍹 Screenshot schermo intero"
+        printf '  ── CARTELLE ─────────────────────\n'
+        printf '%s\n' " Apri screenshot"
+        printf '  ────────────────────────────────\n'
+        printf '%s\n' "󰌍 Indietro"
+    } |
         rofi_pick_msg "Screenshot" "Cartella: $SCREENSHOT_DIR"
 }
 
@@ -426,6 +441,7 @@ run_menu() {
     [[ -n "$choice" ]] || return 0
 
     case "$choice" in
+        "  ──"*) run_menu ;;
         *"Ferma registrazione") stop_recording ;;
         *"Screenshot area")
             mkdir -p "$SCREENSHOT_DIR"
@@ -465,6 +481,7 @@ run_screenshot_menu() {
     [[ -n "$choice" ]] || return 0
 
     case "$choice" in
+        "  ──"*) run_screenshot_menu ;;
         *"Screenshot area")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot area "$(default_screenshot_path)"
@@ -489,6 +506,7 @@ run_record_menu() {
     [[ -n "$choice" ]] || return 0
 
     case "$choice" in
+        "  ──"*) run_record_menu ;;
         *"Ferma registrazione") stop_recording ;;
         *"Registra area") start_recording area false ;;
         *"Registra finestra") start_recording window false ;;

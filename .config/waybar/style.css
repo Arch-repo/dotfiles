@@ -194,3 +194,69 @@ tooltip label {
     background: alpha(@red, 0.08);
     border-color: alpha(@red, 0.35);
 }
+
+/* =============================================================================
+   Premium Capsule/Pill Grouping for Status and Tools
+   ============================================================================= */
+
+#status,
+#tools,
+.status,
+.tools {
+    background: @background-alpha;
+    border: 1px solid alpha(@border, 0.16);
+    border-radius: 12px;
+    margin: 5px 6px;
+    padding: 0 6px;
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Hover over entire capsule subtle background shift */
+#status:hover,
+#tools:hover {
+    border-color: @accent-alpha;
+    background: alpha(@background, 0.76);
+    box-shadow: 0 4px 12px alpha(@background, 0.15);
+}
+
+/* Remove default individual margins and borders for grouped children */
+#status #network,
+#status #bluetooth,
+#status #pulseaudio,
+#status #battery,
+#tools #custom-keyboard,
+#tools #custom-notifications,
+#tools #custom-screenshot,
+#tools #custom-control {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 8px;
+    margin: 2px 2px;
+    min-height: 26px;
+    transition: all 0.2s ease-in-out;
+}
+
+/* Specific text/percentage module padding adjustments */
+#status #pulseaudio,
+#status #battery,
+#tools #custom-keyboard {
+    padding: 0 8px;
+}
+
+#status #network,
+#status #bluetooth,
+#tools #custom-screenshot,
+#tools #custom-notifications,
+#tools #custom-control {
+    min-width: 26px;
+    padding: 0;
+}
+
+/* Beautiful hover highlight for individual modules inside the capsule */
+#status > widget > *:hover,
+#tools > widget > *:hover {
+    background: @select-alpha;
+    border-color: @accent-alpha;
+    color: @foreground;
+}
+

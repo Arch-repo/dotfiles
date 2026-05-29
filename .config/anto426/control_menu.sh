@@ -93,7 +93,13 @@ rofi_input() {
 
 rofi_password() {
     local prompt="$1"
-    rofi -dmenu -password -p "$prompt" -theme "$THEME_MENU"
+    local message="${2:-}"
+
+    if [[ -n "$message" ]]; then
+        rofi -dmenu -password -p "$prompt" -mesg "$message" -theme "$THEME_MENU"
+    else
+        rofi -dmenu -password -p "$prompt" -theme "$THEME_MENU"
+    fi
 }
 
 notify() {
@@ -261,9 +267,12 @@ bluetooth_menu() {
 
         choice="$(
             {
+                printf '  ── AZIONI ───────────────────────\n'
                 printf '%s\n' "󰐕 Attiva/Disattiva"
                 printf '%s\n' "󰑓 Scansiona dispositivi"
+                printf '  ── DISPOSITIVI ──────────────────\n'
                 printf '%s\n' "$devices"
+                printf '  ────────────────────────────────\n'
                 printf '%s\n' "󰌍 Indietro"
             } | rofi_pick_msg "Bluetooth" "Stato: Bluetooth $state\nConnesso: $connected_bt"
         )"
@@ -271,6 +280,7 @@ bluetooth_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "󰐕 Attiva/Disattiva")
                 bluetooth_toggle
                 ;;
@@ -418,6 +428,83 @@ wifi_cache_status() {
     fi
 }
 
+wifi_profile_name_for_ssid() {
+    local ssid="$1"
+    local name profile_ssid
+
+    while IFS= read -r name; do
+        [[ -n "$name" ]] || continue
+        profile_ssid="$(nmcli -g 802-11-wireless.ssid connection show "$name" 2>/dev/null | sed -n '1p')"
+        if [[ "$profile_ssid" == "$ssid" || "$name" == "$ssid" ]]; then
+            printf '%s' "$name"
+            return 0
+        fi
+    done < <(nmcli -g NAME connection show 2>/dev/null)
+
+    return 1
+}
+
+wifi_profile_exists() {
+    wifi_profile_name_for_ssid "$1" >/dev/null
+}
+
+wifi_security_kind() {
+    local security="${1:-open}"
+    security="$(printf '%s' "$security" | tr '[:lower:]' '[:upper:]')"
+
+    if [[ -z "$security" || "$security" == "--" || "$security" == "OPEN" ]]; then
+        printf 'open'
+    elif [[ "$security" == *"802.1X"* ]]; then
+        printf 'enterprise'
+    elif [[ "$security" == *"WEP"* ]]; then
+        printf 'wep'
+    elif [[ "$security" == *"WPA"* || "$security" == *"SAE"* ]]; then
+        printf 'wpa'
+    else
+        printf 'secured'
+    fi
+}
+
+wifi_password_hint() {
+    case "$(wifi_security_kind "$1")" in
+        wpa) printf 'Password WPA/WPA2/WPA3: 8-63 caratteri, oppure chiave hex da 64 caratteri.' ;;
+        wep) printf 'Chiave WEP: 5 o 13 caratteri, oppure 10 o 26 caratteri esadecimali.' ;;
+        *) printf 'Inserisci la password della rete. Vuoto = annulla.' ;;
+    esac
+}
+
+wifi_password_valid() {
+    local security="$1"
+    local password="$2"
+    local length
+    length="${#password}"
+
+    case "$(wifi_security_kind "$security")" in
+        open) return 0 ;;
+        enterprise) return 1 ;;
+        wpa)
+            ((length >= 8 && length <= 63)) && return 0
+            [[ "$password" =~ ^[0-9A-Fa-f]{64}$ ]] && return 0
+            return 1
+            ;;
+        wep)
+            case "$length" in
+                5 | 13) return 0 ;;
+                10 | 26) [[ "$password" =~ ^[0-9A-Fa-f]+$ ]] && return 0 ;;
+            esac
+            return 1
+            ;;
+        *)
+            [[ -n "$password" ]]
+            ;;
+    esac
+}
+
+wifi_output_needs_password() {
+    local output="$1"
+    printf '%s' "$output" | grep -Eiq 'secrets?|password|passphrase|key|802-11-wireless-security|No agents were available|authentication|not authorized'
+}
+
 wifi_rescan() {
     notify "Aggiorno reti Wi-Fi in background..."
     (
@@ -430,33 +517,95 @@ wifi_rescan() {
 wifi_connect_new() {
     local ssid="$1"
     local security="$2"
-    local password output
+    local password output attempt hint
 
-    if [[ "$security" == *"802.1X"* ]]; then
+    if [[ "$(wifi_security_kind "$security")" == "enterprise" ]]; then
         notify "Rete 802.1X: serve un profilo già configurato"
         return 1
     fi
 
-    if [[ "$security" == "open" ]]; then
+    if [[ "$(wifi_security_kind "$security")" == "open" ]]; then
         notify "Connessione in corso a $ssid..."
         if output="$(nmcli -w 20 dev wifi connect "$ssid" 2>&1)"; then
             notify "Connesso a $ssid"
+            wifi_cache_update >/dev/null 2>&1 || true
         else
-            notify "Connessione a $ssid fallita: $output"
+            if wifi_output_needs_password "$output"; then
+                notify "$ssid sembra richiedere una password"
+                wifi_connect_new "$ssid" "WPA"
+                return $?
+            else
+                notify "Connessione a $ssid fallita: $output"
+            fi
         fi
-        return
+        return 0
     fi
 
-    password="$(rofi_password "Password Wi-Fi ($ssid)")"
-    [[ -n "$password" ]] || return 0
+    hint="$(wifi_password_hint "$security")"
+    for attempt in 1 2 3; do
+        if ! password="$(rofi_password "Password Wi-Fi ($ssid)" "$hint")"; then
+            notify "Connessione a $ssid annullata"
+            return 1
+        fi
+
+        if [[ -z "$password" ]]; then
+            notify "Password non inserita: connessione annullata"
+            return 1
+        fi
+
+        if ! wifi_password_valid "$security" "$password"; then
+            hint="$(wifi_password_hint "$security")"
+            notify "Password non valida per $ssid"
+            continue
+        fi
+
+        notify "Connessione in corso a $ssid..."
+        if output="$(nmcli -w 30 dev wifi connect "$ssid" password "$password" 2>&1)"; then
+            notify "Connesso a $ssid"
+            wifi_cache_update >/dev/null 2>&1 || true
+            return 0
+        fi
+
+        if wifi_output_needs_password "$output"; then
+            hint="Password non accettata. Riprova.\n$(wifi_password_hint "$security")"
+            notify "Password non accettata per $ssid"
+            continue
+        fi
+
+        notify "Connessione a $ssid fallita: $output"
+        return 1
+    done
+
+    notify "Connessione a $ssid non riuscita dopo 3 tentativi"
+    return 1
+}
+
+wifi_connect_saved() {
+    local ssid="$1"
+    local security="$2"
+    local profile_name="${3:-$1}"
+    local output
 
     notify "Connessione in corso a $ssid..."
-    run_or_notify "Connessione a $ssid" nmcli -w 30 dev wifi connect "$ssid" password "$password"
+    if output="$(nmcli -w 20 connection up id "$profile_name" 2>&1)"; then
+        notify "Connesso a $ssid"
+        wifi_cache_update >/dev/null 2>&1 || true
+        return 0
+    fi
+
+    if wifi_output_needs_password "$output"; then
+        notify "Profilo salvato senza password valida"
+        wifi_connect_new "$ssid" "$security"
+        return $?
+    fi
+
+    notify "Connessione a $ssid fallita: $output"
+    return 1
 }
 
 wifi_device_menu() {
     local item="$1"
-    local label ssid security choice active has_profile
+    local label ssid security choice active has_profile profile_name
 
     label="$(printf '%s' "$item" | awk -F'\t' '{print $1}')"
     ssid="$(printf '%s' "$item" | awk -F'\t' '{print $2}')"
@@ -464,7 +613,8 @@ wifi_device_menu() {
     active="$(printf '%s' "$item" | awk -F'\t' '{print $4}')"
     [[ -n "$ssid" ]] || return 0
 
-    if nmcli -g NAME connection show 2>/dev/null | grep -Fxq "$ssid"; then
+    profile_name="$(wifi_profile_name_for_ssid "$ssid" 2>/dev/null || true)"
+    if [[ -n "$profile_name" ]]; then
         has_profile=true
     else
         has_profile=false
@@ -495,8 +645,7 @@ wifi_device_menu() {
         case "$choice" in
             "󰌷 Connetti")
                 if [[ "$has_profile" == "true" ]]; then
-                    notify "Connessione in corso a $ssid..."
-                    run_or_notify "Connessione a $ssid" nmcli connection up id "$ssid"
+                    wifi_connect_saved "$ssid" "$security" "$profile_name"
                 else
                     wifi_connect_new "$ssid" "$security"
                 fi
@@ -504,16 +653,18 @@ wifi_device_menu() {
                 ;;
             "󰌸 Disconnetti")
                 notify "Disconnessione in corso da $ssid..."
-                run_or_notify "Disconnessione da $ssid" nmcli connection down id "$ssid"
+                run_or_notify "Disconnessione da $ssid" nmcli connection down id "${profile_name:-$ssid}"
+                wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
             "󰆴 Dimentica rete")
-                run_or_notify "Rete dimenticata" nmcli connection delete id "$ssid"
+                run_or_notify "Rete dimenticata" nmcli connection delete id "${profile_name:-$ssid}"
+                wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
             "󰋼 Informazioni")
                 if [[ "$has_profile" == "true" ]]; then
-                    nmcli connection show id "$ssid" 2>&1 | rofi_pick "Info Rete: $ssid" >/dev/null
+                    nmcli connection show id "$profile_name" 2>&1 | rofi_pick "Info Rete: $ssid" >/dev/null
                 else
                     printf 'Rete non salvata\nSSID: %s\nSicurezza: %s\n' "$ssid" "$security" | rofi_pick "Info Rete: $ssid" >/dev/null
                 fi
@@ -548,9 +699,12 @@ wifi_menu() {
 
         choice="$(
             {
+                printf '  ── AZIONI ───────────────────────\n'
                 printf '%s\n' "󰐕 Attiva/Disattiva"
                 printf '%s\n' "󰑓 Scansiona reti"
+                printf '  ── RETI DISPONIBILI ─────────────\n'
                 printf '%s\n' "$networks"
+                printf '  ────────────────────────────────\n'
                 printf '%s\n' "󰌍 Indietro"
             } | rofi_pick_msg "Wi-Fi" "Stato: Wi-Fi $state\nConnesso: $connected\n$cache_status"
         )"
@@ -558,6 +712,7 @@ wifi_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "󰐕 Attiva/Disattiva")
                 wifi_toggle
                 wifi_cache_refresh_background true
@@ -725,20 +880,25 @@ audio_menu() {
         source_vol="$(audio_volume_label "@DEFAULT_AUDIO_SOURCE@")"
 
         choice="$(
-            printf '%s\n' \
-                "󰖁 Silenzia/Attiva Output" \
-                "󰕾 Volume Output ($(audio_volume_percent "@DEFAULT_AUDIO_SINK@")%)" \
-                "󰍭 Silenzia/Attiva Microfono" \
-                "󰍬 Volume Microfono ($(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")%)" \
-                "󰓃 Seleziona dispositivo Output" \
-                "󰍬 Seleziona dispositivo Input" \
-                "󰌍 Indietro" |
-                rofi_pick_msg "Audio" "Output: $sink_desc\nVolume: $sink_vol\n\nInput:  $source_desc\nVolume: $source_vol"
+            {
+                printf '  ── OUTPUT ──────────────────────\n'
+                printf '%s\n' "󰖁 Silenzia/Attiva Output"
+                printf '%s\n' "󰕾 Volume Output ($(audio_volume_percent "@DEFAULT_AUDIO_SINK@")%)"
+                printf '  ── INPUT ───────────────────────\n'
+                printf '%s\n' "󰍭 Silenzia/Attiva Microfono"
+                printf '%s\n' "󰍬 Volume Microfono ($(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")%)"
+                printf '  ── DISPOSITIVI ─────────────────\n'
+                printf '%s\n' "󰓃 Seleziona dispositivo Output"
+                printf '%s\n' "󰍬 Seleziona dispositivo Input"
+                printf '  ────────────────────────────────\n'
+                printf '%s\n' "󰌍 Indietro"
+            } | rofi_pick_msg "Audio" "Output: $sink_desc\nVolume: $sink_vol\n\nInput:  $source_desc\nVolume: $source_vol"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
             *"Volume Output"*)
                 audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" \
@@ -903,12 +1063,15 @@ battery_menu() {
         choice="$(
             {
                 if command -v powerprofilesctl >/dev/null 2>&1; then
+                    printf '  ── PROFILO ENERGIA ──────────────\n'
                     printf '%s\n' "$power_saver"
                     printf '%s\n' "$balanced"
                     printf '%s\n' "$performance"
                 fi
+                printf '  ── AZIONI ───────────────────────\n'
                 printf '%s\n' "$refresh"
                 printf '%s\n' "$suspend"
+                printf '  ────────────────────────────────\n'
                 printf '%s\n' "$back"
             } | rofi_pick_msg "$title" "$message"
         )"
@@ -916,6 +1079,7 @@ battery_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "$power_saver") run_or_notify "$(system_text "Power Saver")" powerprofilesctl set power-saver ;;
             "$balanced") run_or_notify "$(system_text "Balanced")" powerprofilesctl set balanced ;;
             "$performance") run_or_notify "$(system_text "Performance")" powerprofilesctl set performance ;;
@@ -1047,10 +1211,14 @@ keyboard_menu() {
 
         choice="$(
             {
+                printf '  ── AZIONI ───────────────────────\n'
                 printf '%s\n' "$next_layout"
+                printf '  ── LAYOUT DISPONIBILI ───────────\n'
                 printf '%s\n' "$labels"
+                printf '  ── STRUMENTI ────────────────────\n'
                 command -v fcitx5-configtool >/dev/null 2>&1 && printf '%s\n' "$configure"
                 printf '%s\n' "$diagnostics"
+                printf '  ────────────────────────────────\n'
                 printf '%s\n' "$back"
             } | rofi_pick_msg "$title" "$(system_text "Current"): $(xkb_description "$active_code")\n$(system_text "System"): $im_status\n$gtk_status"
         )"
@@ -1058,6 +1226,7 @@ keyboard_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "$next_layout")
                 run_or_notify "$(system_text "Keyboard")" hyprctl switchxkblayout all next
                 ;;
@@ -1124,6 +1293,7 @@ notifications_menu() {
 
         choice="$(
             {
+                printf '  ── AZIONI ───────────────────────\n'
                 if [[ "$dnd" == "true" ]]; then
                     printf '%s\n' "󰂚 Disattiva Non Disturbare"
                 else
@@ -1132,7 +1302,9 @@ notifications_menu() {
                 printf '%s\n' "󰵚 Chiudi ultima notifica"
                 printf '%s\n' "󰆴 Cancella tutte le notifiche"
                 printf '%s\n' "󰑓 Aggiorna"
+                printf '  ── CRONOLOGIA ───────────────────\n'
                 printf '%s\n' "$history_labels"
+                printf '  ────────────────────────────────\n'
                 printf '%s\n' "󰌍 Indietro"
             } | rofi_pick_msg "Notifiche" "Nel menu: $count\nNon disturbare: $dnd_label"
         )"
@@ -1140,6 +1312,7 @@ notifications_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             *"Attiva Non Disturbare") swaync-client -dn >/dev/null ;;
             *"Disattiva Non Disturbare") swaync-client -df >/dev/null ;;
             *"Chiudi ultima notifica")
@@ -1338,6 +1511,7 @@ calendar_event_detail_menu() {
     )"
 
     case "$choice" in
+        "  ──"*) return 0 ;;
         *"Copia dettagli")
             printf '%s\n%s\n%s\n' "$title" "$when" "$description" | wl-copy 2>/dev/null || true
             ;;
@@ -1553,22 +1727,27 @@ calendar_menu() {
         message="$(calendar_month_message)"
 
         choice="$(
-            printf '%s\n' \
-                "󰑓 Sincronizza Google Calendar" \
-                " Aggiungi evento locale" \
-                "󰃭 Eventi oggi" \
-                "󰔚 Prossimi 30 giorni" \
-                "󰥔 Scegli data" \
-                "󰧭 Elimina evento locale" \
-                "󰖟 Apri Google Calendar" \
-                "󰒓 Config sync" \
-                "󰌍 Indietro" |
-                rofi_pick_msg "$month" "$message" "$THEME_CALENDAR"
+            {
+                printf '  ── EVENTI ───────────────────────\n'
+                printf '%s\n' "󰃭 Eventi oggi"
+                printf '%s\n' "󰔚 Prossimi 30 giorni"
+                printf '%s\n' "󰥔 Scegli data"
+                printf '  ── GESTIONE ─────────────────────\n'
+                printf '%s\n' " Aggiungi evento locale"
+                printf '%s\n' "󰧭 Elimina evento locale"
+                printf '%s\n' "󰑓 Sincronizza Google Calendar"
+                printf '  ── STRUMENTI ────────────────────\n'
+                printf '%s\n' "󰖟 Apri Google Calendar"
+                printf '%s\n' "󰒓 Config sync"
+                printf '  ────────────────────────────────\n'
+                printf '%s\n' "󰌍 Indietro"
+            } | rofi_pick_msg "$month" "$message" "$THEME_CALENDAR"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "󰑓 Sincronizza Google Calendar") calendar_sync_google ;;
             " Aggiungi evento locale") calendar_add_event ;;
             "󰃭 Eventi oggi") calendar_show_date "$today" ;;
@@ -1622,19 +1801,23 @@ power_menu() {
         poweroff="$(menu_item "󰐥" "Power Off")"
         back="$(menu_item "󰌍" "Back")"
         choice="$(
-            printf '%s\n' \
-                "$lock" \
-                "$logout" \
-                "$suspend" \
-                "$reboot" \
-                "$poweroff" \
-                "$back" |
-                rofi_pick_msg "$title" "Hyprland\n$(system_text "Select an action")"
+            {
+                printf '  ── SESSIONE ─────────────────────\n'
+                printf '%s\n' "$lock"
+                printf '%s\n' "$logout"
+                printf '%s\n' "$suspend"
+                printf '  ── SISTEMA ──────────────────────\n'
+                printf '%s\n' "$reboot"
+                printf '%s\n' "$poweroff"
+                printf '  ────────────────────────────────\n'
+                printf '%s\n' "$back"
+            } | rofi_pick_msg "$title" "Hyprland\n$(system_text "Select an action")"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
+            "  ──"*) continue ;;
             "$lock")
                 hyprlock
                 return 0
@@ -1672,55 +1855,49 @@ power_menu() {
 main_menu() {
     while true; do
         local choice
-        local bluetooth wifi audio brightness battery keyboard notifications calendar wallpapers display widgets power floating
-        bluetooth="$(menu_item "󰂯" "Bluetooth")"
-        wifi="$(menu_item "󰤨" "Wi-Fi")"
-        audio="$(menu_item "󰓃" "Sound")"
-        brightness="󰃠 Luminosità"
-        battery="$(menu_item "󰂎" "Battery")"
-        keyboard="$(menu_item "" "Keyboard")"
-        notifications="$(menu_item "󰵙" "Notifications")"
-        calendar="$(menu_item "󰃭" "Calendar")"
-        wallpapers="$(menu_item "󰸉" "Wallpaper")"
-        display="󰍹 Proietta schermo"
-        widgets="󱓞 Gestione widget"
-        floating="󱂬 Floating Manager"
-        power="$(menu_item "󰐥" "Power Off")"
 
         choice="$(
-            printf '%s\n' \
-                "$bluetooth" \
-                "$wifi" \
-                "$audio" \
-                "$brightness" \
-                "$battery" \
-                "$keyboard" \
-                "$notifications" \
-                "$calendar" \
-                "$wallpapers" \
-                "$display" \
-                "$widgets" \
-                "$floating" \
-                "$power" |
-                rofi_pick "$(system_text "Settings")"
+            {
+                printf '󰨞 CONTROLLI RAPIDI\n'
+                printf ' ├─ 󰤨  Connessione Wi-Fi\n'
+                printf ' ├─ 󰂯  Dispositivi Bluetooth\n'
+                printf ' ├─ 󰓃  Regolazioni Audio (Volume/Input)\n'
+                printf ' ├─ 󰃠  Luminosità Schermo\n'
+                printf ' └─ 󰂎  Informazioni Batteria\n'
+                
+                printf '\n󰒓 CONFIGURAZIONE SISTEMA\n'
+                printf ' ├─   Disposizione Tastiera\n'
+                printf ' ├─ 󰵙  Registro Notifiche\n'
+                printf ' ├─ 󰃭  Calendario ed Eventi\n'
+                printf ' ├─ 󰍹  Proietta Schermo (Display)\n'
+                printf ' └─ 󱂬  Floating Manager (Finestre)\n'
+                
+                printf '\n󰏘 PERSONALIZZAZIONE\n'
+                printf ' ├─ 󰸉  Seleziona Sfondo (Wallpaper)\n'
+                printf ' └─ 󱓞  Gestione Widget Desktop\n'
+                
+                printf '\n󰐥 SPEGNIMENTO SISTEMA\n'
+                printf ' └─ 󰐥 Menu Spegnimento\n'
+            } | rofi_pick "$(system_text "Settings")"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "$bluetooth") MENU_STATE="bluetooth"; return 0 ;;
-            "$wifi") MENU_STATE="wifi"; return 0 ;;
-            "$audio") MENU_STATE="audio"; return 0 ;;
-            "$brightness") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
-            "$battery") MENU_STATE="battery"; return 0 ;;
-            "$keyboard") MENU_STATE="keyboard"; return 0 ;;
-            "$notifications") MENU_STATE="notifications"; return 0 ;;
-            "$calendar") MENU_STATE="calendar"; return 0 ;;
-            "$wallpapers") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
-            "$display") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
-            "$widgets") "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
-            "$floating") ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
-            "$power") MENU_STATE="power"; return 0 ;;
+            *"CONTROLLI RAPIDI"* | *"CONFIGURAZIONE SISTEMA"* | *"PERSONALIZZAZIONE"* | *"SPEGNIMENTO SISTEMA"*) continue ;;
+            *"Bluetooth"*) MENU_STATE="bluetooth"; return 0 ;;
+            *"Wi-Fi"*) MENU_STATE="wifi"; return 0 ;;
+            *"Audio"*) MENU_STATE="audio"; return 0 ;;
+            *"Luminosità"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
+            *"Batteria"*) MENU_STATE="battery"; return 0 ;;
+            *"Tastiera"*) MENU_STATE="keyboard"; return 0 ;;
+            *"Notifiche"*) MENU_STATE="notifications"; return 0 ;;
+            *"Calendario"*) MENU_STATE="calendar"; return 0 ;;
+            *"Sfondo"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
+            *"Proietta Schermo"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
+            *"Gestione Widget"*) "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
+            *"Floating Manager"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
+            *"Menu Spegnimento"*) MENU_STATE="power"; return 0 ;;
             *) return 0 ;;
         esac
     done

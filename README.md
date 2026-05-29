@@ -91,22 +91,10 @@ The installer pulls the package set used by this Arch-Hyprland setup, installs A
 ~/.config/anto426/install_archpkg.sh
 ```
 
-The script builds [`Anto426/rofi`](https://github.com/Anto426/rofi) into:
-
-```bash
-~/.local/rofi-anto426
-```
-
-and links the active binary here:
-
-```bash
-~/.local/bin/rofi
-```
-
-Make sure `~/.local/bin` is before `/usr/bin` in your session `PATH`.
+The script builds [`Anto426/rofi`](https://github.com/Anto426/rofi) and installs it directly over the system installation in `/usr` so it overrides `/usr/bin/rofi` cleanly, satisfies packages like `rofi-emoji`, and automatically adds `rofi` to `IgnorePkg` in `/etc/pacman.conf` to protect it from being overwritten during future system updates.
 
 ### 4. Manual Rofi Build
-If you only want to rebuild the custom rofi:
+If you only want to rebuild the custom rofi system-wide:
 
 ```bash
 sudo pacman -S --needed base-devel git meson ninja pkgconf flex bison check pandoc doxygen \
@@ -115,17 +103,15 @@ sudo pacman -S --needed base-devel git meson ninja pkgconf flex bison check pand
   wayland wayland-protocols
 
 git clone --recursive https://github.com/Anto426/rofi ~/Git/arch/rofi
-meson setup ~/Git/arch/rofi/build-anto426 ~/Git/arch/rofi --prefix ~/.local/rofi-anto426
+meson setup ~/Git/arch/rofi/build-anto426 ~/Git/arch/rofi --prefix /usr
 meson compile -C ~/Git/arch/rofi/build-anto426
-meson install -C ~/Git/arch/rofi/build-anto426
-mkdir -p ~/.local/bin
-ln -sfn ~/.local/rofi-anto426/bin/rofi ~/.local/bin/rofi
+sudo meson install -C ~/Git/arch/rofi/build-anto426
 ```
 
 Verify the slider-enabled build:
 
 ```bash
-~/.local/bin/rofi -help | grep slider
+rofi -help | grep slider
 ```
 
 ### 5. Initialize the Theme Engine

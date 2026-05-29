@@ -113,20 +113,24 @@ menu_rows() {
     printf '󰌍 Indietro\n'
 }
 
-choice="$(
-    menu_rows |
-        rofi -dmenu -i -matching fuzzy \
-            -p "Scorciatoie Hyprland" \
-            -mesg "Sezioni: Applicazioni, Finestre, Workspace, Screenshot, Audio, Luminosità, Wallpaper, Widget, Floating, Sistema" \
-            -theme "$THEME"
-)"
+while true; do
+    choice="$(
+        menu_rows |
+            rofi -dmenu -i -matching fuzzy \
+                -p "Scorciatoie Hyprland" \
+                -mesg "Sezioni: Applicazioni, Finestre, Workspace, Screenshot, Audio, Luminosità, Wallpaper, Widget, Floating, Sistema" \
+                -theme "$THEME"
+    )"
 
-case "$choice" in
-    *"Floating Manager") "$HOME/.config/anto426/floating_manager.sh" menu ;;
-    *"luminosità") "$HOME/.config/anto426/brightness_menu.sh" menu ;;
-    *"Proietta") "$HOME/.config/anto426/projection_menu.sh" ;;
-    *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle ;;
-    *"Gestione widget") "$HOME/.config/anto426/widgets.sh" arrange ;;
-    *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & ;;
-    *"Indietro") exit 0 ;;
-esac
+    case "$choice" in
+        "") exit 0 ;;
+        "── "* | "  "*) continue ;;
+        *"Floating Manager") "$HOME/.config/anto426/floating_manager.sh" menu; exit 0 ;;
+        *"luminosità") "$HOME/.config/anto426/brightness_menu.sh" menu; exit 0 ;;
+        *"Proietta") "$HOME/.config/anto426/projection_menu.sh"; exit 0 ;;
+        *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle; exit 0 ;;
+        *"Gestione widget") "$HOME/.config/anto426/widgets.sh" arrange; exit 0 ;;
+        *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & exit 0 ;;
+        *"Indietro") exit 0 ;;
+    esac
+done

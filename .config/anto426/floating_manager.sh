@@ -9,6 +9,10 @@ notify() {
     notify-send "Floating" "$*" 2>/dev/null || true
 }
 
+require_stack() {
+    command -v hyprctl >/dev/null 2>&1 && command -v jq >/dev/null 2>&1
+}
+
 go_back() {
     if [[ "${ANTO426_MENU_PARENT:-}" == "control" ]]; then
         exec "$HOME/.config/anto426/control_menu.sh" main
@@ -18,6 +22,10 @@ go_back() {
 
 active_json() {
     hyprctl activewindow -j 2>/dev/null
+}
+
+has_active_window() {
+    active_json | jq -e '(.address // "") != ""' >/dev/null 2>&1
 }
 
 active_flag() {
@@ -209,19 +217,41 @@ pick_corner() {
 menu() {
     local choice corner
 
+    require_stack || {
+        notify "Hyprland o jq non disponibile"
+        return 1
+    }
+
+    if ! has_active_window; then
+        choice="$(
+            printf '%s\n' "󰌍 Indietro" |
+                rofi -dmenu -i -matching fuzzy \
+                    -p "Floating Manager" \
+                    -mesg "Nessuna finestra attiva" \
+                    -theme "$THEME"
+        )"
+        [[ "$choice" == *"Indietro"* ]] && go_back
+        return 0
+    fi
+
     choice="$(
-        printf '%s\n' \
-            "󰱒 Toggle floating" \
-            "󰁌 Centra" \
-            "󰾆 Compatta 45%" \
-            "󰾅 Comoda 62%" \
-            "󰓡 Grande 78%" \
-            "󰐃 Pin / unpin" \
-            "󰓌 Porta sopra" \
-            "󰘕 Sposta agli angoli" \
-            "󰅖 Reset: tiled + unpin" \
-            "󰅙 Chiudi finestra" \
-            "󰌍 Indietro" |
+        {
+            printf '  ── POSIZIONE ────────────────────\n'
+            printf '%s\n' "󰱒 Toggle floating"
+            printf '%s\n' "󰁌 Centra"
+            printf '%s\n' "󰘕 Sposta agli angoli"
+            printf '  ── DIMENSIONE ───────────────────\n'
+            printf '%s\n' "󰾆 Compatta 45%"
+            printf '%s\n' "󰾅 Comoda 62%"
+            printf '%s\n' "󰓡 Grande 78%"
+            printf '  ── FINESTRA ─────────────────────\n'
+            printf '%s\n' "󰐃 Pin / unpin"
+            printf '%s\n' "󰓌 Porta sopra"
+            printf '%s\n' "󰅖 Reset: tiled + unpin"
+            printf '%s\n' "󰅙 Chiudi finestra"
+            printf '  ────────────────────────────────\n'
+            printf '%s\n' "󰌍 Indietro"
+        } |
             rofi -dmenu -i -matching fuzzy \
                 -p "Floating Manager" \
                 -mesg "$(active_summary)" \
@@ -229,6 +259,8 @@ menu() {
     )"
 
     case "$choice" in
+        "") return 0 ;;
+        "  ──"*) menu ;;
         *"Toggle"*) toggle_floating ;;
         *"Centra"*) center_window ;;
         *"Compatta"*) resize_preset small ;;
