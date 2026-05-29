@@ -142,7 +142,7 @@ build_anto426_rofi() {
     fi
 
     local rofi_src="${ANTO426_ROFI_SRC:-$HOME/Git/arch/rofi}"
-    local rofi_repo="${ANTO426_ROFI_REPO:-https://github.com/Anto426/rofi}"
+    local rofi_repo="${ANTO426_ROFI_REPO:-https://github.com/Arch-repo/rofi}"
     local build_dir="${ANTO426_ROFI_BUILD_DIR:-$rofi_src/build-anto426}"
     local prefix="${ANTO426_ROFI_PREFIX:-/usr}"
 
@@ -209,3 +209,4 @@ ui_step 6 6 "Configuring NetworkManager iwd backend"
 configure_networkmanager_iwd
 
 ui_ok "Package install complete."
+

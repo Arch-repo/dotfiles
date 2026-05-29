@@ -79,7 +79,7 @@ sudo pacman -S --needed base-devel git stow
 Clone this repo to your root `$HOME` and stow the symlinks:
 ```bash
 cd ~
-git clone https://github.com/Anto426/dotfiles.git
+git clone https://github.com/Arch-repo/dotfiles.git
 cd dotfiles
 stow --restow .
 ```
@@ -101,7 +101,7 @@ sudo pacman -S --needed base-devel git meson ninja pkgconf flex bison check pand
   xcb-util xcb-util-wm xcb-util-cursor xcb-util-keysyms xcb-imdkit \
   wayland wayland-protocols
 
-git clone --recursive https://github.com/Anto426/rofi ~/Git/arch/rofi
+git clone --recursive https://github.com/Arch-repo/rofi ~/Git/arch/rofi
 meson setup ~/Git/arch/rofi/build-anto426 ~/Git/arch/rofi --prefix /usr
 meson compile -C ~/Git/arch/rofi/build-anto426
 sudo meson install -C ~/Git/arch/rofi/build-anto426
@@ -125,3 +125,4 @@ Initialize palettes and wallpaper configuration:
 <div align="center">
   <i>Configured by anto426</i>
 </div>
+
