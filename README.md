@@ -14,7 +14,7 @@ A highly customized, aesthetic, and fully dynamic **Wayland/Hyprland** ecosystem
 
 This setup is not just a collection of config files; it features a **fully dynamic theming engine** that extracts colors from the current wallpaper and propagates them instantly across the entire operating system.
 
-- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Ghostty, and Waybar.
+- 🎨 **Dynamic Colors**: Instant palette generation for GTK, Qt, Kvantum, Rofi, Ghostty, VSCode, and Waybar.
 - 🧱 **Theme Fallbacks**: Uses the separate [`Anto426-theme`](https://github.com/Anto426/Anto426-theme) repo as a stable GTK base before dynamic colors are generated.
 - 🖼️ **Boot Integration**: Custom SDDM and GRUB themes automatically generated to match the wallpaper.
 - ⚡ **Performance**: Built around modern, fast tools optimized for Wayland.
@@ -115,7 +115,7 @@ rofi -help | grep slider
 ```
 
 ### 5. Initialize the Theme Engine
-To generate the initial color palettes and apply the theme to the entire system (including GRUB and Qt), simply run the wallpaper engine once or select a wallpaper from the Rofi menu:
+To generate the initial color palettes and apply the theme to the entire system (including GRUB, Qt, and the Anto426 VSCode theme), simply run the wallpaper engine once or select a wallpaper from the Rofi menu:
 
 ```bash
 ~/.config/anto426/wallpaper_select.sh

@@ -176,6 +176,544 @@ selection-foreground = ${foreground#\#}
 EOF
 }
 
+write_vscode_theme_json() {
+    local output="$1"
+
+    cat >"$output" <<EOF
+{
+  "name": "$vscode_theme_name",
+  "type": "dark",
+  "semanticHighlighting": true,
+  "colors": {
+    "foreground": "$foreground",
+    "focusBorder": "$accent",
+    "errorForeground": "$red",
+    "activityBar.background": "$background",
+    "activityBar.border": "${border}55",
+    "activityBar.foreground": "$foreground",
+    "activityBar.inactiveForeground": "${muted}99",
+    "activityBarBadge.background": "$accent",
+    "activityBarBadge.foreground": "$selected_fg",
+    "badge.background": "${surface}c7",
+    "badge.foreground": "$foreground",
+    "button.background": "$accent",
+    "button.foreground": "$selected_fg",
+    "button.hoverBackground": "$purple",
+    "button.secondaryBackground": "$base_alt",
+    "button.secondaryForeground": "$foreground",
+    "button.secondaryHoverBackground": "$surface",
+    "checkbox.background": "$base",
+    "checkbox.border": "${border}8c",
+    "commandCenter.background": "${base}cc",
+    "commandCenter.border": "${border}8c",
+    "commandCenter.foreground": "$foreground",
+    "dropdown.background": "$base",
+    "dropdown.border": "${border}8c",
+    "dropdown.foreground": "$foreground",
+    "dropdown.listBackground": "$background",
+    "editor.background": "$background",
+    "editor.foreground": "$foreground",
+    "editor.findMatchBackground": "${accent}66",
+    "editor.findMatchBorder": "$accent",
+    "editor.findMatchHighlightBackground": "${select}55",
+    "editor.foldBackground": "${surface}33",
+    "editor.lineHighlightBackground": "${surface}2f",
+    "editor.lineHighlightBorder": "${border}33",
+    "editor.selectionBackground": "${select}99",
+    "editor.selectionForeground": "$foreground",
+    "editor.selectionHighlightBackground": "${accent}44",
+    "editor.wordHighlightBackground": "${select}44",
+    "editor.wordHighlightBorder": "${border}8c",
+    "editor.wordHighlightStrongBackground": "${accent}4d",
+    "editor.wordHighlightStrongBorder": "$accent",
+    "editorBracketHighlight.foreground1": "$yellow",
+    "editorBracketHighlight.foreground2": "$purple",
+    "editorBracketHighlight.foreground3": "$accent",
+    "editorBracketMatch.background": "${surface}4d",
+    "editorBracketMatch.border": "$accent",
+    "editorCursor.background": "$background",
+    "editorCursor.foreground": "$accent",
+    "editorError.foreground": "$red",
+    "editorGroup.background": "$background",
+    "editorGroup.border": "${border}55",
+    "editorGroup.dropBackground": "${accent}33",
+    "editorGroup.emptyBackground": "$background",
+    "editorGroupHeader.tabsBackground": "$background",
+    "editorGutter.addedBackground": "$green",
+    "editorGutter.background": "$background",
+    "editorGutter.deletedBackground": "$red",
+    "editorGutter.modifiedBackground": "$yellow",
+    "editorHoverWidget.background": "${base}f2",
+    "editorHoverWidget.border": "${border}8c",
+    "editorHoverWidget.foreground": "$foreground",
+    "editorHoverWidget.highlightForeground": "$yellow",
+    "editorIndentGuide.activeBackground1": "${border}8c",
+    "editorIndentGuide.background1": "${border}40",
+    "editorInlayHint.background": "${surface}33",
+    "editorInlayHint.foreground": "$muted",
+    "editorLineNumber.activeForeground": "$foreground",
+    "editorLineNumber.foreground": "$border",
+    "editorLink.activeForeground": "$accent",
+    "editorOverviewRuler.border": "$background",
+    "editorRuler.foreground": "${border}40",
+    "editorStickyScroll.background": "${background}ee",
+    "editorSuggestWidget.background": "${base}f2",
+    "editorSuggestWidget.border": "${border}8c",
+    "editorSuggestWidget.foreground": "$foreground",
+    "editorSuggestWidget.highlightForeground": "$yellow",
+    "editorSuggestWidget.selectedBackground": "$accent",
+    "editorSuggestWidget.selectedForeground": "$selected_fg",
+    "editorWarning.foreground": "$yellow",
+    "editorWhitespace.foreground": "${border}55",
+    "editorWidget.background": "${base}f2",
+    "editorWidget.border": "${border}8c",
+    "gitDecoration.addedResourceForeground": "$green",
+    "gitDecoration.deletedResourceForeground": "$red",
+    "gitDecoration.ignoredResourceForeground": "$border",
+    "gitDecoration.modifiedResourceForeground": "$yellow",
+    "input.background": "$base",
+    "input.border": "${border}8c",
+    "input.foreground": "$foreground",
+    "input.placeholderForeground": "${muted}99",
+    "inputOption.activeBackground": "${accent}4d",
+    "inputOption.activeBorder": "$accent",
+    "list.activeSelectionBackground": "$accent",
+    "list.activeSelectionForeground": "$selected_fg",
+    "list.dropBackground": "${accent}33",
+    "list.focusBackground": "${select}cc",
+    "list.focusForeground": "$foreground",
+    "list.highlightForeground": "$yellow",
+    "list.hoverBackground": "${surface}78",
+    "list.hoverForeground": "$foreground",
+    "list.inactiveSelectionBackground": "${select}99",
+    "list.inactiveSelectionForeground": "$foreground",
+    "list.warningForeground": "$yellow",
+    "menu.background": "${base}f2",
+    "menu.border": "${border}8c",
+    "menu.foreground": "$foreground",
+    "menu.selectionBackground": "$accent",
+    "menu.selectionForeground": "$selected_fg",
+    "menu.separatorBackground": "${border}55",
+    "menubar.selectionBackground": "${surface}78",
+    "menubar.selectionForeground": "$foreground",
+    "minimap.background": "$background",
+    "minimap.selectionHighlight": "${select}99",
+    "notificationCenter.border": "${border}8c",
+    "notificationCenterHeader.background": "$base_alt",
+    "notifications.background": "${base}f2",
+    "notifications.border": "${border}8c",
+    "notifications.foreground": "$foreground",
+    "notificationLink.foreground": "$yellow",
+    "panel.background": "$background",
+    "panel.border": "${border}55",
+    "panel.dropBorder": "$accent",
+    "panelSectionHeader.background": "$base",
+    "panelTitle.activeBorder": "$accent",
+    "panelTitle.activeForeground": "$foreground",
+    "panelTitle.inactiveForeground": "$muted",
+    "peekView.border": "$accent",
+    "peekViewEditor.background": "$background",
+    "peekViewEditor.matchHighlightBackground": "${accent}55",
+    "peekViewResult.background": "$base",
+    "peekViewResult.selectionBackground": "${select}99",
+    "pickerGroup.border": "${border}55",
+    "pickerGroup.foreground": "$yellow",
+    "progressBar.background": "$accent",
+    "quickInput.background": "${base}f2",
+    "quickInput.foreground": "$foreground",
+    "quickInputList.focusBackground": "$accent",
+    "quickInputList.focusForeground": "$selected_fg",
+    "scrollbar.shadow": "#00000000",
+    "scrollbarSlider.activeBackground": "${accent}99",
+    "scrollbarSlider.background": "${border}66",
+    "scrollbarSlider.hoverBackground": "${select}99",
+    "settings.focusedRowBackground": "${surface}33",
+    "settings.headerForeground": "$foreground",
+    "settings.modifiedItemIndicator": "$accent",
+    "sideBar.background": "$background",
+    "sideBar.border": "${border}55",
+    "sideBar.dropBackground": "${accent}33",
+    "sideBar.foreground": "$muted",
+    "sideBarSectionHeader.background": "$base",
+    "sideBarSectionHeader.border": "${border}33",
+    "sideBarSectionHeader.foreground": "$foreground",
+    "sideBarTitle.foreground": "$foreground",
+    "statusBar.background": "$surface",
+    "statusBar.border": "${border}55",
+    "statusBar.debuggingBackground": "$orange",
+    "statusBar.debuggingForeground": "$selected_fg",
+    "statusBar.foreground": "$foreground",
+    "statusBar.noFolderBackground": "$base_alt",
+    "statusBarItem.hoverBackground": "${select}99",
+    "statusBarItem.remoteBackground": "$accent",
+    "statusBarItem.remoteForeground": "$selected_fg",
+    "statusBarItem.warningBackground": "$yellow",
+    "statusBarItem.warningForeground": "$background",
+    "tab.activeBackground": "$base",
+    "tab.activeBorder": "$accent",
+    "tab.activeForeground": "$foreground",
+    "tab.border": "${border}33",
+    "tab.hoverBackground": "${surface}78",
+    "tab.inactiveBackground": "$background",
+    "tab.inactiveForeground": "$muted",
+    "terminal.ansiBlack": "$background",
+    "terminal.ansiBlue": "$accent",
+    "terminal.ansiBrightBlack": "$gray",
+    "terminal.ansiBrightBlue": "$accent",
+    "terminal.ansiBrightCyan": "$muted",
+    "terminal.ansiBrightGreen": "$green",
+    "terminal.ansiBrightMagenta": "$purple",
+    "terminal.ansiBrightRed": "$red",
+    "terminal.ansiBrightWhite": "#ffffff",
+    "terminal.ansiBrightYellow": "$yellow",
+    "terminal.ansiCyan": "$muted",
+    "terminal.ansiGreen": "$green",
+    "terminal.ansiMagenta": "$pink",
+    "terminal.ansiRed": "$red",
+    "terminal.ansiWhite": "$foreground",
+    "terminal.ansiYellow": "$yellow",
+    "terminal.background": "$background",
+    "terminal.border": "${border}55",
+    "terminal.foreground": "$foreground",
+    "terminal.selectionBackground": "${select}99",
+    "textBlockQuote.background": "$base",
+    "textBlockQuote.border": "${border}8c",
+    "textCodeBlock.background": "$base",
+    "textLink.activeForeground": "$purple",
+    "textLink.foreground": "$accent",
+    "textPreformat.foreground": "$yellow",
+    "titleBar.activeBackground": "$background",
+    "titleBar.activeForeground": "$foreground",
+    "titleBar.border": "${border}55",
+    "titleBar.inactiveBackground": "$background",
+    "titleBar.inactiveForeground": "$muted",
+    "tree.indentGuidesStroke": "${border}55",
+    "walkThrough.embeddedEditorBackground": "$base",
+    "welcomePage.buttonBackground": "$base",
+    "welcomePage.buttonHoverBackground": "${surface}78",
+    "widget.border": "${border}8c",
+    "widget.shadow": "#00000000"
+  },
+  "semanticTokenColors": {
+    "class": "$yellow",
+    "enum": "$yellow",
+    "enumMember": "$accent",
+    "function": "$accent",
+    "interface": "$green",
+    "keyword": "$purple",
+    "macro": "$orange",
+    "method": "$accent",
+    "namespace": "$yellow",
+    "number": "$orange",
+    "parameter": "$foreground",
+    "property": "$red",
+    "string": "$green",
+    "type": "$yellow",
+    "variable": "$foreground",
+    "variable.readonly": "$orange"
+  },
+  "tokenColors": [
+    {
+      "scope": ["comment", "punctuation.definition.comment"],
+      "settings": {
+        "foreground": "$muted",
+        "fontStyle": "italic"
+      }
+    },
+    {
+      "scope": ["keyword", "storage", "storage.type", "keyword.operator.expression"],
+      "settings": {
+        "foreground": "$purple"
+      }
+    },
+    {
+      "scope": ["entity.name.function", "support.function", "variable.function"],
+      "settings": {
+        "foreground": "$accent"
+      }
+    },
+    {
+      "scope": ["entity.name.type", "entity.name.class", "support.type", "support.class"],
+      "settings": {
+        "foreground": "$yellow"
+      }
+    },
+    {
+      "scope": ["string", "constant.character"],
+      "settings": {
+        "foreground": "$green"
+      }
+    },
+    {
+      "scope": ["constant.numeric", "constant.language", "constant.other"],
+      "settings": {
+        "foreground": "$orange"
+      }
+    },
+    {
+      "scope": ["variable", "meta.definition.variable.name", "support.variable"],
+      "settings": {
+        "foreground": "$foreground"
+      }
+    },
+    {
+      "scope": ["variable.parameter", "meta.function.parameters"],
+      "settings": {
+        "foreground": "$foreground"
+      }
+    },
+    {
+      "scope": ["variable.other.property", "support.variable.property", "meta.object-literal.key"],
+      "settings": {
+        "foreground": "$red"
+      }
+    },
+    {
+      "scope": ["entity.name.tag", "support.type.property-name", "entity.other.attribute-name"],
+      "settings": {
+        "foreground": "$red"
+      }
+    },
+    {
+      "scope": ["punctuation", "meta.brace", "meta.delimiter"],
+      "settings": {
+        "foreground": "$muted"
+      }
+    },
+    {
+      "scope": ["invalid", "invalid.illegal"],
+      "settings": {
+        "foreground": "$red"
+      }
+    }
+  ]
+}
+EOF
+}
+
+write_vscode_extension_stub() {
+    local extension_dir="$HOME/.vscode/extensions/anto426.anto426-vscode-theme-dynamic"
+    local generated_theme="$1"
+
+    mkdir -p "$extension_dir/themes"
+    cat >"$extension_dir/package.json" <<EOF
+{
+  "name": "anto426-vscode-theme",
+  "displayName": "$vscode_theme_name",
+  "description": "Dynamic VS Code theme generated by wallpaper_effects.sh.",
+  "version": "0.1.0",
+  "publisher": "Anto426",
+  "engines": {
+    "vscode": "^1.76.0"
+  },
+  "categories": ["Themes"],
+  "contributes": {
+    "themes": [
+      {
+        "label": "$vscode_theme_name",
+        "uiTheme": "vs-dark",
+        "path": "./themes/$vscode_theme_file"
+      }
+    ]
+  }
+}
+EOF
+    cp "$generated_theme" "$extension_dir/themes/$vscode_theme_file"
+    log "VSCode theme stub aggiornato: $extension_dir"
+}
+
+write_vscode_user_settings() {
+    local settings_dirs=(
+        "$HOME/.config/Code/User"
+        "$HOME/.config/Code - OSS/User"
+        "$HOME/.config/VSCodium/User"
+    )
+    local settings_dir
+    local settings_file
+
+    for settings_dir in "${settings_dirs[@]}"; do
+        [[ "$settings_dir" == "$HOME/.config/Code/User" || -d "$(dirname "$settings_dir")" ]] || continue
+        mkdir -p "$settings_dir"
+        settings_file="$settings_dir/settings.json"
+
+        if command -v node >/dev/null 2>&1; then
+            if ANTO426_BACKGROUND="$background" \
+                ANTO426_SURFACE="$surface" \
+                ANTO426_BASE="$base" \
+                ANTO426_SELECT="$select" \
+                ANTO426_ACCENT="$accent" \
+                ANTO426_FOREGROUND="$foreground" \
+                ANTO426_MUTED="$muted" \
+                ANTO426_BORDER="$border" \
+                node - "$settings_file" "$vscode_theme_name" <<'NODE'
+const fs = require('fs')
+const [settingsPath, themeName] = process.argv.slice(2)
+
+function stripJsonc(text) {
+  let output = ''
+  let inString = false
+  let escaped = false
+  let inLineComment = false
+  let inBlockComment = false
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i]
+    const next = text[i + 1]
+
+    if (inLineComment) {
+      if (char === '\n') {
+        inLineComment = false
+        output += char
+      }
+      continue
+    }
+
+    if (inBlockComment) {
+      if (char === '*' && next === '/') {
+        inBlockComment = false
+        i++
+      }
+      continue
+    }
+
+    if (inString) {
+      output += char
+      if (escaped) {
+        escaped = false
+      } else if (char === '\\') {
+        escaped = true
+      } else if (char === '"') {
+        inString = false
+      }
+      continue
+    }
+
+    if (char === '"') {
+      inString = true
+      output += char
+      continue
+    }
+
+    if (char === '/' && next === '/') {
+      inLineComment = true
+      i++
+      continue
+    }
+
+    if (char === '/' && next === '*') {
+      inBlockComment = true
+      i++
+      continue
+    }
+
+    output += char
+  }
+
+  return output.replace(/,\s*([}\]])/g, '$1')
+}
+
+let settings = {}
+if (fs.existsSync(settingsPath)) {
+  const original = fs.readFileSync(settingsPath, 'utf8')
+  if (original.trim()) {
+    try {
+      settings = JSON.parse(stripJsonc(original))
+    } catch (error) {
+      fs.copyFileSync(settingsPath, `${settingsPath}.anto426.bak`)
+      settings = {}
+    }
+  }
+}
+
+if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
+  settings = {}
+}
+
+const scopedTheme = `[${themeName}]`
+const colorCustomizations =
+  settings['workbench.colorCustomizations'] &&
+  typeof settings['workbench.colorCustomizations'] === 'object' &&
+  !Array.isArray(settings['workbench.colorCustomizations'])
+    ? settings['workbench.colorCustomizations']
+    : {}
+
+colorCustomizations[scopedTheme] = {
+  'activityBar.background': process.env.ANTO426_BACKGROUND,
+  'editor.background': process.env.ANTO426_BACKGROUND,
+  'editor.foreground': process.env.ANTO426_FOREGROUND,
+  'editor.selectionBackground': `${process.env.ANTO426_SELECT}99`,
+  'editorCursor.foreground': process.env.ANTO426_ACCENT,
+  'list.activeSelectionBackground': process.env.ANTO426_ACCENT,
+  'list.hoverBackground': `${process.env.ANTO426_SURFACE}78`,
+  'panel.background': process.env.ANTO426_BACKGROUND,
+  'sideBar.background': process.env.ANTO426_BACKGROUND,
+  'statusBar.background': process.env.ANTO426_SURFACE,
+  'tab.activeBackground': process.env.ANTO426_BASE,
+  'terminal.background': process.env.ANTO426_BACKGROUND,
+  'terminal.foreground': process.env.ANTO426_FOREGROUND,
+  'titleBar.activeBackground': process.env.ANTO426_BACKGROUND,
+  'widget.border': `${process.env.ANTO426_BORDER}8c`
+}
+
+settings['workbench.colorTheme'] = themeName
+settings['workbench.preferredDarkColorTheme'] = themeName
+settings['workbench.colorCustomizations'] = colorCustomizations
+
+fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`)
+NODE
+            then
+                log "VSCode settings aggiornati: $settings_file"
+            else
+                log "VSCode settings non aggiornati: $settings_file"
+            fi
+        elif [[ ! -s "$settings_file" ]]; then
+            cat >"$settings_file" <<EOF
+{
+  "workbench.colorTheme": "$vscode_theme_name",
+  "workbench.preferredDarkColorTheme": "$vscode_theme_name"
+}
+EOF
+            log "VSCode settings creati: $settings_file"
+        else
+            log "VSCode settings esistenti non modificati: node mancante"
+        fi
+    done
+}
+
+write_vscode_theme() {
+    local generated_theme="$tmp_dir/$vscode_theme_file"
+    local roots=(
+        "$HOME/.vscode/extensions"
+        "$HOME/.vscode-oss/extensions"
+        "$HOME/.vscodium/extensions"
+    )
+    local root
+    local package_file
+    local extension_dir
+    local updated=0
+
+    write_vscode_theme_json "$generated_theme"
+
+    for root in "${roots[@]}"; do
+        [[ -d "$root" ]] || continue
+        while IFS= read -r -d '' package_file; do
+            if grep -Eq '"name"[[:space:]]*:[[:space:]]*"anto426-vscode-theme"' "$package_file"; then
+                extension_dir="$(dirname "$package_file")"
+                mkdir -p "$extension_dir/themes"
+                cp "$generated_theme" "$extension_dir/themes/$vscode_theme_file"
+                updated=1
+                log "VSCode theme aggiornato: $extension_dir/themes/$vscode_theme_file"
+            fi
+        done < <(find "$root" -maxdepth 2 -type f -name package.json -print0 2>/dev/null)
+    done
+
+    if ((updated == 0)); then
+        write_vscode_extension_stub "$generated_theme"
+    fi
+
+    write_vscode_user_settings
+}
+
 write_htop_theme() {
     local target="$htop_config_dir/htoprc"
     local htop_version
@@ -294,6 +832,7 @@ write_session_theme() {
     write_color_files
     write_hypr_theme
     write_terminal_theme
+    write_vscode_theme
     write_htop_theme
     write_palette_map "$state_dir/palette.map"
 }

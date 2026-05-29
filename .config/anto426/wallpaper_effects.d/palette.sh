@@ -111,6 +111,7 @@ gray=$gray
 hypr=theme.generated.conf
 colors=colors.{css,rasi,sh}
 ghostty=dynamic.conf + themes/anto426
+vscode=$vscode_theme_file
 htop=$HOME/.config/htop/htoprc
 
 [targets.apps]
