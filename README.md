@@ -1,9 +1,3 @@
-<p align="center">
-  <img 
-    src="https://wsrv.nl/?url=avatars.githubusercontent.com/u/87477585?v=5&w=300&h=300&mask=circle&fit=cover" 
-    width="150"
-  />
-</p>
 
 <p align="center">
   <a href="https://git.io/typing-svg"><img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=24&duration=3000&pause=1000&color=8cb8e4&center=true&vCenter=true&width=500&height=80&lines=Aesthetic+Dotfiles;Wayland+Hyprland+Ecosystem;Dynamic+Color+Theming" alt="Typing SVG" /></a>
