@@ -158,7 +158,7 @@ bluetooth_scan() {
 bluetooth_device_rows() {
     {
         bluetoothctl devices Paired 2>/dev/null
-        bluetoothctl devices 2>/dev/null
+        bluetoothctl devices Connected 2>/dev/null
     } | awk '
         /^Device/ {
             mac = $2
@@ -268,7 +268,7 @@ bluetooth_menu() {
             local count dev_lines i
             mapfile -t dev_lines <<< "$(printf '%s\n' "$device_rows" | awk -F'\t' '{print $1}')"
             count=${#dev_lines[@]}
-            if (( count > 0 && dev_lines[0] != "" )); then
+            if [[ $count -gt 0 && -n "${dev_lines[0]}" ]]; then
                 for ((i=0; i<count; i++)); do
                     if (( i == count - 1 )); then
                         formatted_devices+=$' └─ '"${dev_lines[i]}"$'\n'
@@ -409,7 +409,7 @@ wifi_cache_update() {
     local raw_list tmp
     tmp="$(mktemp)"
 
-    if raw_list="$(timeout 4s nmcli -t -f ACTIVE,SSID,SECURITY,SIGNAL dev wifi list --rescan no 2>/dev/null)"; then
+    if raw_list="$(timeout 8s nmcli -t -f ACTIVE,SSID,SECURITY,SIGNAL dev wifi list --rescan no 2>/dev/null)"; then
         printf '%s\n' "$raw_list" | wifi_network_rows > "$tmp"
         if [[ -s "$tmp" ]]; then
             mv "$tmp" "$WIFI_CACHE_FILE"
@@ -424,6 +424,14 @@ wifi_cache_update() {
 wifi_cache_refresh_background() {
     local force="${1:-false}"
     local lock_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-wifi-cache.lock"
+
+    if [[ -d "$lock_dir" ]]; then
+        local lock_age
+        lock_age="$(($(date +%s) - $(stat -c %Y "$lock_dir" 2>/dev/null || date +%s)))"
+        if (( lock_age > 15 )); then
+            rmdir "$lock_dir" 2>/dev/null || rm -rf "$lock_dir" 2>/dev/null
+        fi
+    fi
 
     [[ "$force" == "true" ]] || ! wifi_cache_fresh || return 0
     mkdir "$lock_dir" 2>/dev/null || return 0
@@ -441,21 +449,21 @@ wifi_cached_rows() {
     fi
 
     local raw_list
-    raw_list="$(timeout 1s nmcli -t -f ACTIVE,SSID,SECURITY,SIGNAL dev wifi list --rescan no 2>/dev/null || true)"
+    raw_list="$(timeout 4s nmcli -t -f ACTIVE,SSID,SECURITY,SIGNAL dev wifi list --rescan no 2>/dev/null || true)"
     printf '%s\n' "$raw_list" | wifi_network_rows
 }
 
 wifi_cache_status() {
     local age
     age="$(wifi_cache_age 2>/dev/null)" || {
-        printf 'Lista: aggiornamento in corso'
+        printf 'List: updating...'
         return 0
     }
 
     if (( age < 60 )); then
-        printf 'Lista: aggiornata %ss fa' "$age"
+        printf 'List: updated %ss ago' "$age"
     else
-        printf 'Lista: aggiornata %sm fa' "$((age / 60))"
+        printf 'List: updated %sm ago' "$((age / 60))"
     fi
 }
 
@@ -731,7 +739,7 @@ wifi_menu() {
             local count net_lines i
             mapfile -t net_lines <<< "$(printf '%s\n' "$network_rows" | awk -F'\t' '{print $1}')"
             count=${#net_lines[@]}
-            if (( count > 0 && net_lines[0] != "" )); then
+            if [[ $count -gt 0 && -n "${net_lines[0]}" ]]; then
                 for ((i=0; i<count; i++)); do
                     if (( i == count - 1 )); then
                         formatted_networks+=$' └─ '"${net_lines[i]}"$'\n'
