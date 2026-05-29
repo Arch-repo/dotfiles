@@ -236,15 +236,23 @@ layout_monitor_for_widget() {
 
 widget_client_address() {
     local name="$1"
+    local clients_json_input="${2:-}"
     local runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
     local pid_file="$runtime_dir/$name.pid"
     local pid class title
+    local clients_json
+
+    if [[ -n "$clients_json_input" ]]; then
+        clients_json="$clients_json_input"
+    else
+        clients_json="$(hyprctl clients -j 2>/dev/null || echo "[]")"
+    fi
 
     if [[ -r "$pid_file" ]]; then
         pid="$(cat "$pid_file" 2>/dev/null || true)"
         if [[ "$pid" =~ ^[0-9]+$ ]]; then
             local addr
-            addr="$(hyprctl clients -j 2>/dev/null | jq -r --argjson pid "$pid" '.[] | select(.pid == $pid) | .address' | sed -n '1p')"
+            addr="$(echo "$clients_json" | jq -r --argjson pid "$pid" '.[] | select(.pid == $pid) | .address' | sed -n '1p')"
             if [[ -n "$addr" ]]; then
                 printf '%s' "$addr"
                 return 0
@@ -256,7 +264,7 @@ widget_client_address() {
     title="$(widget_meta "$name" title 2>/dev/null || true)"
     [[ -n "$class" ]] || return 1
 
-    hyprctl clients -j 2>/dev/null |
+    echo "$clients_json" |
         jq -r --arg class "$class" --arg title "$title" '
             .[] |
             select(
@@ -275,9 +283,10 @@ apply_widget_geometry() {
     local y="$3"
     local w="$4"
     local h="$5"
+    local clients_json="${6:-}"
     local addr
 
-    addr="$(widget_client_address "$name")"
+    addr="$(widget_client_address "$name" "$clients_json")"
     [[ -n "$addr" ]] || return 1
 
     hyprctl --batch "dispatch setfloating address:$addr; dispatch resizewindowpixel exact $w $h,address:$addr; dispatch movewindowpixel exact $x $y,address:$addr" >/dev/null 2>&1
@@ -382,6 +391,9 @@ apply_widget_layout() {
 
     while ((attempts < 24)); do
         local ready=0 total=0
+        local clients_json
+        clients_json="$(hyprctl clients -j 2>/dev/null || echo "[]")"
+
         for name in $order; do
             [[ -n "$name" ]] && total=$((total + 1))
         done
@@ -402,7 +414,7 @@ apply_widget_layout() {
             [[ -z "$w" ]] && w="$(widget_meta "$name" w)"
             [[ -z "$h" ]] && h="$(widget_meta "$name" h)"
 
-            if apply_widget_geometry "$name" "$x" "$y" "$w" "$h"; then
+            if apply_widget_geometry "$name" "$x" "$y" "$w" "$h" "$clients_json"; then
                 ready=$((ready + 1))
             fi
         done

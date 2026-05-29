@@ -1025,10 +1025,13 @@ EOF
 }
 
 write_session_theme() {
-    write_color_files
-    write_hypr_theme
-    write_terminal_theme
-    write_vscode_theme
-    write_htop_theme
-    write_palette_map "$state_dir/palette.map"
+    # Scrittura dei file di configurazione in parallelo
+    write_color_files &
+    write_hypr_theme &
+    write_terminal_theme &
+    write_vscode_theme &
+    write_htop_theme &
+    write_palette_map "$state_dir/palette.map" &
+    
+    wait
 }

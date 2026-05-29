@@ -294,9 +294,9 @@ start_widgets() {
     layout_load
     update_cava_theme_colors
     if widgets_locked; then
-        write_widget_lock_hypr_rules lock
+        write_widget_lock_hypr_rules lock no-reload
     else
-        write_widget_lock_hypr_rules unlock
+        write_widget_lock_hypr_rules unlock no-reload
     fi
     if layout_needs_defaults; then
         layout_default_stack
@@ -318,7 +318,7 @@ start_widgets() {
 
     for widget in $(custom_widget_ids); do
         [[ -n "$widget" ]] || continue
-        launch_custom_widget "$widget" && started=1
+        launch_custom_widget "$widget" no-reload && started=1
     done
 
     if [[ "$started" == "0" ]]; then
@@ -328,6 +328,9 @@ start_widgets() {
         [[ "$quiet" == "quiet" ]] || notify "Nessun widget configurato — aggiungine uno dal menu"
         return 0
     fi
+
+    # Singolo ricaricamento finale di Hyprland dopo che tutte le regole sono state scritte
+    hyprctl reload >/dev/null 2>&1 || true
 
     (
         if ! apply_widget_layout_locked; then

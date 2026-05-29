@@ -387,9 +387,16 @@ read -r ar ag ab < <(
 
 generate_palette_from_samples "$r" "$g" "$b" "$ar" "$ag" "$ab"
 
-write_session_theme
-write_app_theme
-write_boot_theme
+# Scrittura dei temi in parallelo per massimizzare le prestazioni
+write_session_theme &
+pid_session=$!
+write_app_theme &
+pid_app=$!
+write_boot_theme &
+pid_boot=$!
+
+wait $pid_session $pid_app $pid_boot
+
 
 pkill -SIGUSR2 waybar 2>/dev/null || true
 swaync-client -rs >/dev/null 2>&1 || true

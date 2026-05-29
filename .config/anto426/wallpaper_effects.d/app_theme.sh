@@ -475,12 +475,13 @@ patch_copied_theme_text_colors() {
     [[ -d "$target" ]] || return 0
 
     while IFS= read -r -d '' file; do
-        patch_gtk_base_css "$file"
+        patch_gtk_base_css "$file" &
     done < <(
         find "$target" -type f \
             \( -name '*.css' -o -name '*.svg' -o -name '*.rc' -o -name 'gtkrc' -o -name '*.xpm' \) \
             -print0
     )
+    wait
 }
 
 prepare_gtk_overlay_target() {
@@ -524,11 +525,12 @@ write_gtk_theme() {
     mkdir -p "$HOME/.themes" "$HOME/.local/share/themes"
 
     for target in "$theme_root" "$theme_share_root"; do
-        copy_gtk_base_theme "$target" || true
-        prepare_gtk_overlay_target "$target" "gtk-3.0"
-        prepare_gtk_overlay_target "$target" "gtk-4.0"
-        patch_copied_theme_text_colors "$target"
-        cat >"$target/index.theme" <<EOF
+        (
+            copy_gtk_base_theme "$target" || true
+            prepare_gtk_overlay_target "$target" "gtk-3.0"
+            prepare_gtk_overlay_target "$target" "gtk-4.0"
+            patch_copied_theme_text_colors "$target"
+            cat >"$target/index.theme" <<EOF
 [X-GNOME-Metatheme]
 Name=$gtk_theme_name
 Type=X-GNOME-Metatheme
@@ -536,7 +538,9 @@ Comment=Dynamic anto426 GTK theme based on Anto426-theme
 Encoding=UTF-8
 GtkTheme=$gtk_theme_name
 EOF
+        ) &
     done
+    wait
 
     write_gtk_css_file "$gtk3_dir/gtk.css" "3.0"
     write_gtk_css_file "$gtk4_dir/gtk.css" "4.0"
@@ -903,10 +907,23 @@ EOF
 }
 
 write_app_theme() {
-    write_gtk_theme
-    write_qt_theme
-    write_kvantum_theme
-    gtk_reload_theme
-    qt_reload_theme
-    restart_gtk_portals
+    # Scrittura dei temi per le app in parallelo
+    write_gtk_theme &
+    pid_gtk=$!
+    write_qt_theme &
+    pid_qt=$!
+    write_kvantum_theme &
+    pid_kvantum=$!
+
+    wait $pid_gtk $pid_qt $pid_kvantum
+
+    # Ricarica dei temi in parallelo
+    gtk_reload_theme &
+    pid_gtk_reload=$!
+    qt_reload_theme &
+    pid_qt_reload=$!
+    restart_gtk_portals &
+    pid_portals=$!
+
+    wait $pid_gtk_reload $pid_qt_reload $pid_portals
 }

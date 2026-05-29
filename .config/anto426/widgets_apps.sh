@@ -354,6 +354,7 @@ remove_custom_widget() {
 }
 
 write_custom_widget_hypr_rules() {
+    local reload="${1:-reload}"
     local file="$HOME/.config/hypr/conf/widget-apps.generated.conf"
     local id wm_class regex monitor x y w h mode
 
@@ -395,15 +396,16 @@ write_custom_widget_hypr_rules() {
         done
     } >"$file"
 
-    hyprctl reload >/dev/null 2>&1 || true
+    [[ "$reload" == "no-reload" ]] || hyprctl reload >/dev/null 2>&1 || true
 }
 
 launch_custom_widget() {
     local id="$1"
+    local reload="${2:-reload}"
     local mode class title command monitor rules
 
     custom_widget_meta "$id" id >/dev/null || return 1
-    write_custom_widget_hypr_rules
+    write_custom_widget_hypr_rules "$reload"
     mode="$(custom_widget_meta "$id" mode 2>/dev/null || printf 'app')"
     class="$(custom_widget_meta "$id" class)"
     title="$(custom_widget_meta "$id" title)"
