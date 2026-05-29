@@ -17,6 +17,45 @@ cleanup_menu_files() {
 
 trap cleanup_menu_files EXIT
 
+get_color() {
+    local name="$1"
+    local default="$2"
+    local val key
+
+    key="$name"
+    val="$(
+        awk -v key="$key" '
+            $1 == "@define-color" && $2 == key {
+                gsub(/;/, "", $3)
+                print $3
+                exit
+            }
+        ' "$HOME/.config/colors/colors.css" 2>/dev/null
+    )"
+
+    if [[ "$val" == "@"* ]]; then
+        key="${val#@}"
+        val="$(
+            awk -v key="$key" '
+                $1 == "@define-color" && $2 == key {
+                    gsub(/;/, "", $3)
+                    print $3
+                    exit
+                }
+            ' "$HOME/.config/colors/colors.css" 2>/dev/null
+        )"
+    fi
+
+    printf '%s' "${val:-$default}"
+}
+
+c_accent="$(get_color accent "#8cb8e4")"
+c_muted="$(get_color muted "#b9c4d2")"
+c_yellow="$(get_color yellow "#f9e2af")"
+c_green="$(get_color green "#a6e3a1")"
+c_red="$(get_color red "#f38ba8")"
+c_cyan="$(get_color cyan "#89dceb")"
+
 json_escape() {
     local value="${1:-}"
     value=${value//\\/\\\\}
@@ -261,38 +300,68 @@ build_menu_files() {
     clients="$(clients_json)"
     apps="$(background_clients_json "$clients" "$active")"
 
-    printf '%s\t%s\t\t\t\t\n' "󰑓 Aggiorna lista" "refresh" >>"$MAP_FILE"
-    printf '%s\0icon\x1fview-refresh\n' "󰑓 Aggiorna lista" >>"$MENU_FILE"
+    # Action section
+    printf '%s\t%s\t\t\t\t\n' "Refresh list" "refresh" >>"$MAP_FILE"
+    
+    printf '󰑓 QUICK ACTIONS\n' >>"$MENU_FILE"
+    printf ' └─ 󰑓 Refresh list\0icon\x1fview-refresh\n' >>"$MENU_FILE"
 
-    printf '%s' "$apps" |
-        jq -r '
-            .[] | [
-                (.address // ""),
-                (.class // "App"),
-                (.initialClass // .class // "App"),
-                ((.title // "") | gsub("[\t\n\r]"; " ")),
-                ((.workspace.name // .workspace.id // "?") | tostring)
-            ] | @tsv' |
-        while IFS=$'\t' read -r address class initial_class title workspace; do
-            [[ -n "$address" ]] || continue
-            class="$(single_line "$class")"
-            initial_class="$(single_line "$initial_class")"
-            title="$(single_line "$title")"
-            workspace="$(single_line "$workspace")"
-            icon="$(desktop_icon_for_class "$class" "$initial_class")"
-            label="${class}"
-            [[ -n "$title" ]] && label="${label}  ${title}"
-            label="${label}  [${workspace}]"
-            if label_exists "$label"; then
-                short="$(short_address "$address")"
-                label="${label}  #${short}"
+    printf '\n󰘔 BACKGROUND APPLICATIONS\n' >>"$MENU_FILE"
+
+    local app_lines=()
+    local app_data=()
+    
+    while IFS=$'\t' read -r address class initial_class title workspace; do
+        [[ -n "$address" ]] || continue
+        class="$(single_line "$class")"
+        initial_class="$(single_line "$initial_class")"
+        title="$(single_line "$title")"
+        workspace="$(single_line "$workspace")"
+        icon="$(desktop_icon_for_class "$class" "$initial_class")"
+        label="${class}"
+        [[ -n "$title" ]] && label="${label}  ${title}"
+        label="${label}  [${workspace}]"
+        
+        # Check uniqueness
+        if label_exists "$label"; then
+            short="$(short_address "$address")"
+            label="${label}  #${short}"
+        fi
+        
+        app_lines+=("$label|$icon")
+        app_data+=("$label"$'\t'"app"$'\t'"$address"$'\t'"$class"$'\t'"$title"$'\t'"$workspace")
+    done < <(
+        printf '%s' "$apps" |
+            jq -r '
+                .[] | [
+                    (.address // ""),
+                    (.class // "App"),
+                    (.initialClass // .class // "App"),
+                    ((.title // "") | gsub("[\t\n\r]"; " ")),
+                    ((.workspace.name // .workspace.id // "?") | tostring)
+                ] | @tsv'
+    )
+
+    local count=${#app_lines[@]}
+    if (( count > 0 )); then
+        for ((i=0; i<count; i++)); do
+            local item="${app_lines[i]}"
+            local lbl="${item%|*}"
+            local icn="${item#*|}"
+            
+            local data="${app_data[i]}"
+            printf '%s\n' "$data" >>"$MAP_FILE"
+            
+            if (( i == count - 1 )); then
+                printf ' └─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
+            else
+                printf ' ├─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
             fi
-            printf '%s\t%s\t%s\t%s\t%s\t%s\n' "$label" "app" "$address" "$class" "$title" "$workspace" >>"$MAP_FILE"
-            printf '%s\0icon\x1f%s\n' "$label" "$icon" >>"$MENU_FILE"
         done
+    else
+        printf ' └─ 󰂲 No active applications\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
+    fi
 
-    count="$(awk -F'\t' '$2 == "app" { count++ } END { print count + 0 }' "$MAP_FILE" 2>/dev/null)"
-    [[ "$count" =~ ^[0-9]+$ ]] || count=0
     ((count > 0))
 }
 
@@ -330,11 +399,11 @@ workspace_label_from_name() {
     local name="$2"
 
     if [[ "$name" == special:* ]]; then
-        printf 'Spazio speciale %s' "${name#special:}"
+        printf 'Special workspace %s' "${name#special:}"
     elif [[ -n "$name" ]]; then
-        printf 'Spazio %s' "$name"
+        printf 'Workspace %s' "$name"
     else
-        printf 'Spazio %s' "$id"
+        printf 'Workspace %s' "$id"
     fi
 }
 
@@ -369,7 +438,7 @@ build_workspace_menu_files() {
         done
 
     for number in {1..10}; do
-        add_workspace_option "Spazio $number" "$number"
+        add_workspace_option "Workspace $number" "$number"
     done
 }
 
@@ -380,14 +449,14 @@ move_app_to_workspace_menu() {
     build_workspace_menu_files
     choice="$(
         rofi -dmenu -i -matching fuzzy -show-icons \
-            -p "Sposta dove?" \
+            -p "Move where?" \
             -theme "$THEME" <"$WORKSPACE_MENU_FILE"
     )"
     [[ -n "$choice" ]] || return 0
     workspace="$(awk -F'\t' -v label="$choice" '$1 == label { print $2; exit }' "$WORKSPACE_MAP_FILE" 2>/dev/null)"
     [[ -n "$workspace" ]] || return 0
     hyprctl dispatch movetoworkspacesilent "$workspace,address:$address" >/dev/null 2>&1 &&
-        notify "App spostata"
+        notify "App moved"
 }
 
 close_app() {
@@ -408,34 +477,48 @@ app_actions_menu() {
     prompt="$app_name"
     ((${#prompt} > 42)) && prompt="${prompt:0:39}..."
 
+    local message_card
+    message_card="Class: <b><span color='${c_accent}'>${class}</span></b>\nCurrent workspace: <b><span color='${c_yellow}'>${workspace:-?}</span></b>"
+
     action="$(
         {
-            printf '%s\n' "󰍉 Apri"
-            printf '%s\n' "󰁝 Porta qui"
-            printf '%s\n' "󰏫 Sposta in spazio..."
-            printf '%s\n' "󰅖 Chiudi"
-            printf '%s\n' "󰌑 Indietro"
+            printf '󰘔 APPLICATION CONTROLS\n'
+            printf ' ├─ 󰍉 Open window\n'
+            printf ' ├─ 󰁝 Bring here (Move)\n'
+            printf ' ├─ 󰏫 Move to workspace...\n'
+            printf ' └─ 󰅖 Close window\n'
+            
+            printf '\n󰌍 NAVIGATION\n'
+            printf ' └─ 󰌑 Back\n'
         } |
             rofi -dmenu -i -matching fuzzy \
-                -p "$prompt" \
-                -mesg "Spazio attuale: ${workspace:-?}" \
+                -p "Manage" \
+                -mesg "$message_card" \
                 -theme "$THEME"
     )"
 
-    case "$action" in
-        *"Apri"*)
-            focus_app "$address" || notify "Non riesco ad aprire l'app"
+    [[ -z "$action" ]] && return 0
+    if [[ "$action" != *"├─ "* && "$action" != *"└─ "* ]]; then
+        app_actions_menu "$address" "$class" "$title" "$workspace"
+        return $?
+    fi
+    local clean_action
+    clean_action="$(printf '%s' "$action" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
+
+    case "$clean_action" in
+        *"Apri"* | *"Open"*)
+            focus_app "$address" || notify "Could not open app"
             ;;
-        *"Porta qui"*)
-            move_app_to_current "$address" || notify "Non riesco a portarla qui"
+        *"Porta qui"* | *"Bring here"*)
+            move_app_to_current "$address" || notify "Could not bring here"
             ;;
-        *"Sposta in spazio"*)
+        *"Sposta in spazio"* | *"Move to workspace"*)
             move_app_to_workspace_menu "$address"
             ;;
-        *"Chiudi"*)
-            close_app "$address" && notify "Richiesta chiusura inviata"
+        *"Chiudi"* | *"Close"*)
+            close_app "$address" && notify "Close request sent"
             ;;
-        *"Indietro"*)
+        *"Indietro"* | *"Back"*)
             return 2
             ;;
     esac
@@ -445,7 +528,7 @@ open_menu() {
     local choice row type address class title workspace count
 
     require_stack || {
-        notify "Hyprland o jq non disponibile"
+        notify "Hyprland or jq not available"
         return 1
     }
 
@@ -453,19 +536,25 @@ open_menu() {
 
     while true; do
         if ! build_menu_files; then
-            notify "Nessuna app in background"
+            notify "No apps in background"
             return 0
         fi
 
         count="$(awk -F'\t' '$2 == "app" { count++ } END { print count + 0 }' "$MAP_FILE" 2>/dev/null)"
         choice="$(
             rofi -dmenu -i -matching fuzzy -show-icons \
-                -p "App background ($count)" \
+                -p "Background Apps ($count)" \
                 -theme "$THEME" <"$MENU_FILE"
         )"
 
         [[ -n "$choice" ]] || return 0
-        row="$(awk -F'\t' -v label="$choice" '$1 == label { print; exit }' "$MAP_FILE" 2>/dev/null)"
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
+
+        row="$(awk -F'\t' -v label="$clean_choice" '$1 == label { print; exit }' "$MAP_FILE" 2>/dev/null)"
         [[ -n "$row" ]] || return 0
         IFS=$'\t' read -r _ type address class title workspace _ <<<"$row"
 

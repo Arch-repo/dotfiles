@@ -4,7 +4,7 @@ if pgrep -x rofi > /dev/null; then
     pkill -x rofi
 fi
 
-THEME="$HOME/.config/rofi/config.rasi"
+THEME="$HOME/.config/rofi/control_menu.rasi"
 
 rofi -show drun \
     -show-icons \

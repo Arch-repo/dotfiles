@@ -34,7 +34,7 @@ set_brightness() {
     local before after
 
     command -v brightnessctl >/dev/null 2>&1 || {
-        notify "brightnessctl non trovato"
+        notify "brightnessctl not found"
         return 1
     }
 
@@ -42,7 +42,7 @@ set_brightness() {
     [[ -n "$before" ]] || before=0
 
     brightnessctl set "$value" >/dev/null 2>&1 || {
-        notify "Operazione fallita"
+        notify "Operation failed"
         return 1
     }
 
@@ -58,7 +58,7 @@ adjust_brightness() {
     local current
 
     command -v brightnessctl >/dev/null 2>&1 || {
-        notify "brightnessctl non trovato"
+        notify "brightnessctl not found"
         return 1
     }
 
@@ -85,7 +85,7 @@ pick_slider() {
     current="$(current_percent)"
     [[ -n "$current" ]] || current=0
 
-    value="$(rofi_slider_pick "slider-brightness" "Luminosità" "Schermo principale" "$current" 0 100 1 "brightness")"
+    value="$(rofi_slider_pick "slider-brightness" "Brightness" "Main screen" "$current" 0 100 1 "brightness")"
     [[ -z "$value" ]] && return 0
     if command -v brightnessctl >/dev/null 2>&1; then
         brightnessctl set "${value}%" >/dev/null 2>&1 || true

@@ -81,43 +81,43 @@ only_primary() {
         [[ "$monitor" == "$primary" ]] && continue
         disable_monitor "$monitor"
     done < <(monitor_names)
-    notify "Solo schermo principale"
+    notify "Main screen only"
 }
 
 only_external() {
     local primary="$1" external="$2"
     [[ -n "$external" ]] || {
-        notify "Nessuno schermo esterno rilevato"
+        notify "No external screen detected"
         return 1
     }
     enable_monitor "$external" "0x0" 1
     disable_monitor "$primary"
-    notify "Solo schermo esterno: $external"
+    notify "External screen only: $external"
 }
 
 extend_displays() {
     local primary="$1" external="$2" scale width
     [[ -n "$external" ]] || {
-        notify "Nessuno schermo esterno rilevato"
+        notify "No external screen detected"
         return 1
     }
     scale="$(scale_for "$primary")"
     width="$(logical_width "$primary")"
     enable_monitor "$primary" "0x0" "${scale:-1}"
     enable_monitor "$external" "${width:-1600}x0" 1
-    notify "Schermi estesi"
+    notify "Displays extended"
 }
 
 duplicate_displays() {
     local primary="$1" external="$2" scale
     [[ -n "$external" ]] || {
-        notify "Nessuno schermo esterno rilevato"
+        notify "No external screen detected"
         return 1
     }
     scale="$(scale_for "$primary")"
     enable_monitor "$primary" "0x0" "${scale:-1}"
     hyprctl keyword monitor "$external,preferred,auto,1,mirror,$primary" >/dev/null 2>&1
-    notify "Schermi duplicati"
+    notify "Displays duplicated"
 }
 
 require_hyprctl
@@ -126,34 +126,39 @@ require_jq
 primary="$(primary_monitor)"
 external="$(external_monitor "$primary")"
 [[ -n "$primary" ]] || {
-    notify "Nessuno schermo rilevato"
+    notify "No screen detected"
     exit 1
 }
 
 while true; do
     choice="$(
         {
-            printf '  ── MODALITA SCHERMO ─────────────\n'
-            printf '%s\n' "󰍹 Solo schermo principale"
-            printf '%s\n' "󰍺 Duplica"
-            printf '%s\n' "󰹑 Estendi"
-            printf '%s\n' "󰶐 Solo schermo esterno"
-            printf '  ────────────────────────────────\n'
-            printf '%s\n' "󰌍 Indietro"
+            printf '󰍹 DISPLAY MODE\n'
+            printf ' ├─ 󰍹 Main screen only\n'
+            printf ' ├─ 󰍺 Duplicate\n'
+            printf ' ├─ 󰹑 Extend\n'
+            printf ' └─ 󰶐 External screen only\n'
+            
+            printf '\n󰌍 NAVIGATION\n'
+            printf ' └─ 󰌍 Back\n'
         } |
             rofi -dmenu -i -matching fuzzy \
-                -p "Proietta" \
-                -mesg "Principale: ${primary:-?}\nEsterno: ${external:-non rilevato}" \
+                -p "Project" \
+                -mesg "Primary: ${primary:-?}\nExternal: ${external:-not detected}" \
                 -theme "$THEME"
     )"
 
-    case "$choice" in
-        "") exit 0 ;;
-        "  ──"*) continue ;;
-        *"principale"*) only_primary "$primary"; exit 0 ;;
-        *"Duplica"*) duplicate_displays "$primary" "$external"; exit 0 ;;
-        *"Estendi"*) extend_displays "$primary" "$external"; exit 0 ;;
-        *"esterno"*) only_external "$primary" "$external"; exit 0 ;;
-        *"Indietro") go_back ;;
+    [[ -z "$choice" ]] && exit 0
+    if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+        continue
+    fi
+    clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
+
+    case "$clean_choice" in
+        *"principale"* | *"Main"*) only_primary "$primary"; exit 0 ;;
+        *"Duplica"* | *"Duplicate"*) duplicate_displays "$primary" "$external"; exit 0 ;;
+        *"Estendi"* | *"Extend"*) extend_displays "$primary" "$external"; exit 0 ;;
+        *"esterno"* | *"External"*) only_external "$primary" "$external"; exit 0 ;;
+        *"Indietro" | *"Back"*) go_back ;;
     esac
 done

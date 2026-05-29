@@ -2,7 +2,7 @@
 set -uo pipefail
 
 wallpapers_dir="${ANTO426_WALLPAPERS_DIR:-$HOME/Pictures/Wallpapers}"
-theme="$HOME/.config/rofi/config.rasi"
+theme="$HOME/.config/rofi/control_menu.rasi"
 apply_script="$HOME/.config/anto426/wallpaper_apply.sh"
 depth="${ANTO426_WALLPAPER_DEPTH:-3}"
 
@@ -47,70 +47,87 @@ trap 'rm -f "$tmp_map"' EXIT
 
 while true; do
     : >"$tmp_map"
+    
+    # Read wallpaper files to format them properly
+    lines=()
+    if wallpaper_files | grep -q .; then
+        while IFS= read -r file; do
+            rel="${file#"$wallpapers_dir"/}"
+            label="${rel%.*}"
+            lines+=("$label|$file")
+        done < <(wallpaper_files)
+    fi
+
     choice="$(
         {
-            printf '  ── WALLPAPER ────────────────────\n'
-
-            if wallpaper_files | grep -q .; then
-                wallpaper_files | while IFS= read -r file; do
-                    rel="${file#"$wallpapers_dir"/}"
-                    label="${rel%.*}"
-                    printf '%s\t%s\n' "$label" "$file" >>"$tmp_map"
-                    printf '%s\0icon\x1f%s\n' "$label" "$file"
+            printf '󰸉 AVAILABLE WALLPAPERS\n'
+            count=${#lines[@]}
+            if (( count > 0 )); then
+                for ((i=0; i<count; i++)); do
+                    item="${lines[i]}"
+                    lbl="${item%|*}"
+                    fl="${item#*|}"
+                    printf '%s\t%s\n' "$lbl" "$fl" >>"$tmp_map"
+                    if (( i == count - 1 )); then
+                        printf ' └─ %s\0icon\x1f%s\n' "$lbl" "$fl"
+                    else
+                        printf ' ├─ %s\0icon\x1f%s\n' "$lbl" "$fl"
+                    fi
                 done
             else
-                printf '%s\n' "󰋼 Nessun wallpaper trovato"
+                printf ' └─ 󰋼 No wallpapers found\n'
             fi
 
-            printf '  ── AZIONI ───────────────────────\n'
-            printf '󰒟 Wallpaper casuale\n'
-            printf '󰑓 Rigenera tema corrente\n'
-            printf ' Apri cartella wallpaper\n'
-            printf '  ────────────────────────────────\n'
-            printf '󰌍 Indietro\n'
+            printf '\n󰏘 WALLPAPER MANAGEMENT\n'
+            printf ' ├─ 󰒟 Random wallpaper\n'
+            printf ' ├─ 󰑓 Regenerate current theme\n'
+            printf ' └─  Open wallpaper folder\n'
+            
+            printf '\n󰌍 NAVIGATION\n'
+            printf ' └─ 󰌍 Back\n'
         } |
-            rofi -dmenu -i -matching fuzzy \
+            rofi -dmenu -i -matching fuzzy -show-icons \
+                -theme-str 'element-icon { width: 96px; height: 54px; border-radius: 6px; }' \
                 -p "Wallpaper" \
-                -mesg "Cartella: $wallpapers_dir" \
                 -theme "$theme"
     )"
 
-    case "$choice" in
-        "")
-            exit 0
-            ;;
-        "  ──"*)
-            continue
-            ;;
-        *"Nessun wallpaper"*)
+    [[ -z "$choice" ]] && exit 0
+    if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+        continue
+    fi
+    clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
+
+    case "$clean_choice" in
+        *"Nessun wallpaper"* | *"No wallpapers found"*)
             open_wallpaper_dir
             exit 0
             ;;
-        *"Wallpaper casuale")
+        *"Wallpaper casuale" | *"Random wallpaper"*)
             "$HOME/.config/anto426/wallpaper_random.sh"
             exit 0
             ;;
-        *"Rigenera tema corrente")
+        *"Rigenera tema corrente" | *"Regenerate current theme"*)
             current="$(current_wallpaper)"
             if [[ -n "$current" && -f "$current" ]]; then
                 "$HOME/.config/anto426/wallpaper_effects.sh" "$current"
-                notify "Tema rigenerato"
+                notify "Theme regenerated"
             else
-                notify "Sfondo corrente non trovato"
+                notify "Current wallpaper not found"
             fi
             exit 0
             ;;
-        *"Apri cartella")
+        *"Apri cartella"* | *"Open wallpaper folder"*)
             open_wallpaper_dir
             exit 0
             ;;
-        *"Indietro")
+        *"Indietro" | *"Back"*)
             go_back
             ;;
         *)
-            selected_path="$(awk -F'\t' -v label="$choice" '$1 == label {print $2; exit}' "$tmp_map")"
+            selected_path="$(awk -F'\t' -v label="$clean_choice" '$1 == label {print $2; exit}' "$tmp_map")"
             [[ -n "$selected_path" && -f "$selected_path" ]] || {
-                notify "Wallpaper non trovato"
+                notify "Wallpaper not found"
                 exit 1
             }
             "$apply_script" "$selected_path"

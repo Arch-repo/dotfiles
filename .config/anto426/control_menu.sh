@@ -203,44 +203,44 @@ bluetooth_device_menu() {
     while true; do
         choice="$(
             printf '%s\n' \
-                "Stato: $status" \
-                "󰌷 Connetti" \
-                "󰌸 Disconnetti" \
-                "󰖔 Associa" \
-                "󰗠 Autorizza" \
-                "󰆴 Rimuovi" \
-                "󰋼 Informazioni" \
-                "󰌍 Indietro" |
+                "Status: $status" \
+                "󰌷 Connect" \
+                "󰌸 Disconnect" \
+                "󰖔 Pair" \
+                "󰗠 Trust" \
+                "󰆴 Remove" \
+                "󰋼 Info" \
+                "󰌍 Back" |
                 rofi_pick "$label"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "󰌷 Connetti")
-                notify "Connessione in corso a $label..."
-                run_or_notify "Connessione Bluetooth" bluetoothctl connect "$mac"
+            "󰌷 Connect")
+                notify "Connecting to $label..."
+                run_or_notify "Bluetooth Connection" bluetoothctl connect "$mac"
                 return 0
                 ;;
-            "󰌸 Disconnetti")
-                notify "Disconnessione in corso da $label..."
-                run_or_notify "Disconnessione Bluetooth" bluetoothctl disconnect "$mac"
+            "󰌸 Disconnect")
+                notify "Disconnecting from $label..."
+                run_or_notify "Bluetooth Disconnection" bluetoothctl disconnect "$mac"
                 return 0
                 ;;
-            "󰖔 Associa")
-                run_or_notify "Associazione Bluetooth" bluetoothctl pair "$mac"
+            "󰖔 Pair")
+                run_or_notify "Bluetooth Pairing" bluetoothctl pair "$mac"
                 ;;
-            "󰗠 Autorizza")
-                run_or_notify "Autorizzazione Bluetooth" bluetoothctl trust "$mac"
+            "󰗠 Trust")
+                run_or_notify "Bluetooth Trust" bluetoothctl trust "$mac"
                 ;;
-            "󰆴 Rimuovi")
-                run_or_notify "Dispositivo rimosso" bluetoothctl remove "$mac"
+            "󰆴 Remove")
+                run_or_notify "Device removed" bluetoothctl remove "$mac"
                 return 0
                 ;;
-            "󰋼 Informazioni")
-                bluetoothctl info "$mac" 2>&1 | rofi_pick "Info Bluetooth" >/dev/null
+            "󰋼 Info")
+                bluetoothctl info "$mac" 2>&1 | rofi_pick "Bluetooth Info" >/dev/null
                 ;;
-            "󰌍 Indietro")
+            "󰌍 Back")
                 return 0
                 ;;
             *)
@@ -254,49 +254,80 @@ bluetooth_menu() {
     while true; do
         local powered state choice device_rows devices connected_bt
         powered="$(bluetooth_powered)"
-        state="spento"
-        [[ "$powered" == "yes" ]] && state="acceso"
-        [[ -z "$powered" ]] && state="non disponibile"
+        state="off"
+        [[ "$powered" == "yes" ]] && state="on"
+        [[ -z "$powered" ]] && state="not available"
 
         device_rows="$(bluetooth_device_rows)"
         connected_bt="$(printf '%s\n' "$device_rows" | awk -F'\t' '$4 == "yes" {print $5; exit}')"
-        [[ -z "$connected_bt" ]] && connected_bt="nessuno"
+        [[ -z "$connected_bt" ]] && connected_bt="none"
 
-        devices="$(printf '%s\n' "$device_rows" | awk -F'\t' '{print $1}')"
-        [[ -z "$devices" ]] && devices="󰂲 Nessun dispositivo trovato"
+        # Format devices with tree-like connectors
+        local formatted_devices=""
+        if [[ -n "$device_rows" ]]; then
+            local count dev_lines i
+            mapfile -t dev_lines <<< "$(printf '%s\n' "$device_rows" | awk -F'\t' '{print $1}')"
+            count=${#dev_lines[@]}
+            if (( count > 0 && dev_lines[0] != "" )); then
+                for ((i=0; i<count; i++)); do
+                    if (( i == count - 1 )); then
+                        formatted_devices+=$' └─ '"${dev_lines[i]}"$'\n'
+                    else
+                        formatted_devices+=$' ├─ '"${dev_lines[i]}"$'\n'
+                    fi
+                done
+            else
+                formatted_devices=" └─ 󰂲 No devices found\n"
+            fi
+        else
+            formatted_devices=" └─ 󰂲 No devices found\n"
+        fi
+
+        local state_color="$c_red"
+        [[ "$state" == "on" ]] && state_color="$c_green"
+        local conn_color="$c_muted"
+        [[ "$connected_bt" != "none" ]] && conn_color="$c_yellow"
+        local message_card
+        message_card="Status: <b><span color='${state_color}'>Bluetooth ${state}</span></b>\nConnected: <b><span color='${conn_color}'>${connected_bt}</span></b>"
 
         choice="$(
             {
-                printf '  ── AZIONI ───────────────────────\n'
-                printf '%s\n' "󰐕 Attiva/Disattiva"
-                printf '%s\n' "󰑓 Scansiona dispositivi"
-                printf '  ── DISPOSITIVI ──────────────────\n'
-                printf '%s\n' "$devices"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍 Indietro"
-            } | rofi_pick_msg "Bluetooth" "Stato: Bluetooth $state\nConnesso: $connected_bt"
+                printf '󰂯 BLUETOOTH MANAGEMENT\n'
+                printf ' ├─ 󰐕 Enable/Disable\n'
+                printf ' └─ 󰑓 Scan devices\n'
+                
+                printf '\n󰂱 DEVICES\n'
+                printf '%s' "$formatted_devices"
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ 󰌍 Back\n'
+            } | rofi_pick_msg "Bluetooth" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
-            "󰐕 Attiva/Disattiva")
+        case "$clean_choice" in
+            "󰐕 Attiva/Disattiva" | "󰐕 Enable/Disable")
                 bluetooth_toggle
                 ;;
-            "󰑓 Scansiona dispositivi")
+            "󰑓 Scansiona dispositivi" | "󰑓 Scan devices")
                 bluetooth_scan
                 ;;
-            "󰌍 Indietro")
+            "󰌍 Indietro" | "󰌍 Back")
                 back_or_main
                 return 0
                 ;;
-            "󰂲 Nessun dispositivo trovato")
+            "󰂲 Nessun dispositivo trovato" | "󰂲 No devices found")
                 continue
                 ;;
             *)
                 local dev_item
-                dev_item="$(printf '%s\n' "$device_rows" | awk -F'\t' -v chosen="$choice" '$1 == chosen {printf "%s\t%s\t%s", $1, $2, $3; exit}')"
+                dev_item="$(printf '%s\n' "$device_rows" | awk -F'\t' -v chosen="$clean_choice" '$1 == chosen {printf "%s\t%s\t%s", $1, $2, $3; exit}')"
                 [[ -n "$dev_item" ]] && bluetooth_device_menu "$dev_item"
                 ;;
         esac
@@ -623,17 +654,17 @@ wifi_device_menu() {
     while true; do
         local options=()
         if [[ "$active" == "yes" ]]; then
-            options+=("󰌸 Disconnetti")
+            options+=("󰌸 Disconnect")
         else
-            options+=("󰌷 Connetti")
+            options+=("󰌷 Connect")
         fi
 
         if [[ "$has_profile" == "true" ]]; then
-            options+=("󰆴 Dimentica rete")
+            options+=("󰆴 Forget network")
         fi
 
-        options+=("󰋼 Informazioni")
-        options+=("󰌍 Indietro")
+        options+=("󰋼 Info")
+        options+=("󰌍 Back")
 
         local options_str
         options_str="$(printf '%s\n' "${options[@]}")"
@@ -643,7 +674,7 @@ wifi_device_menu() {
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "󰌷 Connetti")
+            "󰌷 Connetti" | "󰌷 Connect")
                 if [[ "$has_profile" == "true" ]]; then
                     wifi_connect_saved "$ssid" "$security" "$profile_name"
                 else
@@ -651,25 +682,25 @@ wifi_device_menu() {
                 fi
                 return 0
                 ;;
-            "󰌸 Disconnetti")
-                notify "Disconnessione in corso da $ssid..."
-                run_or_notify "Disconnessione da $ssid" nmcli connection down id "${profile_name:-$ssid}"
+            "󰌸 Disconnetti" | "󰌸 Disconnect")
+                notify "Disconnecting from $ssid..."
+                run_or_notify "Disconnection from $ssid" nmcli connection down id "${profile_name:-$ssid}"
                 wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
-            "󰆴 Dimentica rete")
-                run_or_notify "Rete dimenticata" nmcli connection delete id "${profile_name:-$ssid}"
+            "󰆴 Dimentica rete" | "󰆴 Forget network")
+                run_or_notify "Network forgotten" nmcli connection delete id "${profile_name:-$ssid}"
                 wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
-            "󰋼 Informazioni")
+            "󰋼 Informazioni" | "󰋼 Info")
                 if [[ "$has_profile" == "true" ]]; then
-                    nmcli connection show id "$profile_name" 2>&1 | rofi_pick "Info Rete: $ssid" >/dev/null
+                    nmcli connection show id "$profile_name" 2>&1 | rofi_pick "Network Info: $ssid" >/dev/null
                 else
-                    printf 'Rete non salvata\nSSID: %s\nSicurezza: %s\n' "$ssid" "$security" | rofi_pick "Info Rete: $ssid" >/dev/null
+                    printf 'Unsaved network\nSSID: %s\nSecurity: %s\n' "$ssid" "$security" | rofi_pick "Network Info: $ssid" >/dev/null
                 fi
                 ;;
-            "󰌍 Indietro")
+            "󰌍 Indietro" | "󰌍 Back")
                 return 0
                 ;;
             *)
@@ -685,52 +716,83 @@ wifi_menu() {
     while true; do
         local enabled connected choice network_rows networks state cache_status
         enabled="$(wifi_enabled)"
-        state="spenta"
-        [[ "$enabled" == "enabled" ]] && state="accesa"
-        [[ -z "$enabled" ]] && state="non disponibile"
+        state="off"
+        [[ "$enabled" == "enabled" ]] && state="on"
+        [[ -z "$enabled" ]] && state="not available"
 
         connected="$(wifi_connected_ssid)"
-        [[ -z "$connected" ]] && connected="nessuna rete"
+        [[ -z "$connected" ]] && connected="no network"
 
         network_rows="$(wifi_cached_rows)"
-        networks="$(printf '%s\n' "$network_rows" | awk -F'\t' '{print $1}')"
-        [[ -z "$networks" ]] && networks="󰤭 Reti in caricamento"
         cache_status="$(wifi_cache_status)"
+
+        local formatted_networks=""
+        if [[ -n "$network_rows" ]]; then
+            local count net_lines i
+            mapfile -t net_lines <<< "$(printf '%s\n' "$network_rows" | awk -F'\t' '{print $1}')"
+            count=${#net_lines[@]}
+            if (( count > 0 && net_lines[0] != "" )); then
+                for ((i=0; i<count; i++)); do
+                    if (( i == count - 1 )); then
+                        formatted_networks+=$' └─ '"${net_lines[i]}"$'\n'
+                    else
+                        formatted_networks+=$' ├─ '"${net_lines[i]}"$'\n'
+                    fi
+                done
+            else
+                formatted_networks=" └─ 󰤭 Loading networks...\n"
+            fi
+        else
+            formatted_networks=" └─ 󰤭 Loading networks...\n"
+        fi
+
+        local state_color="$c_red"
+        [[ "$state" == "on" ]] && state_color="$c_green"
+        local conn_color="$c_muted"
+        [[ "$connected" != "no network" ]] && conn_color="$c_cyan"
+        local message_card
+        message_card="Status: <b><span color='${state_color}'>Wi-Fi ${state}</span></b>\nConnected: <b><span color='${conn_color}'>${connected}</span></b>\n<span color='${c_muted}'>${cache_status}</span>"
 
         choice="$(
             {
-                printf '  ── AZIONI ───────────────────────\n'
-                printf '%s\n' "󰐕 Attiva/Disattiva"
-                printf '%s\n' "󰑓 Scansiona reti"
-                printf '  ── RETI DISPONIBILI ─────────────\n'
-                printf '%s\n' "$networks"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍 Indietro"
-            } | rofi_pick_msg "Wi-Fi" "Stato: Wi-Fi $state\nConnesso: $connected\n$cache_status"
+                printf '󰤨 WI-FI MANAGEMENT\n'
+                printf ' ├─ 󰐕 Enable/Disable\n'
+                printf ' └─ 󰑓 Scan networks\n'
+                
+                printf '\n󰤨 AVAILABLE NETWORKS\n'
+                printf '%s' "$formatted_networks"
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ 󰌍 Back\n'
+            } | rofi_pick_msg "Wi-Fi" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
-            "󰐕 Attiva/Disattiva")
+        case "$clean_choice" in
+            "󰐕 Attiva/Disattiva" | "󰐕 Enable/Disable")
                 wifi_toggle
                 wifi_cache_refresh_background true
                 ;;
-            "󰑓 Scansiona reti")
+            "󰑓 Scansiona reti" | "󰑓 Scan networks")
                 wifi_rescan
                 ;;
-            "󰌍 Indietro")
+            "󰌍 Indietro" | "󰌍 Back")
                 back_or_main
                 return 0
                 ;;
-            "󰤭 Reti in caricamento")
+            "󰤭 Reti in caricamento" | "󰤭 Loading networks...")
                 wifi_cache_refresh_background true
                 continue
                 ;;
             *)
                 local dev_item
-                dev_item="$(printf '%s\n' "$network_rows" | awk -F'\t' -v chosen="$choice" '$1 == chosen {printf "%s\t%s\t%s\t%s", $1, $2, $3, $4; exit}')"
+                dev_item="$(printf '%s\n' "$network_rows" | awk -F'\t' -v chosen="$clean_choice" '$1 == chosen {printf "%s\t%s\t%s\t%s", $1, $2, $3, $4; exit}')"
                 [[ -n "$dev_item" ]] && wifi_device_menu "$dev_item"
                 ;;
         esac
@@ -879,39 +941,47 @@ audio_menu() {
         sink_vol="$(audio_volume_label "@DEFAULT_AUDIO_SINK@")"
         source_vol="$(audio_volume_label "@DEFAULT_AUDIO_SOURCE@")"
 
+        local message_card
+        message_card="󰓃 <b><span color='${c_accent}'>OUTPUT</span></b>: ${sink_desc}\nVolume: <b><span color='${c_yellow}'>${sink_vol}</span></b>\n\n󰍬 <b><span color='${c_accent}'>INPUT</span></b>:  ${source_desc}\nVolume: <b><span color='${c_yellow}'>${source_vol}</span></b>"
+
         choice="$(
             {
-                printf '  ── OUTPUT ──────────────────────\n'
-                printf '%s\n' "󰖁 Silenzia/Attiva Output"
-                printf '%s\n' "󰕾 Volume Output ($(audio_volume_percent "@DEFAULT_AUDIO_SINK@")%)"
-                printf '  ── INPUT ───────────────────────\n'
-                printf '%s\n' "󰍭 Silenzia/Attiva Microfono"
-                printf '%s\n' "󰍬 Volume Microfono ($(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")%)"
-                printf '  ── DISPOSITIVI ─────────────────\n'
-                printf '%s\n' "󰓃 Seleziona dispositivo Output"
-                printf '%s\n' "󰍬 Seleziona dispositivo Input"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍 Indietro"
-            } | rofi_pick_msg "Audio" "Output: $sink_desc\nVolume: $sink_vol\n\nInput:  $source_desc\nVolume: $source_vol"
+                printf '󰓃 AUDIO OUTPUT CONTROL\n'
+                printf ' ├─ 󰖁 Mute/Unmute Output\n'
+                printf ' ├─ 󰕾 Output Volume (%d%%)\n' "$(audio_volume_percent "@DEFAULT_AUDIO_SINK@")"
+                printf ' └─ 󰓃 Select Output Device\n'
+                
+                printf '\n󰍬 AUDIO INPUT CONTROL\n'
+                printf ' ├─ 󰍭 Mute/Unmute Microphone\n'
+                printf ' ├─ 󰍬 Microphone Volume (%d%%)\n' "$(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")"
+                printf ' └─ 󰍬 Select Input Device\n'
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ 󰌍 Back\n'
+            } | rofi_pick_msg "Audio" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
-            *"Silenzia/Attiva Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            *"Volume Output"*)
-                audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Volume Output" \
+        case "$clean_choice" in
+            *"Silenzia/Attiva Output" | *"Mute/Unmute Output"*) wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+            *"Volume Output"* | *"Output Volume"*)
+                audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Output Volume" \
                     "Output: $sink_desc" "slider-volume" "output-volume"
                 ;;
-            *"Silenzia/Attiva Microfono") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            *"Volume Microfono"*)
-                audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Volume Microfono" \
+            *"Silenzia/Attiva Microfono" | *"Mute/Unmute Microphone"*) wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
+            *"Volume Microfono"* | *"Microphone Volume"*)
+                audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Microphone Volume" \
                     "Input: $source_desc" "slider-mic" "input-volume"
                 ;;
-            *"Seleziona dispositivo Output") audio_choose_sink ;;
-            *"Seleziona dispositivo Input") audio_choose_source ;;
-            "󰌍 Indietro")
+            *"Seleziona dispositivo Output" | *"Select Output Device"*) audio_choose_sink ;;
+            *"Seleziona dispositivo Input" | *"Select Input Device"*) audio_choose_source ;;
+            "󰌍 Indietro" | "󰌍 Back")
                 back_or_main
                 return 0
                 ;;
@@ -1030,15 +1100,37 @@ battery_message() {
     model="$(battery_read "$path" model_name)"
     power_state="$(power_online)"
 
-    printf '%s: %s%%\n%s: %s\n%s: %s\n' \
-        "$(system_text "Battery")" "${capacity:-?}" \
-        "$(system_text "Status")" "$status_label" \
-        "$(system_text "Power")" "$power_state"
-    [[ -n "$estimate" ]] && printf '%s: %s\n' "$(system_text "Time")" "$estimate"
-    printf '%s: %s\n%s: %s' \
-        "$(system_text "Profile")" "$profile" \
-        "$(system_text "Health")" "$health"
-    [[ -n "$manufacturer$model" ]] && printf '\n%s: %s %s' "$(system_text "Battery")" "$manufacturer" "$model"
+    # dynamic color mapping
+    local cap_color="$c_green"
+    if [[ -n "$capacity" && "$capacity" =~ ^[0-9]+$ ]]; then
+        if (( capacity < 20 )); then
+            cap_color="$c_red"
+        elif (( capacity < 50 )); then
+            cap_color="$c_yellow"
+        fi
+    fi
+    
+    local status_color="$c_muted"
+    [[ "$status" == "Charging" ]] && status_color="$c_green"
+    [[ "$status" == "Full" ]] && status_color="$c_cyan"
+
+    local out
+    out="<b>$(system_text "Battery")</b>: <span color='${cap_color}'>${capacity:-?}%</span>\n"
+    out="${out}<b>$(system_text "Status")</b>: <span color='${status_color}'>${status_label}</span>\n"
+    out="${out}<b>$(system_text "Power")</b>: <span color='${c_yellow}'>${power_state}</span>"
+    
+    if [[ -n "$estimate" ]]; then
+        out="${out}\n<b>$(system_text "Time")</b>: <span color='${c_cyan}'>${estimate}</span>"
+    fi
+    
+    out="${out}\n<b>$(system_text "Profile")</b>: <span color='${c_accent}'>${profile}</span>"
+    out="${out}\n<b>$(system_text "Health")</b>: <span color='${c_accent}'>${health}</span>"
+    
+    if [[ -n "$manufacturer$model" ]]; then
+        out="${out}\n<span color='${c_muted}'>${manufacturer} ${model}</span>"
+    fi
+    
+    printf '%b' "$out"
 }
 
 battery_menu() {
@@ -1063,23 +1155,30 @@ battery_menu() {
         choice="$(
             {
                 if command -v powerprofilesctl >/dev/null 2>&1; then
-                    printf '  ── PROFILO ENERGIA ──────────────\n'
-                    printf '%s\n' "$power_saver"
-                    printf '%s\n' "$balanced"
-                    printf '%s\n' "$performance"
+                    printf '󰂎 POWER PROFILE\n'
+                    printf ' ├─ %s\n' "$power_saver"
+                    printf ' ├─ %s\n' "$balanced"
+                    printf ' └─ %s\n' "$performance"
+                    printf '\n󰐥 POWER ACTIONS\n'
+                else
+                    printf '󰐥 POWER ACTIONS\n'
                 fi
-                printf '  ── AZIONI ───────────────────────\n'
-                printf '%s\n' "$refresh"
-                printf '%s\n' "$suspend"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "$back"
+                printf ' ├─ %s\n' "$refresh"
+                printf ' └─ %s\n' "$suspend"
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ %s\n' "$back"
             } | rofi_pick_msg "$title" "$message"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
+        case "$clean_choice" in
             "$power_saver") run_or_notify "$(system_text "Power Saver")" powerprofilesctl set power-saver ;;
             "$balanced") run_or_notify "$(system_text "Balanced")" powerprofilesctl set balanced ;;
             "$performance") run_or_notify "$(system_text "Performance")" powerprofilesctl set performance ;;
@@ -1209,24 +1308,50 @@ keyboard_menu() {
         diagnostics="$(menu_item "󰋼" "Diagnostics")"
         back="$(menu_item "󰌍" "Back")"
 
+        # Format labels with tree connectors
+        local formatted_labels=""
+        if [[ -n "$labels" ]]; then
+            local count label_lines i
+            mapfile -t label_lines <<< "$labels"
+            count=${#label_lines[@]}
+            for ((i=0; i<count; i++)); do
+                if (( i == count - 1 )); then
+                    formatted_labels+=$' └─ '"${label_lines[i]}"$'\n'
+                else
+                    formatted_labels+=$' ├─ '"${label_lines[i]}"$'\n'
+                fi
+            done
+        fi
+
         choice="$(
             {
-                printf '  ── AZIONI ───────────────────────\n'
-                printf '%s\n' "$next_layout"
-                printf '  ── LAYOUT DISPONIBILI ───────────\n'
-                printf '%s\n' "$labels"
-                printf '  ── STRUMENTI ────────────────────\n'
-                command -v fcitx5-configtool >/dev/null 2>&1 && printf '%s\n' "$configure"
-                printf '%s\n' "$diagnostics"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "$back"
-            } | rofi_pick_msg "$title" "$(system_text "Current"): $(xkb_description "$active_code")\n$(system_text "System"): $im_status\n$gtk_status"
+                printf ' KEYBOARD LAYOUT\n'
+                printf ' └─ %s\n' "$next_layout"
+                
+                printf '\nAVAILABLE LAYOUTS\n'
+                printf '%s' "$formatted_labels"
+                
+                printf '\n󰒓 TOOLS AND CONFIGURATION\n'
+                if command -v fcitx5-configtool >/dev/null 2>&1; then
+                    printf ' ├─ %s\n' "$configure"
+                    printf ' └─ %s\n' "$diagnostics"
+                else
+                    printf ' └─ %s\n' "$diagnostics"
+                fi
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ %s\n' "$back"
+            } | rofi_pick_msg "$title" "<b>$(system_text "Current")</b>: <b><span color='${c_accent}'>$(xkb_description "$active_code")</span></b>\n<b>$(system_text "System")</b>: <span color='${c_muted}'>${im_status}</span>\n<span color='${c_muted}'>${gtk_status}</span>"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
+        case "$clean_choice" in
             "$next_layout")
                 run_or_notify "$(system_text "Keyboard")" hyprctl switchxkblayout all next
                 ;;
@@ -1242,7 +1367,7 @@ keyboard_menu() {
                 return 0
                 ;;
             *)
-                selected="$(printf '%s\n' "$rows" | awk -F'\t' -v chosen="$choice" '$1 == chosen {print; exit}')"
+                selected="$(printf '%s\n' "$rows" | awk -F'\t' -v chosen="$clean_choice" '$1 == chosen {print; exit}')"
                 [[ -n "$selected" ]] || return 0
                 index="$(printf '%s' "$selected" | awk -F'\t' '{print $2}')"
                 code="$(printf '%s' "$selected" | awk -F'\t' '{print $3}')"
@@ -1266,8 +1391,8 @@ notifications_menu() {
         local count dnd dnd_label history_rows history_labels choice
         count="$(swaync-client -c 2>/dev/null || echo 0)"
         dnd="$(swaync-client -D 2>/dev/null || echo false)"
-        dnd_label="spento"
-        [[ "$dnd" == "true" ]] && dnd_label="attivo"
+        dnd_label="off"
+        [[ "$dnd" == "true" ]] && dnd_label="active"
 
         history_rows="$(
             if [[ -s "$NOTIFICATIONS_FILE" ]]; then
@@ -1289,71 +1414,99 @@ notifications_menu() {
             fi
         )"
         history_labels="$(printf '%s\n' "$history_rows" | awk -F'\t' 'NF {print $1}')"
-        [[ -z "$history_labels" ]] && history_labels="󰵙 Nessuna notifica salvata"
+        [[ -z "$history_labels" ]] && history_labels="󰵙 No notifications saved"
+
+        # Format history labels with tree connectors
+        local formatted_history=""
+        if [[ -n "$history_labels" && "$history_labels" != "󰵙 No notifications saved" ]]; then
+            local count hist_lines i
+            mapfile -t hist_lines <<< "$history_labels"
+            count=${#hist_lines[@]}
+            for ((i=0; i<count; i++)); do
+                if (( i == count - 1 )); then
+                    formatted_history+=$' └─ '"${hist_lines[i]}"$'\n'
+                else
+                    formatted_history+=$' ├─ '"${hist_lines[i]}"$'\n'
+                fi
+            done
+        else
+            formatted_history=" └─ 󰵙 No notifications saved\n"
+        fi
+
+        local dnd_color="$c_muted"
+        [[ "$dnd" == "true" ]] && dnd_color="$c_red"
+        local message_card
+        message_card="Active Notifications: <b><span color='${c_yellow}'>${count}</span></b>\nDo Not Disturb: <b><span color='${dnd_color}'>${dnd_label}</span></b>"
 
         choice="$(
             {
-                printf '  ── AZIONI ───────────────────────\n'
+                printf '󰵙 NOTIFICATIONS MANAGEMENT\n'
                 if [[ "$dnd" == "true" ]]; then
-                    printf '%s\n' "󰂚 Disattiva Non Disturbare"
+                    printf ' ├─ 󰂚 Disable Do Not Disturb\n'
                 else
-                    printf '%s\n' "󰂛 Attiva Non Disturbare"
+                    printf ' ├─ 󰂛 Enable Do Not Disturb\n'
                 fi
-                printf '%s\n' "󰵚 Chiudi ultima notifica"
-                printf '%s\n' "󰆴 Cancella tutte le notifiche"
-                printf '%s\n' "󰑓 Aggiorna"
-                printf '  ── CRONOLOGIA ───────────────────\n'
-                printf '%s\n' "$history_labels"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍 Indietro"
-            } | rofi_pick_msg "Notifiche" "Nel menu: $count\nNon disturbare: $dnd_label"
+                printf ' ├─ 󰵚 Close last notification\n'
+                printf ' ├─ 󰆴 Clear all notifications\n'
+                printf ' └─ 󰑓 Refresh\n'
+                
+                printf '\n󰵚 RECENT HISTORY\n'
+                printf '%s' "$formatted_history"
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ 󰌍 Back\n'
+            } | rofi_pick_msg "Notifiche" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
-            *"Attiva Non Disturbare") swaync-client -dn >/dev/null ;;
-            *"Disattiva Non Disturbare") swaync-client -df >/dev/null ;;
-            *"Chiudi ultima notifica")
+        case "$clean_choice" in
+            *"Attiva Non Disturbare" | *"Enable Do Not Disturb"*) swaync-client -dn >/dev/null ;;
+            *"Disattiva Non Disturbare" | *"Disable Do Not Disturb"*) swaync-client -df >/dev/null ;;
+            *"Chiudi ultima notifica" | *"Close last notification"*)
                 swaync-client --close-latest
                 [[ -s "$NOTIFICATIONS_FILE" ]] && sed -i '$d' "$NOTIFICATIONS_FILE"
                 ;;
-            *"Cancella tutte le notifiche")
+            *"Cancella tutte le notifiche" | *"Clear all notifications"*)
                 swaync-client -C
                 : > "$NOTIFICATIONS_FILE"
                 ;;
-            *"Aggiorna")
+            *"Aggiorna" | *"Refresh"*)
                 continue
                 ;;
-            "󰵙 Nessuna notifica salvata")
+            "󰵙 Nessuna notifica salvata" | "󰵙 No notifications saved")
                 continue
                 ;;
-            "󰌍 Indietro")
+            "󰌍 Indietro" | "󰌍 Back")
                 back_or_main
                 return 0
                 ;;
             *)
                 local selected timestamp app summary body detail detail_choice
-                selected="$(printf '%s\n' "$history_rows" | awk -F'\t' -v chosen="$choice" '$1 == chosen {print; exit}')"
+                selected="$(printf '%s\n' "$history_rows" | awk -F'\t' -v chosen="$clean_choice" '$1 == chosen {print; exit}')"
                 [[ -n "$selected" ]] || return 0
 
                 timestamp="$(printf '%s' "$selected" | awk -F'\t' '{print $2}')"
                 app="$(printf '%s' "$selected" | awk -F'\t' '{print $3}')"
                 summary="$(printf '%s' "$selected" | awk -F'\t' '{print $4}')"
                 body="$(printf '%s' "$selected" | awk -F'\t' '{print $5}')"
-                detail="App: $app\nOra: $(date -d "@$timestamp" '+%d/%m %H:%M' 2>/dev/null || printf '%s' "$timestamp")\n\n$summary"
+                detail="App: $app\nTime: $(date -d "@$timestamp" '+%d/%m %H:%M' 2>/dev/null || printf '%s' "$timestamp")\n\n$summary"
                 [[ -n "$body" ]] && detail="$detail\n$body"
 
                 detail_choice="$(
                     printf '%s\n' \
-                        "󰅍 Copia testo" \
-                        "󰌍 Indietro" |
-                        rofi_pick_msg "Notifica" "$detail"
+                        " ├─ 󰅍 Copy text" \
+                        " └─ 󰌍 Back" |
+                        rofi_pick_msg "Notification" "$detail"
                 )"
 
                 case "$detail_choice" in
-                    *"Copia testo") printf '%s\n%s\n' "$summary" "$body" | wl-copy 2>/dev/null || true ;;
+                    *"Copia testo" | *"Copy text"*) printf '%s\n%s\n' "$summary" "$body" | wl-copy 2>/dev/null || true ;;
                 esac
                 ;;
         esac
@@ -1657,6 +1810,14 @@ get_color() {
     printf '%s' "${val:-$default}"
 }
 
+# Global dynamic colors loaded dynamically from system configuration
+c_accent="$(get_color accent "#8cb8e4")"
+c_muted="$(get_color muted "#b9c4d2")"
+c_yellow="$(get_color yellow "#f9e2af")"
+c_green="$(get_color green "#a6e3a1")"
+c_red="$(get_color red "#f38ba8")"
+c_cyan="$(get_color cyan "#89dceb")"
+
 calendar_month_message() {
     local today month_view events
     today="$(date +%F)"
@@ -1728,38 +1889,45 @@ calendar_menu() {
 
         choice="$(
             {
-                printf '  ── EVENTI ───────────────────────\n'
-                printf '%s\n' "󰃭 Eventi oggi"
-                printf '%s\n' "󰔚 Prossimi 30 giorni"
-                printf '%s\n' "󰥔 Scegli data"
-                printf '  ── GESTIONE ─────────────────────\n'
-                printf '%s\n' " Aggiungi evento locale"
-                printf '%s\n' "󰧭 Elimina evento locale"
-                printf '%s\n' "󰑓 Sincronizza Google Calendar"
-                printf '  ── STRUMENTI ────────────────────\n'
-                printf '%s\n' "󰖟 Apri Google Calendar"
-                printf '%s\n' "󰒓 Config sync"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍 Indietro"
+                printf '󰃭 EVENTS NAVIGATION\n'
+                printf ' ├─ 󰃭 Today'\''s events\n'
+                printf ' ├─ 󰔚 Next 30 days\n'
+                printf ' └─ 󰥔 Choose date\n'
+                
+                printf '\n CALENDAR MANAGEMENT\n'
+                printf ' ├─  Add local event\n'
+                printf ' ├─ 󰧭 Delete local event\n'
+                printf ' └─ 󰑓 Sync Google Calendar\n'
+                
+                printf '\n󰒓 TOOLS AND WEB\n'
+                printf ' ├─ 󰖟 Open Google Calendar\n'
+                printf ' └─ 󰒓 Config sync\n'
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ 󰌍 Back\n'
             } | rofi_pick_msg "$month" "$message" "$THEME_CALENDAR"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
-            "󰑓 Sincronizza Google Calendar") calendar_sync_google ;;
-            " Aggiungi evento locale") calendar_add_event ;;
-            "󰃭 Eventi oggi") calendar_show_date "$today" ;;
-            "󰔚 Prossimi 30 giorni") calendar_show_upcoming ;;
-            "󰥔 Scegli data")
-                picked_date="$(rofi_input "Data (YYYY-MM-DD)" "$today")"
+        case "$clean_choice" in
+            "󰑓 Sincronizza Google Calendar" | "󰑓 Sync Google Calendar") calendar_sync_google ;;
+            " Aggiungi evento locale" | " Add local event") calendar_add_event ;;
+            "󰃭 Eventi oggi" | "󰃭 Today's events") calendar_show_date "$today" ;;
+            "󰔚 Prossimi 30 giorni" | "󰔚 Next 30 days") calendar_show_upcoming ;;
+            "󰥔 Scegli data" | "󰥔 Choose date")
+                picked_date="$(rofi_input "Date (YYYY-MM-DD)" "$today")"
                 [[ -n "$picked_date" ]] && calendar_show_date "$(date -d "$picked_date" +%F 2>/dev/null || printf '%s' "$today")"
                 ;;
-            "󰧭 Elimina evento locale") calendar_delete_event ;;
-            "󰖟 Apri Google Calendar") xdg-open "https://calendar.google.com/calendar/u/0/r" >/dev/null 2>&1 & ;;
+            "󰧭 Elimina evento locale" | "󰧭 Delete local event") calendar_delete_event ;;
+            "󰖟 Apri Google Calendar" | "󰖟 Open Google Calendar") xdg-open "https://calendar.google.com/calendar/u/0/r" >/dev/null 2>&1 & ;;
             "󰒓 Config sync") "$REMOTE_SYNC_SCRIPT" config ;;
-            "󰌍 Indietro")
+            "󰌍 Indietro" | "󰌍 Back")
                 back_or_main
                 return 0
                 ;;
@@ -1800,24 +1968,33 @@ power_menu() {
         reboot="$(menu_item "󰜉" "Restart")"
         poweroff="$(menu_item "󰐥" "Power Off")"
         back="$(menu_item "󰌍" "Back")"
+        local message_card
+        message_card="<b><span color='${c_accent}'>Hyprland Session Control</span></b>\n<span color='${c_muted}'>$(system_text "Select an action")</span>"
+
         choice="$(
             {
-                printf '  ── SESSIONE ─────────────────────\n'
-                printf '%s\n' "$lock"
-                printf '%s\n' "$logout"
-                printf '%s\n' "$suspend"
-                printf '  ── SISTEMA ──────────────────────\n'
-                printf '%s\n' "$reboot"
-                printf '%s\n' "$poweroff"
-                printf '  ────────────────────────────────\n'
-                printf '%s\n' "$back"
-            } | rofi_pick_msg "$title" "Hyprland\n$(system_text "Select an action")"
+                printf '󰌾 SESSION CONTROL\n'
+                printf ' ├─ %s\n' "$lock"
+                printf ' ├─ %s\n' "$logout"
+                printf ' └─ %s\n' "$suspend"
+                
+                printf '\n󰐥 SYSTEM CONTROL\n'
+                printf ' ├─ %s\n' "$reboot"
+                printf ' └─ %s\n' "$poweroff"
+                
+                printf '\n󰌍 NAVIGATION\n'
+                printf ' └─ %s\n' "$back"
+            } | rofi_pick_msg "$title" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            "  ──"*) continue ;;
+        case "$clean_choice" in
             "$lock")
                 hyprlock
                 return 0
@@ -1858,46 +2035,50 @@ main_menu() {
 
         choice="$(
             {
-                printf '󰨞 CONTROLLI RAPIDI\n'
-                printf ' ├─ 󰤨  Connessione Wi-Fi\n'
-                printf ' ├─ 󰂯  Dispositivi Bluetooth\n'
-                printf ' ├─ 󰓃  Regolazioni Audio (Volume/Input)\n'
-                printf ' ├─ 󰃠  Luminosità Schermo\n'
-                printf ' └─ 󰂎  Informazioni Batteria\n'
+                printf '󰨞 QUICK CONTROLS\n'
+                printf ' ├─ 󰤨  Wi-Fi Connection\n'
+                printf ' ├─ 󰂯  Bluetooth Devices\n'
+                printf ' ├─ 󰓃  Audio Adjustments (Volume/Input)\n'
+                printf ' ├─ 󰃠  Screen Brightness\n'
+                printf ' └─ 󰂎  Battery Information\n'
                 
-                printf '\n󰒓 CONFIGURAZIONE SISTEMA\n'
-                printf ' ├─   Disposizione Tastiera\n'
-                printf ' ├─ 󰵙  Registro Notifiche\n'
-                printf ' ├─ 󰃭  Calendario ed Eventi\n'
-                printf ' ├─ 󰍹  Proietta Schermo (Display)\n'
-                printf ' └─ 󱂬  Floating Manager (Finestre)\n'
+                printf '\n󰒓 SYSTEM CONFIGURATION\n'
+                printf ' ├─   Keyboard Layout\n'
+                printf ' ├─ 󰵙  Notification History\n'
+                printf ' ├─ 󰃭  Calendar and Events\n'
+                printf ' ├─ 󰍹  Project Screen (Display)\n'
+                printf ' └─ 󱂬  Floating Window Manager\n'
                 
-                printf '\n󰏘 PERSONALIZZAZIONE\n'
-                printf ' ├─ 󰸉  Seleziona Sfondo (Wallpaper)\n'
-                printf ' └─ 󱓞  Gestione Widget Desktop\n'
+                printf '\n󰏘 PERSONALIZATION\n'
+                printf ' ├─ 󰸉  Select Wallpaper\n'
+                printf ' └─ 󱓞  Desktop Widgets Management\n'
                 
-                printf '\n󰐥 SPEGNIMENTO SISTEMA\n'
-                printf ' └─ 󰐥 Menu Spegnimento\n'
+                printf '\n󰐥 SYSTEM SHUTDOWN\n'
+                printf ' └─ 󰐥 Power Menu\n'
             } | rofi_pick "$(system_text "Settings")"
         )"
 
         [[ -z "$choice" ]] && return 0
+        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
+            continue
+        fi
+        local clean_choice
+        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-        case "$choice" in
-            *"CONTROLLI RAPIDI"* | *"CONFIGURAZIONE SISTEMA"* | *"PERSONALIZZAZIONE"* | *"SPEGNIMENTO SISTEMA"*) continue ;;
+        case "$clean_choice" in
             *"Bluetooth"*) MENU_STATE="bluetooth"; return 0 ;;
-            *"Wi-Fi"*) MENU_STATE="wifi"; return 0 ;;
-            *"Audio"*) MENU_STATE="audio"; return 0 ;;
-            *"Luminosità"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
-            *"Batteria"*) MENU_STATE="battery"; return 0 ;;
-            *"Tastiera"*) MENU_STATE="keyboard"; return 0 ;;
-            *"Notifiche"*) MENU_STATE="notifications"; return 0 ;;
-            *"Calendario"*) MENU_STATE="calendar"; return 0 ;;
-            *"Sfondo"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
-            *"Proietta Schermo"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
-            *"Gestione Widget"*) "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
-            *"Floating Manager"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
-            *"Menu Spegnimento"*) MENU_STATE="power"; return 0 ;;
+            *"Wi-Fi"* | *"Wi-Fi Connection"*) MENU_STATE="wifi"; return 0 ;;
+            *"Audio"* | *"Audio Adjustments"*) MENU_STATE="audio"; return 0 ;;
+            *"Luminosità"* | *"Brightness"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
+            *"Batteria"* | *"Battery"*) MENU_STATE="battery"; return 0 ;;
+            *"Tastiera"* | *"Keyboard"*) MENU_STATE="keyboard"; return 0 ;;
+            *"Notifiche"* | *"Notification"*) MENU_STATE="notifications"; return 0 ;;
+            *"Calendario"* | *"Calendar"*) MENU_STATE="calendar"; return 0 ;;
+            *"Sfondo"* | *"Wallpaper"* | *"Select Wallpaper"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
+            *"Proietta Schermo"* | *"Project"* | *"Display"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
+            *"Gestione Widget"* | *"Widgets"*) "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
+            *"Floating Manager"* | *"Floating"*) ANTO426_MENU_PARENT=control "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
+            *"Menu Spegnimento"* | *"Power"* | *"Power Menu"*) MENU_STATE="power"; return 0 ;;
             *) return 0 ;;
         esac
     done
