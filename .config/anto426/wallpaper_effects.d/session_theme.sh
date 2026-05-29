@@ -210,7 +210,7 @@ write_vscode_theme_json() {
     "breadcrumb.activeSelectionForeground": "$foreground",
     "button.background": "$accent",
     "button.foreground": "$selected_fg",
-    "button.hoverBackground": "$purple",
+    "button.hoverBackground": "$select",
     "button.secondaryBackground": "$base_alt",
     "button.secondaryForeground": "$foreground",
     "button.secondaryHoverBackground": "$surface",
@@ -239,9 +239,9 @@ write_vscode_theme_json() {
     "editor.wordHighlightBorder": "${border}8c",
     "editor.wordHighlightStrongBackground": "${accent}4d",
     "editor.wordHighlightStrongBorder": "$accent",
-    "editorBracketHighlight.foreground1": "$yellow",
-    "editorBracketHighlight.foreground2": "$purple",
-    "editorBracketHighlight.foreground3": "$accent",
+    "editorBracketHighlight.foreground1": "$accent",
+    "editorBracketHighlight.foreground2": "$muted",
+    "editorBracketHighlight.foreground3": "$yellow",
     "editorBracketMatch.background": "${surface}4d",
     "editorBracketMatch.border": "$accent",
     "editorCursor.background": "$background",
@@ -259,7 +259,7 @@ write_vscode_theme_json() {
     "editorHoverWidget.background": "$vscode_base_strong",
     "editorHoverWidget.border": "${border}8c",
     "editorHoverWidget.foreground": "$foreground",
-    "editorHoverWidget.highlightForeground": "$yellow",
+    "editorHoverWidget.highlightForeground": "$accent",
     "editorIndentGuide.activeBackground1": "${border}8c",
     "editorIndentGuide.background1": "${border}40",
     "editorInlayHint.background": "${surface}33",
@@ -274,7 +274,7 @@ write_vscode_theme_json() {
     "editorSuggestWidget.background": "$vscode_base_strong",
     "editorSuggestWidget.border": "${border}8c",
     "editorSuggestWidget.foreground": "$foreground",
-    "editorSuggestWidget.highlightForeground": "$yellow",
+    "editorSuggestWidget.highlightForeground": "$accent",
     "editorSuggestWidget.selectedBackground": "$accent",
     "editorSuggestWidget.selectedForeground": "$selected_fg",
     "editorWarning.foreground": "$yellow",
@@ -296,7 +296,7 @@ write_vscode_theme_json() {
     "list.dropBackground": "${accent}33",
     "list.focusBackground": "${select}cc",
     "list.focusForeground": "$foreground",
-    "list.highlightForeground": "$yellow",
+    "list.highlightForeground": "$accent",
     "list.hoverBackground": "${surface}78",
     "list.hoverForeground": "$foreground",
     "list.inactiveSelectionBackground": "${select}99",
@@ -320,7 +320,7 @@ write_vscode_theme_json() {
     "notifications.background": "$vscode_base_strong",
     "notifications.border": "${border}8c",
     "notifications.foreground": "$foreground",
-    "notificationLink.foreground": "$yellow",
+    "notificationLink.foreground": "$accent",
     "panel.background": "$vscode_bg",
     "panel.border": "${border}55",
     "panel.dropBorder": "$accent",
@@ -335,7 +335,7 @@ write_vscode_theme_json() {
     "peekViewResult.selectionBackground": "${select}99",
     "peekViewTitle.background": "$vscode_base_alt",
     "pickerGroup.border": "${border}55",
-    "pickerGroup.foreground": "$yellow",
+    "pickerGroup.foreground": "$muted",
     "progressBar.background": "$accent",
     "quickInput.background": "$vscode_base_strong",
     "quickInput.foreground": "$foreground",
@@ -405,7 +405,7 @@ write_vscode_theme_json() {
     "textBlockQuote.background": "$vscode_base",
     "textBlockQuote.border": "${border}8c",
     "textCodeBlock.background": "$vscode_base",
-    "textLink.activeForeground": "$purple",
+    "textLink.activeForeground": "$accent",
     "textLink.foreground": "$accent",
     "textPreformat.foreground": "$yellow",
     "titleBar.activeBackground": "$vscode_bg",
@@ -426,17 +426,17 @@ write_vscode_theme_json() {
     "enumMember": "$accent",
     "function": "$accent",
     "interface": "$green",
-    "keyword": "$purple",
+    "keyword": "$accent",
     "macro": "$orange",
     "method": "$accent",
-    "namespace": "$yellow",
+    "namespace": "$muted",
     "number": "$orange",
     "parameter": "$foreground",
-    "property": "$red",
+    "property": "$pink",
     "string": "$green",
     "type": "$yellow",
     "variable": "$foreground",
-    "variable.readonly": "$orange"
+    "variable.readonly": "$muted"
   },
   "tokenColors": [
     {
@@ -449,7 +449,7 @@ write_vscode_theme_json() {
     {
       "scope": ["keyword", "storage", "storage.type", "keyword.operator.expression"],
       "settings": {
-        "foreground": "$purple"
+        "foreground": "$accent"
       }
     },
     {
@@ -491,13 +491,13 @@ write_vscode_theme_json() {
     {
       "scope": ["variable.other.property", "support.variable.property", "meta.object-literal.key"],
       "settings": {
-        "foreground": "$red"
+        "foreground": "$pink"
       }
     },
     {
       "scope": ["entity.name.tag", "support.type.property-name", "entity.other.attribute-name"],
       "settings": {
-        "foreground": "$red"
+        "foreground": "$pink"
       }
     },
     {
@@ -609,6 +609,11 @@ write_vscode_user_settings() {
                 ANTO426_FOREGROUND="$foreground" \
                 ANTO426_MUTED="$muted" \
                 ANTO426_BORDER="$border" \
+                ANTO426_RED="$red" \
+                ANTO426_ORANGE="$orange" \
+                ANTO426_YELLOW="$yellow" \
+                ANTO426_GREEN="$green" \
+                ANTO426_PINK="$pink" \
                 node - "$settings_file" "$vscode_theme_name" <<'NODE'
 const fs = require('fs')
 const [settingsPath, themeName] = process.argv.slice(2)
@@ -758,8 +763,73 @@ tokenColorCustomizations[scopedTheme] = {
     {
       scope: ['entity.name.function', 'support.function', 'variable.function'],
       settings: { foreground: process.env.ANTO426_ACCENT }
+    },
+    {
+      scope: ['entity.name.type', 'entity.name.class', 'support.type', 'support.class'],
+      settings: { foreground: process.env.ANTO426_YELLOW }
+    },
+    {
+      scope: ['string', 'constant.character'],
+      settings: { foreground: process.env.ANTO426_GREEN }
+    },
+    {
+      scope: ['constant.numeric', 'constant.language', 'constant.other'],
+      settings: { foreground: process.env.ANTO426_ORANGE }
+    },
+    {
+      scope: ['variable', 'meta.definition.variable.name', 'support.variable'],
+      settings: { foreground: process.env.ANTO426_FOREGROUND }
+    },
+    {
+      scope: ['variable.parameter', 'meta.function.parameters'],
+      settings: { foreground: process.env.ANTO426_FOREGROUND }
+    },
+    {
+      scope: ['variable.other.property', 'support.variable.property', 'meta.object-literal.key'],
+      settings: { foreground: process.env.ANTO426_PINK }
+    },
+    {
+      scope: ['entity.name.tag', 'support.type.property-name', 'entity.other.attribute-name'],
+      settings: { foreground: process.env.ANTO426_PINK }
+    },
+    {
+      scope: ['punctuation', 'meta.brace', 'meta.delimiter'],
+      settings: { foreground: process.env.ANTO426_MUTED }
+    },
+    {
+      scope: ['invalid', 'invalid.illegal'],
+      settings: { foreground: process.env.ANTO426_RED }
     }
   ]
+}
+
+const semanticTokenColorCustomizations =
+  settings['editor.semanticTokenColorCustomizations'] &&
+  typeof settings['editor.semanticTokenColorCustomizations'] === 'object' &&
+  !Array.isArray(settings['editor.semanticTokenColorCustomizations'])
+    ? settings['editor.semanticTokenColorCustomizations']
+    : {}
+
+semanticTokenColorCustomizations[scopedTheme] = {
+  enabled: true,
+  rules: {
+    class: process.env.ANTO426_YELLOW,
+    enum: process.env.ANTO426_YELLOW,
+    enumMember: process.env.ANTO426_ACCENT,
+    function: process.env.ANTO426_ACCENT,
+    interface: process.env.ANTO426_GREEN,
+    keyword: process.env.ANTO426_ACCENT,
+    macro: process.env.ANTO426_ORANGE,
+    method: process.env.ANTO426_ACCENT,
+    namespace: process.env.ANTO426_MUTED,
+    number: process.env.ANTO426_ORANGE,
+    parameter: process.env.ANTO426_FOREGROUND,
+    property: process.env.ANTO426_PINK,
+    string: process.env.ANTO426_GREEN,
+    type: process.env.ANTO426_YELLOW,
+    variable: process.env.ANTO426_FOREGROUND,
+    'variable.readonly': process.env.ANTO426_MUTED
+  }
 }
 
 settings['workbench.colorTheme'] = themeName
@@ -767,6 +837,7 @@ settings['workbench.preferredDarkColorTheme'] = themeName
 settings['window.titleBarStyle'] = 'custom'
 settings['workbench.colorCustomizations'] = colorCustomizations
 settings['editor.tokenColorCustomizations'] = tokenColorCustomizations
+settings['editor.semanticTokenColorCustomizations'] = semanticTokenColorCustomizations
 
 if (JSON.stringify(settings) !== beforeSettings) {
   fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`)

@@ -54,12 +54,12 @@ generate_palette_from_samples() {
                 popover = hex(mix(bg_r, surface_r, 0.78), mix(bg_g, surface_g, 0.78), mix(bg_b, surface_b, 0.78))
                 selected_fg = brightness(accent_r, accent_g, accent_b) > 155 ? "#11111b" : "#f6f7fb"
 
-                red = hex(243, 139, 168)
-                orange = hex(ar * 0.48 + 250 * 0.52, ag * 0.30 + 179 * 0.70, ab * 0.22 + 135 * 0.78)
-                yellow = hex(ar * 0.35 + 249 * 0.65, ag * 0.36 + 226 * 0.64, ab * 0.20 + 175 * 0.80)
-                green = hex(ar * 0.25 + 166 * 0.75, ag * 0.42 + 227 * 0.58, ab * 0.25 + 161 * 0.75)
-                pink = hex(ar * 0.34 + 245 * 0.66, ag * 0.28 + 194 * 0.72, ab * 0.42 + 231 * 0.58)
-                purple = hex(ar * 0.40 + 203 * 0.60, ag * 0.34 + 166 * 0.66, ab * 0.50 + 247 * 0.50)
+                red = hex(ar * 0.10 + 206 * 0.90, ag * 0.08 + 126 * 0.92, ab * 0.08 + 150 * 0.92)
+                orange = hex(ar * 0.16 + 190 * 0.84, ag * 0.12 + 146 * 0.88, ab * 0.10 + 136 * 0.90)
+                yellow = hex(ar * 0.18 + 193 * 0.82, ag * 0.16 + 173 * 0.84, ab * 0.12 + 186 * 0.88)
+                green = hex(ar * 0.12 + 154 * 0.88, ag * 0.22 + 176 * 0.78, ab * 0.16 + 174 * 0.84)
+                pink = hex(ar * 0.24 + 180 * 0.76, ag * 0.16 + 145 * 0.84, ab * 0.28 + 190 * 0.72)
+                purple = hex(ar * 0.40 + 170 * 0.60, ag * 0.32 + 145 * 0.68, ab * 0.55 + 205 * 0.45)
                 gray = hex(r * 0.25 + 69 * 0.75, g * 0.25 + 71 * 0.75, b * 0.25 + 90 * 0.75)
 
                 print background, surface, select, accent, border, fg, muted, red, orange, yellow, green, pink, purple, gray, base, base_alt, titlebar, titlebar_backdrop, popover, selected_fg
