@@ -178,6 +178,14 @@ EOF
 
 write_vscode_theme_json() {
     local output="$1"
+    local vscode_bg="${background}8c"
+    local vscode_bg_soft="${background}66"
+    local vscode_editor_bg="${background}99"
+    local vscode_bg_clear="${background}00"
+    local vscode_base="${base}a8"
+    local vscode_base_strong="${base}d9"
+    local vscode_base_alt="${base_alt}b8"
+    local vscode_surface="${surface}ba"
 
     cat >"$output" <<EOF
 {
@@ -188,7 +196,7 @@ write_vscode_theme_json() {
     "foreground": "$foreground",
     "focusBorder": "$accent",
     "errorForeground": "$red",
-    "activityBar.background": "$background",
+    "activityBar.background": "$vscode_bg",
     "activityBar.border": "${border}55",
     "activityBar.foreground": "$foreground",
     "activityBar.inactiveForeground": "${muted}99",
@@ -196,6 +204,10 @@ write_vscode_theme_json() {
     "activityBarBadge.foreground": "$selected_fg",
     "badge.background": "${surface}c7",
     "badge.foreground": "$foreground",
+    "breadcrumb.background": "$vscode_bg",
+    "breadcrumb.foreground": "$muted",
+    "breadcrumb.focusForeground": "$foreground",
+    "breadcrumb.activeSelectionForeground": "$foreground",
     "button.background": "$accent",
     "button.foreground": "$selected_fg",
     "button.hoverBackground": "$purple",
@@ -204,14 +216,15 @@ write_vscode_theme_json() {
     "button.secondaryHoverBackground": "$surface",
     "checkbox.background": "$base",
     "checkbox.border": "${border}8c",
-    "commandCenter.background": "${base}cc",
+    "commandCenter.background": "$vscode_base",
     "commandCenter.border": "${border}8c",
     "commandCenter.foreground": "$foreground",
-    "dropdown.background": "$base",
+    "debugToolBar.background": "$vscode_base_strong",
+    "dropdown.background": "$vscode_base",
     "dropdown.border": "${border}8c",
     "dropdown.foreground": "$foreground",
-    "dropdown.listBackground": "$background",
-    "editor.background": "$background",
+    "dropdown.listBackground": "$vscode_bg",
+    "editor.background": "$vscode_editor_bg",
     "editor.foreground": "$foreground",
     "editor.findMatchBackground": "${accent}66",
     "editor.findMatchBorder": "$accent",
@@ -234,16 +247,16 @@ write_vscode_theme_json() {
     "editorCursor.background": "$background",
     "editorCursor.foreground": "$accent",
     "editorError.foreground": "$red",
-    "editorGroup.background": "$background",
+    "editorGroup.background": "$vscode_bg",
     "editorGroup.border": "${border}55",
     "editorGroup.dropBackground": "${accent}33",
-    "editorGroup.emptyBackground": "$background",
-    "editorGroupHeader.tabsBackground": "$background",
+    "editorGroup.emptyBackground": "$vscode_bg",
+    "editorGroupHeader.tabsBackground": "$vscode_bg",
     "editorGutter.addedBackground": "$green",
-    "editorGutter.background": "$background",
+    "editorGutter.background": "$vscode_bg_clear",
     "editorGutter.deletedBackground": "$red",
     "editorGutter.modifiedBackground": "$yellow",
-    "editorHoverWidget.background": "${base}f2",
+    "editorHoverWidget.background": "$vscode_base_strong",
     "editorHoverWidget.border": "${border}8c",
     "editorHoverWidget.foreground": "$foreground",
     "editorHoverWidget.highlightForeground": "$yellow",
@@ -254,10 +267,11 @@ write_vscode_theme_json() {
     "editorLineNumber.activeForeground": "$foreground",
     "editorLineNumber.foreground": "$border",
     "editorLink.activeForeground": "$accent",
-    "editorOverviewRuler.border": "$background",
+    "editorMarkerNavigation.background": "$vscode_base",
+    "editorOverviewRuler.border": "$vscode_bg_clear",
     "editorRuler.foreground": "${border}40",
-    "editorStickyScroll.background": "${background}ee",
-    "editorSuggestWidget.background": "${base}f2",
+    "editorStickyScroll.background": "${background}d9",
+    "editorSuggestWidget.background": "$vscode_base_strong",
     "editorSuggestWidget.border": "${border}8c",
     "editorSuggestWidget.foreground": "$foreground",
     "editorSuggestWidget.highlightForeground": "$yellow",
@@ -265,13 +279,13 @@ write_vscode_theme_json() {
     "editorSuggestWidget.selectedForeground": "$selected_fg",
     "editorWarning.foreground": "$yellow",
     "editorWhitespace.foreground": "${border}55",
-    "editorWidget.background": "${base}f2",
+    "editorWidget.background": "$vscode_base_strong",
     "editorWidget.border": "${border}8c",
     "gitDecoration.addedResourceForeground": "$green",
     "gitDecoration.deletedResourceForeground": "$red",
     "gitDecoration.ignoredResourceForeground": "$border",
     "gitDecoration.modifiedResourceForeground": "$yellow",
-    "input.background": "$base",
+    "input.background": "$vscode_base",
     "input.border": "${border}8c",
     "input.foreground": "$foreground",
     "input.placeholderForeground": "${muted}99",
@@ -288,7 +302,9 @@ write_vscode_theme_json() {
     "list.inactiveSelectionBackground": "${select}99",
     "list.inactiveSelectionForeground": "$foreground",
     "list.warningForeground": "$yellow",
-    "menu.background": "${base}f2",
+    "listFilterWidget.background": "$vscode_base_strong",
+    "listFilterWidget.noMatchesOutline": "$red",
+    "menu.background": "$vscode_base_strong",
     "menu.border": "${border}8c",
     "menu.foreground": "$foreground",
     "menu.selectionBackground": "$accent",
@@ -296,30 +312,32 @@ write_vscode_theme_json() {
     "menu.separatorBackground": "${border}55",
     "menubar.selectionBackground": "${surface}78",
     "menubar.selectionForeground": "$foreground",
-    "minimap.background": "$background",
+    "minimap.background": "$vscode_bg_clear",
     "minimap.selectionHighlight": "${select}99",
+    "multiDiffEditor.headerBackground": "$vscode_base",
     "notificationCenter.border": "${border}8c",
-    "notificationCenterHeader.background": "$base_alt",
-    "notifications.background": "${base}f2",
+    "notificationCenterHeader.background": "$vscode_base_alt",
+    "notifications.background": "$vscode_base_strong",
     "notifications.border": "${border}8c",
     "notifications.foreground": "$foreground",
     "notificationLink.foreground": "$yellow",
-    "panel.background": "$background",
+    "panel.background": "$vscode_bg",
     "panel.border": "${border}55",
     "panel.dropBorder": "$accent",
-    "panelSectionHeader.background": "$base",
+    "panelSectionHeader.background": "$vscode_base",
     "panelTitle.activeBorder": "$accent",
     "panelTitle.activeForeground": "$foreground",
     "panelTitle.inactiveForeground": "$muted",
     "peekView.border": "$accent",
-    "peekViewEditor.background": "$background",
+    "peekViewEditor.background": "$vscode_editor_bg",
     "peekViewEditor.matchHighlightBackground": "${accent}55",
-    "peekViewResult.background": "$base",
+    "peekViewResult.background": "$vscode_base",
     "peekViewResult.selectionBackground": "${select}99",
+    "peekViewTitle.background": "$vscode_base_alt",
     "pickerGroup.border": "${border}55",
     "pickerGroup.foreground": "$yellow",
     "progressBar.background": "$accent",
-    "quickInput.background": "${base}f2",
+    "quickInput.background": "$vscode_base_strong",
     "quickInput.foreground": "$foreground",
     "quickInputList.focusBackground": "$accent",
     "quickInputList.focusForeground": "$selected_fg",
@@ -327,34 +345,42 @@ write_vscode_theme_json() {
     "scrollbarSlider.activeBackground": "${accent}99",
     "scrollbarSlider.background": "${border}66",
     "scrollbarSlider.hoverBackground": "${select}99",
+    "settings.checkboxBackground": "$vscode_base",
+    "settings.checkboxBorder": "${border}8c",
+    "settings.dropdownBackground": "$vscode_base",
+    "settings.dropdownBorder": "${border}8c",
     "settings.focusedRowBackground": "${surface}33",
     "settings.headerForeground": "$foreground",
     "settings.modifiedItemIndicator": "$accent",
-    "sideBar.background": "$background",
+    "settings.numberInputBackground": "$vscode_base",
+    "settings.numberInputBorder": "${border}8c",
+    "settings.textInputBackground": "$vscode_base",
+    "settings.textInputBorder": "${border}8c",
+    "sideBar.background": "$vscode_bg",
     "sideBar.border": "${border}55",
     "sideBar.dropBackground": "${accent}33",
     "sideBar.foreground": "$muted",
-    "sideBarSectionHeader.background": "$base",
+    "sideBarSectionHeader.background": "$vscode_base",
     "sideBarSectionHeader.border": "${border}33",
     "sideBarSectionHeader.foreground": "$foreground",
     "sideBarTitle.foreground": "$foreground",
-    "statusBar.background": "$surface",
+    "statusBar.background": "$vscode_surface",
     "statusBar.border": "${border}55",
     "statusBar.debuggingBackground": "$orange",
     "statusBar.debuggingForeground": "$selected_fg",
     "statusBar.foreground": "$foreground",
-    "statusBar.noFolderBackground": "$base_alt",
+    "statusBar.noFolderBackground": "$vscode_base_alt",
     "statusBarItem.hoverBackground": "${select}99",
     "statusBarItem.remoteBackground": "$accent",
     "statusBarItem.remoteForeground": "$selected_fg",
     "statusBarItem.warningBackground": "$yellow",
     "statusBarItem.warningForeground": "$background",
-    "tab.activeBackground": "$base",
+    "tab.activeBackground": "$vscode_base",
     "tab.activeBorder": "$accent",
     "tab.activeForeground": "$foreground",
     "tab.border": "${border}33",
     "tab.hoverBackground": "${surface}78",
-    "tab.inactiveBackground": "$background",
+    "tab.inactiveBackground": "$vscode_bg_soft",
     "tab.inactiveForeground": "$muted",
     "terminal.ansiBlack": "$background",
     "terminal.ansiBlue": "$accent",
@@ -372,24 +398,24 @@ write_vscode_theme_json() {
     "terminal.ansiRed": "$red",
     "terminal.ansiWhite": "$foreground",
     "terminal.ansiYellow": "$yellow",
-    "terminal.background": "$background",
+    "terminal.background": "$vscode_editor_bg",
     "terminal.border": "${border}55",
     "terminal.foreground": "$foreground",
     "terminal.selectionBackground": "${select}99",
-    "textBlockQuote.background": "$base",
+    "textBlockQuote.background": "$vscode_base",
     "textBlockQuote.border": "${border}8c",
-    "textCodeBlock.background": "$base",
+    "textCodeBlock.background": "$vscode_base",
     "textLink.activeForeground": "$purple",
     "textLink.foreground": "$accent",
     "textPreformat.foreground": "$yellow",
-    "titleBar.activeBackground": "$background",
+    "titleBar.activeBackground": "$vscode_bg",
     "titleBar.activeForeground": "$foreground",
     "titleBar.border": "${border}55",
-    "titleBar.inactiveBackground": "$background",
+    "titleBar.inactiveBackground": "$vscode_bg_soft",
     "titleBar.inactiveForeground": "$muted",
     "tree.indentGuidesStroke": "${border}55",
-    "walkThrough.embeddedEditorBackground": "$base",
-    "welcomePage.buttonBackground": "$base",
+    "walkThrough.embeddedEditorBackground": "$vscode_base",
+    "welcomePage.buttonBackground": "$vscode_base",
     "welcomePage.buttonHoverBackground": "${surface}78",
     "widget.border": "${border}8c",
     "widget.shadow": "#00000000"
@@ -494,9 +520,11 @@ EOF
 write_vscode_extension_stub() {
     local extension_dir="$HOME/.vscode/extensions/anto426.anto426-vscode-theme-dynamic"
     local generated_theme="$1"
+    local tmp_package
 
     mkdir -p "$extension_dir/themes"
-    cat >"$extension_dir/package.json" <<EOF
+    tmp_package="$(mktemp)"
+    cat >"$tmp_package" <<EOF
 {
   "name": "anto426-vscode-theme",
   "displayName": "$vscode_theme_name",
@@ -518,8 +546,30 @@ write_vscode_extension_stub() {
   }
 }
 EOF
-    cp "$generated_theme" "$extension_dir/themes/$vscode_theme_file"
+    copy_if_changed "$tmp_package" "$extension_dir/package.json" || true
+    rm -f "$tmp_package"
+    copy_if_changed "$generated_theme" "$extension_dir/themes/$vscode_theme_file" || true
     log "VSCode theme stub aggiornato: $extension_dir"
+}
+
+copy_if_changed() {
+    local src="$1"
+    local dst="$2"
+
+    mkdir -p "$(dirname "$dst")"
+    if [[ -f "$dst" ]] && cmp -s "$src" "$dst"; then
+        return 1
+    fi
+
+    cp "$src" "$dst"
+}
+
+vscode_is_running() {
+    pgrep -x code >/dev/null 2>&1 ||
+        pgrep -x codium >/dev/null 2>&1 ||
+        pgrep -x code-oss >/dev/null 2>&1 ||
+        pgrep -x code-insiders >/dev/null 2>&1 ||
+        pgrep -x electron >/dev/null 2>&1 && pgrep -af 'Code|VSCodium|code-oss|code-insiders' >/dev/null 2>&1
 }
 
 write_vscode_user_settings() {
@@ -629,6 +679,7 @@ if (!settings || typeof settings !== 'object' || Array.isArray(settings)) {
   settings = {}
 }
 
+const beforeSettings = JSON.stringify(settings)
 const scopedTheme = `[${themeName}]`
 const colorCustomizations =
   settings['workbench.colorCustomizations'] &&
@@ -638,28 +689,74 @@ const colorCustomizations =
     : {}
 
 colorCustomizations[scopedTheme] = {
-  'activityBar.background': process.env.ANTO426_BACKGROUND,
-  'editor.background': process.env.ANTO426_BACKGROUND,
+  'activityBar.background': `${process.env.ANTO426_BACKGROUND}8c`,
+  'breadcrumb.background': `${process.env.ANTO426_BACKGROUND}8c`,
+  'commandCenter.background': `${process.env.ANTO426_BASE}a8`,
+  'dropdown.background': `${process.env.ANTO426_BASE}a8`,
+  'dropdown.listBackground': `${process.env.ANTO426_BACKGROUND}8c`,
+  'editor.background': `${process.env.ANTO426_BACKGROUND}99`,
+  'editorGroup.background': `${process.env.ANTO426_BACKGROUND}8c`,
+  'editorGroup.emptyBackground': `${process.env.ANTO426_BACKGROUND}8c`,
+  'editorGroupHeader.tabsBackground': `${process.env.ANTO426_BACKGROUND}8c`,
+  'editorGutter.background': `${process.env.ANTO426_BACKGROUND}00`,
   'editor.foreground': process.env.ANTO426_FOREGROUND,
   'editor.selectionBackground': `${process.env.ANTO426_SELECT}99`,
   'editorCursor.foreground': process.env.ANTO426_ACCENT,
+  'input.background': `${process.env.ANTO426_BASE}a8`,
   'list.activeSelectionBackground': process.env.ANTO426_ACCENT,
   'list.hoverBackground': `${process.env.ANTO426_SURFACE}78`,
-  'panel.background': process.env.ANTO426_BACKGROUND,
-  'sideBar.background': process.env.ANTO426_BACKGROUND,
-  'statusBar.background': process.env.ANTO426_SURFACE,
-  'tab.activeBackground': process.env.ANTO426_BASE,
-  'terminal.background': process.env.ANTO426_BACKGROUND,
+  'menu.background': `${process.env.ANTO426_BASE}d9`,
+  'minimap.background': `${process.env.ANTO426_BACKGROUND}00`,
+  'panel.background': `${process.env.ANTO426_BACKGROUND}8c`,
+  'quickInput.background': `${process.env.ANTO426_BASE}d9`,
+  'sideBar.background': `${process.env.ANTO426_BACKGROUND}8c`,
+  'sideBarSectionHeader.background': `${process.env.ANTO426_BASE}a8`,
+  'statusBar.background': `${process.env.ANTO426_SURFACE}ba`,
+  'tab.activeBackground': `${process.env.ANTO426_BASE}a8`,
+  'tab.inactiveBackground': `${process.env.ANTO426_BACKGROUND}66`,
+  'terminal.background': `${process.env.ANTO426_BACKGROUND}99`,
   'terminal.foreground': process.env.ANTO426_FOREGROUND,
-  'titleBar.activeBackground': process.env.ANTO426_BACKGROUND,
+  'titleBar.activeBackground': `${process.env.ANTO426_BACKGROUND}8c`,
+  'titleBar.inactiveBackground': `${process.env.ANTO426_BACKGROUND}66`,
   'widget.border': `${process.env.ANTO426_BORDER}8c`
+}
+
+const tokenColorCustomizations =
+  settings['editor.tokenColorCustomizations'] &&
+  typeof settings['editor.tokenColorCustomizations'] === 'object' &&
+  !Array.isArray(settings['editor.tokenColorCustomizations'])
+    ? settings['editor.tokenColorCustomizations']
+    : {}
+
+tokenColorCustomizations[scopedTheme] = {
+  textMateRules: [
+    {
+      scope: ['comment', 'punctuation.definition.comment'],
+      settings: {
+        foreground: process.env.ANTO426_MUTED,
+        fontStyle: 'italic'
+      }
+    },
+    {
+      scope: ['keyword', 'storage', 'storage.type', 'keyword.operator.expression'],
+      settings: { foreground: process.env.ANTO426_ACCENT }
+    },
+    {
+      scope: ['entity.name.function', 'support.function', 'variable.function'],
+      settings: { foreground: process.env.ANTO426_ACCENT }
+    }
+  ]
 }
 
 settings['workbench.colorTheme'] = themeName
 settings['workbench.preferredDarkColorTheme'] = themeName
+settings['window.titleBarStyle'] = 'custom'
 settings['workbench.colorCustomizations'] = colorCustomizations
+settings['editor.tokenColorCustomizations'] = tokenColorCustomizations
 
-fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`)
+if (JSON.stringify(settings) !== beforeSettings) {
+  fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`)
+}
 NODE
             then
                 log "VSCode settings aggiornati: $settings_file"
@@ -694,21 +791,27 @@ write_vscode_theme() {
 
     write_vscode_theme_json "$generated_theme"
 
-    for root in "${roots[@]}"; do
-        [[ -d "$root" ]] || continue
-        while IFS= read -r -d '' package_file; do
-            if grep -Eq '"name"[[:space:]]*:[[:space:]]*"anto426-vscode-theme"' "$package_file"; then
-                extension_dir="$(dirname "$package_file")"
-                mkdir -p "$extension_dir/themes"
-                cp "$generated_theme" "$extension_dir/themes/$vscode_theme_file"
-                updated=1
-                log "VSCode theme aggiornato: $extension_dir/themes/$vscode_theme_file"
-            fi
-        done < <(find "$root" -maxdepth 2 -type f -name package.json -print0 2>/dev/null)
-    done
+    if vscode_is_running; then
+        log "VSCode in esecuzione: salto aggiornamento file estensione per evitare reload."
+    else
+        for root in "${roots[@]}"; do
+            [[ -d "$root" ]] || continue
+            while IFS= read -r -d '' package_file; do
+                if grep -Eq '"name"[[:space:]]*:[[:space:]]*"anto426-vscode-theme"' "$package_file"; then
+                    extension_dir="$(dirname "$package_file")"
+                    if copy_if_changed "$generated_theme" "$extension_dir/themes/$vscode_theme_file"; then
+                        log "VSCode theme aggiornato: $extension_dir/themes/$vscode_theme_file"
+                    else
+                        log "VSCode theme invariato: $extension_dir/themes/$vscode_theme_file"
+                    fi
+                    updated=1
+                fi
+            done < <(find "$root" -maxdepth 2 -type f -name package.json -print0 2>/dev/null)
+        done
 
-    if ((updated == 0)); then
-        write_vscode_extension_stub "$generated_theme"
+        if ((updated == 0)); then
+            write_vscode_extension_stub "$generated_theme"
+        fi
     fi
 
     write_vscode_user_settings
