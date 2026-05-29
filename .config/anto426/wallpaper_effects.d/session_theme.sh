@@ -565,11 +565,24 @@ copy_if_changed() {
 }
 
 vscode_is_running() {
-    pgrep -x code >/dev/null 2>&1 ||
+    if command -v hyprctl >/dev/null 2>&1 &&
+        hyprctl clients -j 2>/dev/null |
+            grep -Eiq '"class"[[:space:]]*:[[:space:]]*"(Code|code|code-url-handler|code-oss|Code - OSS|codium|Codium|VSCodium|code-insiders|Code - Insiders)"'; then
+        return 0
+    fi
+
+    if pgrep -x code >/dev/null 2>&1 ||
         pgrep -x codium >/dev/null 2>&1 ||
         pgrep -x code-oss >/dev/null 2>&1 ||
         pgrep -x code-insiders >/dev/null 2>&1 ||
-        pgrep -x electron >/dev/null 2>&1 && pgrep -af 'Code|VSCodium|code-oss|code-insiders' >/dev/null 2>&1
+        {
+            pgrep -x electron >/dev/null 2>&1 &&
+                pgrep -af '(^|[ /])(Code|VSCodium|code-oss|code-insiders)([ /]|$)|class=(Code|VSCodium|code-oss|code-insiders)' >/dev/null 2>&1
+        }; then
+        return 0
+    fi
+
+    return 1
 }
 
 write_vscode_user_settings() {
@@ -580,6 +593,7 @@ write_vscode_user_settings() {
     )
     local settings_dir
     local settings_file
+    local node_result
 
     for settings_dir in "${settings_dirs[@]}"; do
         [[ "$settings_dir" == "$HOME/.config/Code/User" || -d "$(dirname "$settings_dir")" ]] || continue
@@ -587,7 +601,7 @@ write_vscode_user_settings() {
         settings_file="$settings_dir/settings.json"
 
         if command -v node >/dev/null 2>&1; then
-            if ANTO426_BACKGROUND="$background" \
+            if node_result="$(ANTO426_BACKGROUND="$background" \
                 ANTO426_SURFACE="$surface" \
                 ANTO426_BASE="$base" \
                 ANTO426_SELECT="$select" \
@@ -756,10 +770,17 @@ settings['editor.tokenColorCustomizations'] = tokenColorCustomizations
 
 if (JSON.stringify(settings) !== beforeSettings) {
   fs.writeFileSync(settingsPath, `${JSON.stringify(settings, null, 2)}\n`)
+  process.stdout.write('changed\n')
+} else {
+  process.stdout.write('unchanged\n')
 }
 NODE
-            then
-                log "VSCode settings aggiornati: $settings_file"
+            )"; then
+                if [[ "$node_result" == "changed" ]]; then
+                    log "VSCode settings aggiornati: $settings_file"
+                else
+                    log "VSCode settings invariati: $settings_file"
+                fi
             else
                 log "VSCode settings non aggiornati: $settings_file"
             fi
@@ -767,7 +788,8 @@ NODE
             cat >"$settings_file" <<EOF
 {
   "workbench.colorTheme": "$vscode_theme_name",
-  "workbench.preferredDarkColorTheme": "$vscode_theme_name"
+  "workbench.preferredDarkColorTheme": "$vscode_theme_name",
+  "window.titleBarStyle": "custom"
 }
 EOF
             log "VSCode settings creati: $settings_file"
