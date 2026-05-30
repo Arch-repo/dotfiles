@@ -132,33 +132,34 @@ configuration {
 }
 
 #inputbar {
-    children:   [ prompt, textbox-prompt-colon, entry ];
-    spacing:       6px;
+    children:   [ prompt, entry ];
+    spacing:       12px;
     padding:       10px 14px;
     border:        1px;
-    border-color:  @border;
-    border-radius: 14px;
-    background-color: @surface;
+    border-color:  @border-alpha;
+    border-radius: 16px;
+    background-color: @surface-alpha;
 }
 
 #prompt {
     spacing:    0;
-    text-color: @accent;
-    font: "JetBrainsMono Nerd Font Bold 12";
+    background-color: @select-alpha;
+    text-color: @foreground;
+    font: "JetBrainsMono Nerd Font Bold 11";
+    padding: 4px 12px;
+    border-radius: 10px;
 }
 
 #textbox-prompt-colon {
-    expand:     false;
-    str:        "•";
-    margin:     0px 0.1em 0em 0em;
-    text-color: @muted;
+    enabled:    false;
 }
 
 #entry {
     spacing:    0;
     text-color: @foreground;
-    placeholder: "Cerca applicazioni o comandi...";
+    placeholder: "Search applications or commands...";
     placeholder-color: @muted;
+    vertical-align: 0.5;
 }
 
 #message {

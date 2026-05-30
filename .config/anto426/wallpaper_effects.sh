@@ -50,17 +50,17 @@ log() {
 }
 
 notify() {
-    notify-send "Sfondo" "$*" 2>/dev/null || true
+    notify-send "Wallpaper" "$*" 2>/dev/null || true
 }
 
 notify_theme_reload() {
-    notify-send "Tema aggiornato" "$*" 2>/dev/null || true
+    notify-send "Theme updated" "$*" 2>/dev/null || true
 }
 
 require_command() {
     command -v "$1" >/dev/null 2>&1 || {
-        log "Comando mancante: $1"
-        notify "Comando mancante: $1"
+        log "Command missing: $1"
+        notify "Command missing: $1"
         exit 1
     }
 }
@@ -77,7 +77,7 @@ admin_setup() {
     local file
 
     if ((EUID != 0)); then
-        printf 'Esegui con root: sudo %s --setup-admin\n' "$0" >&2
+        printf 'Run as root: sudo %s --setup-admin\n' "$0" >&2
         return 1
     fi
 
@@ -98,7 +98,7 @@ admin_setup() {
             chmod u+rw,go+r "$file"
             printf 'OK %s -> %s:%s\n' "$file" "$target_user" "$target_group"
         else
-            printf 'SKIP mancante: %s\n' "$file" >&2
+            printf 'SKIP missing: %s\n' "$file" >&2
         fi
     done
 }
@@ -111,7 +111,7 @@ fi
 current_wallpaper_path="${1:-$(awww query 2>/dev/null | awk -F'image: ' '/image:/ {print $2; exit}')}"
 
 if [[ -z "$current_wallpaper_path" || ! -f "$current_wallpaper_path" ]]; then
-    log "Sfondo non valido: ${current_wallpaper_path:-vuoto}"
+    log "Invalid wallpaper: ${current_wallpaper_path:-empty}"
     exit 0
 fi
 
@@ -230,8 +230,8 @@ install_file() {
         fi
     fi
 
-    log "$label non aggiornato, permessi insufficienti: $dst. Setup: $setup_cmd"
-    notify "$label non aggiornato: esegui setup admin una volta"
+    log "$label not updated, insufficient permissions: $dst. Setup: $setup_cmd"
+    notify "$label not updated: run admin setup once"
     return 1
 }
 
@@ -247,7 +247,7 @@ install_optional_file() {
         return $?
     fi
 
-    log "$label non aggiornato, permessi insufficienti: $dst"
+    log "$label not updated, insufficient permissions: $dst"
     return 1
 }
 
@@ -255,17 +255,17 @@ reload_widgets_after_theme() {
     if [[ -x "$widgets_script" ]]; then
         if "$widgets_script" status 2>/dev/null | grep -q '^running$'; then
             if "$widgets_script" reload >/dev/null 2>&1; then
-                widgets_reload_status="ricaricati"
+                widgets_reload_status="reloaded"
             else
-                widgets_reload_status="errore reload"
-                log "Reload widget fallito: $widgets_script"
+                widgets_reload_status="reload error"
+                log "Widget reload failed: $widgets_script"
             fi
         else
-            log "Reload widget saltato: nessun widget attivo"
+            log "Widget reload skipped: no active widgets"
         fi
     else
-        widgets_reload_status="script mancante"
-        log "Reload widget saltato, script mancante: $widgets_script"
+        widgets_reload_status="missing script"
+        log "Widget reload skipped, missing script: $widgets_script"
     fi
 }
 
@@ -364,7 +364,7 @@ canvas_height="${canvas_size#*x}"
 tmp_dir="$(mktemp -d)"
 trap 'rm -rf "$tmp_dir"' EXIT
 
-log "Aggiorno tema da: $current_wallpaper_path ($canvas_size)"
+log "Updating theme from: $current_wallpaper_path ($canvas_size)"
 
 make_cover_image "$current_wallpaper_path" "$canvas_size" "$destination_wallpaper_dir/normal.png"
 printf '%s\n' "$current_wallpaper_path" >"$destination_wallpaper_dir/current-wallpaper.path"
@@ -387,7 +387,7 @@ read -r ar ag ab < <(
 
 generate_palette_from_samples "$r" "$g" "$b" "$ar" "$ag" "$ab"
 
-# Scrittura dei temi in parallelo per massimizzare le prestazioni
+# Writing themes in parallel for maximum performance
 write_session_theme &
 pid_session=$!
 write_app_theme &
@@ -403,5 +403,5 @@ swaync-client -rs >/dev/null 2>&1 || true
 hyprctl reload >/dev/null 2>&1 || true
 reload_widgets_after_theme
 
-log "Tema aggiornato: bg=$background surface=$surface accent=$accent border=$border"
-notify_theme_reload "Da $(basename "$current_wallpaper_path"). Widget: $widgets_reload_status. Riavvia le app aperte se non aggiornano colori o tema."
+log "Theme updated: bg=$background surface=$surface accent=$accent border=$border"
+notify_theme_reload "From $(basename "$current_wallpaper_path"). Widgets: $widgets_reload_status. Restart running apps if colors or theme do not update."

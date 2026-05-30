@@ -78,13 +78,12 @@ while true; do
                 printf ' └─ 󰋼 No wallpapers found\n'
             fi
 
-            printf '\n󰏘 WALLPAPER MANAGEMENT\n'
-            printf ' ├─ 󰒟 Random wallpaper\n'
-            printf ' ├─ 󰑓 Regenerate current theme\n'
-            printf ' └─  Open wallpaper folder\n'
+            printf '\n󰇄 WALLPAPER MANAGEMENT\n'
+            printf ' ├─ 󰒟  Random wallpaper\n'
+            printf ' ├─ 󰑓  Regenerate current theme\n'
+            printf ' └─   Open wallpaper folder\n'
             
-            printf '\n󰌍 NAVIGATION\n'
-            printf ' └─ 󰌍 Back\n'
+            printf '\n󰌍  Back\n'
         } |
             rofi -dmenu -i -matching fuzzy -show-icons \
                 -theme-str 'element-icon { width: 96px; height: 54px; border-radius: 6px; }' \
@@ -93,6 +92,9 @@ while true; do
     )"
 
     [[ -z "$choice" ]] && exit 0
+    if [[ "$choice" == *"Back"* ]]; then
+        go_back
+    fi
     if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
         continue
     fi

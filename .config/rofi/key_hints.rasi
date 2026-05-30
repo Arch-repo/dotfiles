@@ -1,101 +1,37 @@
-configuration {
-    show-icons: false;
-    scroll-method: 1;
-    scrollbar: true;
-}
+/* =============================================================================
+   ROFI KEY HINTS THEME
+   Imports control_menu.rasi with overrides for wide grid list and scrollbars.
+   ============================================================================= */
 
-@import "~/.config/colors/colors.rasi"
+@import "~/.config/rofi/control_menu.rasi"
 
 * {
-    font: "JetBrainsMono Nerd Font SemiBold 10";
-    background-color: transparent;
-    text-color: @foreground;
+    font: "JetBrainsMono Nerd Font SemiBold 10.5";
 }
 
 #window {
-    location: center;
-    anchor: center;
-    background-color: @background-alpha;
-    border: 2px;
-    border-color: @border-alpha;
-    border-radius: 24px;
-    padding: 16px;
-    width: 760px;
-}
-
-#mainbox {
-    spacing: 10px;
-    background-color: transparent;
-}
-
-#inputbar {
-    spacing: 8px;
-    padding: 9px 12px;
-    border: 1px;
-    border-color: @border;
-    border-radius: 14px;
-    background-color: @surface;
-}
-
-#prompt {
-    text-color: @accent;
-    font: "JetBrainsMono Nerd Font Bold 11";
-}
-
-#entry {
-    text-color: @foreground;
-    placeholder: "Cerca scorciatoie, sezioni o azioni...";
-    placeholder-color: @muted;
-}
-
-#message {
-    border: 1px;
-    border-color: @border-alpha;
-    border-radius: 16px;
-    padding: 9px 12px;
-    background-color: @surface-alpha;
-}
-
-#textbox {
-    text-color: @foreground;
-    font: "JetBrainsMono Nerd Font Medium 10";
+    width:            760px;
+    padding:          20px;
 }
 
 #listview {
-    columns: 1;
-    lines: 16;
-    fixed-height: true;
-    spacing: 3px;
-    padding: 2px;
-    scrollbar: true;
-    background-color: transparent;
+    lines:            15;
+    scrollbar:        true;
+    spacing:          4px;
 }
 
 #scrollbar {
-    width: 4px;
-    border: 0;
-    handle-width: 8px;
-    padding: 0;
-    handle-color: @select;
+    width:            4px;
+    border:           0px;
+    handle-width:     6px;
+    padding:          0px 0px 0px 4px;
+    handle-color:     @select;
 }
 
 #element {
-    border: 1px;
-    border-color: transparent;
-    border-radius: 10px;
-    padding: 5px 8px;
-    background-color: transparent;
-    text-color: @foreground;
+    padding:          6px 12px;
 }
 
-#element.selected.normal {
-    background-color: @accent;
-    text-color: @selected-fg;
-    border-color: @border;
-}
-
-#element-text {
-    background-color: inherit;
-    text-color: inherit;
-    font: "JetBrainsMono Nerd Font SemiBold 10";
+#entry {
+    placeholder:      "Search shortcuts, sections or actions...";
 }

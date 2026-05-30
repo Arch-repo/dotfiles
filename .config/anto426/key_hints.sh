@@ -17,120 +17,120 @@ row() {
 }
 
 menu_rows() {
-    header "Applicazioni"
-    row "SUPER Space" "Terminale"
-    row "SUPER E" "File manager"
-    row "SUPER B" "Browser"
-    row "Alt Space" "Launcher applicazioni"
-    row "SUPER ." "Emoji"
-    row "SUPER V" "Clipboard"
-    row "XF86Assistant / F23" "Note"
+    header "APPLICATIONS"
+    row "SUPER Space" "Terminal"
+    row "SUPER E" "File Manager"
+    row "SUPER B" "Web Browser"
+    row "Alt Space" "Application Launcher"
+    row "SUPER ." "Emoji Picker"
+    row "SUPER V" "Clipboard History"
+    row "XF86Assistant / F23" "Quick Notes"
     printf '\n'
 
-    header "Finestre"
-    row "SUPER Q" "Chiudi finestra"
-    row "SUPER Shift Q" "Forza chiusura PID"
-    row "SUPER Frecce" "Sposta focus"
-    row "SUPER Shift Frecce" "Muovi / sposta floating"
-    row "SUPER Ctrl Frecce" "Ridimensiona a pixel"
-    row "SUPER Mouse sinistro" "Sposta finestra"
-    row "SUPER Mouse destro" "Ridimensiona finestra"
-    row "SUPER S" "Fullscreen"
-    row "SUPER P" "Pseudo tiling"
-    row "SUPER J" "Toggle split"
+    header "WINDOWS"
+    row "SUPER Q" "Close Window"
+    row "SUPER Shift Q" "Force Kill Process (PID)"
+    row "SUPER Arrows" "Move Focus"
+    row "SUPER Shift Arrows" "Move Floating Window"
+    row "SUPER Ctrl Arrows" "Resize Window (Pixels)"
+    row "SUPER Left Mouse" "Drag / Move Window"
+    row "SUPER Right Mouse" "Resize Window"
+    row "SUPER S" "Toggle Fullscreen"
+    row "SUPER P" "Toggle Pseudo-Tiling"
+    row "SUPER J" "Toggle Split (Vertical/Horizontal)"
     printf '\n'
 
-    header "Workspace"
-    row "SUPER Tab" "Workspace successivo"
-    row "SUPER Shift Tab" "Workspace precedente"
-    row "SUPER 1..0" "Vai a workspace 1..10"
-    row "SUPER Shift 1..0" "Sposta finestra a workspace"
-    row "SUPER Scroll" "Scorri workspace"
+    header "WORKSPACES"
+    row "SUPER Tab" "Next Workspace"
+    row "SUPER Shift Tab" "Previous Workspace"
+    row "SUPER 1..0" "Go to Workspace 1..10"
+    row "SUPER Shift 1..0" "Move Window to Workspace 1..10"
+    row "SUPER Scroll" "Cycle Workspaces"
     printf '\n'
 
-    header "Screenshot e registrazione"
-    row "Print" "Screenshot area rapido"
-    row "Shift Print" "Screenshot finestra"
-    row "Ctrl Print" "Screenshot schermo"
-    row "Alt Print" "Menu screenshot"
-    row "F9" "Pannello registrazione"
-    row "F11" "Pannello screenshot"
-    row "SUPER Shift S" "Menu screenshot"
-    row "SUPER Shift R" "Menu registrazione"
+    header "SCREENSHOTS & RECORDING"
+    row "Print" "Quick Screenshot (Area)"
+    row "Shift Print" "Screenshot Active Window"
+    row "Ctrl Print" "Screenshot Active Screen"
+    row "Alt Print" "Screenshot Selector Menu"
+    row "F9" "Screen Recording Menu"
+    row "F11" "Screenshot Selection Panel"
+    row "SUPER Shift S" "Screenshot Menu"
+    row "SUPER Shift R" "Recording Menu"
     printf '\n'
 
-    header "Audio"
-    row "XF86 Volume Up/Down" "Volume +/-"
-    row "XF86 Mute" "Mute audio"
-    row "XF86 MicMute" "Mute microfono"
-    row "Control Menu > Audio" "Mixer e dispositivi"
+    header "AUDIO CONTROLS"
+    row "XF86 Volume Up/Down" "Volume Increase / Decrease"
+    row "XF86 Mute" "Mute / Unmute Audio"
+    row "XF86 MicMute" "Mute / Unmute Microphone"
+    row "Control Menu > Audio" "Volume Mixer & Audio Devices"
     printf '\n'
 
-    header "Luminosità"
-    row "XF86 Brightness +/-" "Luminosità +/-"
-    row "SUPER Shift B" "Menu luminosità"
+    header "SCREEN BRIGHTNESS"
+    row "XF86 Brightness +/-" "Brightness Increase / Decrease"
+    row "SUPER Shift B" "Brightness Control Menu"
     printf '\n'
 
-    header "Wallpaper"
-    row "SUPER W" "Scegli wallpaper"
-    row "SUPER Shift W" "Wallpaper casuale"
+    header "DESKTOP WALLPAPER"
+    row "SUPER W" "Select Wallpaper"
+    row "SUPER Shift W" "Randomize Wallpaper"
     printf '\n'
 
-    header "Widget"
-    row "SUPER G" "Mostra/nasconde widget"
-    row "SUPER Shift G" "Riavvia widget"
-    row "SUPER Control G" "Menu gestione widget"
-    row "SUPER Alt G" "Salva posizione widget"
-    row "SUPER Shift Alt G" "Menu widget / terminale / app"
-    row "Tasti volume/luce" "Slider OSD al centro (CSS)"
-    row "SUPER Click sx (floating)" "Trascina widget / finestre"
+    header "DESKTOP WIDGETS"
+    row "SUPER G" "Toggle Widget Visibility"
+    row "SUPER Shift G" "Restart Desktop Widgets"
+    row "SUPER Control G" "Widget Management Menu"
+    row "SUPER Alt G" "Save Custom Widget Geometry"
+    row "SUPER Shift Alt G" "Visual Presets & Terminal Widgets"
+    row "Volume/Brightness Keys" "Center OSD Sliders"
+    row "SUPER Left Click (Drag)" "Drag / Move Widget Window"
     printf '\n'
 
-    header "Floating mode"
-    row "SUPER F" "Toggle floating"
-    row "SUPER Shift F" "Floating Manager"
-    row "SUPER Ctrl F" "Centra finestra"
-    row "SUPER Alt F" "Pin / unpin"
-    row "SUPER Ctrl 1/2/3" "Resize small/medium/large"
-    row "SUPER Ctrl T" "Porta sopra"
-    row "SUPER Ctrl Backspace" "Reset floating"
+    header "FLOATING WINDOW MODE"
+    row "SUPER F" "Toggle Floating Mode"
+    row "SUPER Shift F" "Launch Floating Manager"
+    row "SUPER Ctrl F" "Center Active Window"
+    row "SUPER Alt F" "Pin / Unpin Active Window"
+    row "SUPER Ctrl 1/2/3" "Resize Compact/Comfortable/Large"
+    row "SUPER Ctrl T" "Bring Window to Front"
+    row "SUPER Ctrl Backspace" "Reset Window: Tile + Unpin"
     printf '\n'
 
-    header "Sistema"
-    row "SUPER L" "Blocca schermo"
-    row "Power" "Menu spegnimento"
-    row "SUPER Shift P" "Proietta schermo"
-    row "SUPER Shift Ctrl Esc" "Esci da Hyprland"
-    row "SUPER Shift N" "Identifica tasto Copilot"
+    header "SYSTEM ACTIONS"
+    row "SUPER L" "Lock Screen"
+    row "Power Key" "Shutdown / Power Menu"
+    row "SUPER Shift P" "Project Screen (Display Mode)"
+    row "SUPER Shift Ctrl Esc" "Exit Hyprland Session"
+    row "SUPER Shift N" "Identify Copilot Key"
     printf '\n'
 
-    printf '󱂬 Apri Floating Manager\n'
-    printf '󰃠 Apri menu luminosità\n'
-    printf '󰍹 Apri Proietta schermo\n'
-    printf '󱓞 Toggle widget\n'
-    printf '󱓞 Gestione widget\n'
-    printf '󰈙 Apri keybinding.conf\n'
-    printf '󰌍 Indietro\n'
+    printf ' ├─ 󱂬  Open Floating Manager\n'
+    printf ' ├─ 󰃠  Open Brightness Menu\n'
+    printf ' ├─ 󰍹  Open Project Screen\n'
+    printf ' ├─ 󱓞  Toggle Widgets Visibility\n'
+    printf ' ├─ 󱓞  Manage Widgets Dashboard\n'
+    printf ' └─ 󰈙  View keybindings.conf\n'
+    printf '\n󰌍  Back\n'
 }
 
 while true; do
     choice="$(
         menu_rows |
             rofi -dmenu -i -matching fuzzy \
-                -p "Scorciatoie Hyprland" \
-                -mesg "Sezioni: Applicazioni, Finestre, Workspace, Screenshot, Audio, Luminosità, Wallpaper, Widget, Floating, Sistema" \
+                -p "Hyprland Keybindings" \
+                -mesg "Sections: Applications, Windows, Workspaces, Screenshots, Audio, Brightness, Wallpaper, Widgets, Floating, System" \
                 -theme "$THEME"
     )"
 
     case "$choice" in
         "") exit 0 ;;
         "── "* | "  "*) continue ;;
-        *"Floating Manager") "$HOME/.config/anto426/floating_manager.sh" menu; exit 0 ;;
-        *"luminosità") "$HOME/.config/anto426/brightness_menu.sh" menu; exit 0 ;;
-        *"Proietta") "$HOME/.config/anto426/projection_menu.sh"; exit 0 ;;
-        *"Toggle widget") "$HOME/.config/anto426/widgets.sh" toggle; exit 0 ;;
-        *"Gestione widget") "$HOME/.config/anto426/widgets.sh" arrange; exit 0 ;;
-        *"Apri keybinding.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & exit 0 ;;
-        *"Indietro") exit 0 ;;
+        *"Floating Manager"*) "$HOME/.config/anto426/floating_manager.sh" menu; exit 0 ;;
+        *"Brightness Menu"*) "$HOME/.config/anto426/brightness_menu.sh" menu; exit 0 ;;
+        *"Project Screen"*) "$HOME/.config/anto426/projection_menu.sh"; exit 0 ;;
+        *"Toggle Widgets"*) "$HOME/.config/anto426/widgets.sh" toggle; exit 0 ;;
+        *"Manage Widgets"*) "$HOME/.config/anto426/widgets.sh" arrange; exit 0 ;;
+        *"keybindings.conf"*) xdg-open "$KEYBINDS" >/dev/null 2>&1 & exit 0 ;;
+        *"Back"*) exit 0 ;;
     esac
 done

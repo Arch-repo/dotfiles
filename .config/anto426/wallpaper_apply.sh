@@ -19,13 +19,13 @@ notify() {
 }
 
 usage() {
-    printf 'Uso: %s /path/wallpaper\n' "$0" >&2
+    printf 'Usage: %s /path/wallpaper\n' "$0" >&2
 }
 
 ensure_awww() {
     command -v awww >/dev/null 2>&1 || {
-        notify "Comando awww non trovato"
-        log "awww non trovato"
+        notify "awww command not found"
+        log "awww not found"
         return 1
     }
 
@@ -44,8 +44,8 @@ case "$wallpaper" in
 esac
 
 if [[ ! -f "$wallpaper" ]]; then
-    notify "Sfondo non trovato: $wallpaper"
-    log "sfondo non trovato: $wallpaper"
+    notify "Wallpaper not found: $wallpaper"
+    log "wallpaper not found: $wallpaper"
     exit 1
 fi
 
@@ -54,17 +54,17 @@ wallpaper="$(readlink -f "$wallpaper" 2>/dev/null || printf '%s' "$wallpaper")"
 ensure_awww || exit 1
 
 if awww img "$wallpaper" --transition-type "$transition" --transition-duration "$duration"; then
-    log "sfondo applicato: $wallpaper"
+    log "wallpaper applied: $wallpaper"
 else
-    notify "Cambio sfondo fallito"
-    log "awww img fallito: $wallpaper"
+    notify "Failed to change wallpaper"
+    log "awww img failed: $wallpaper"
     exit 1
 fi
 
 if [[ -x "$effects_script" ]]; then
-    "$effects_script" "$wallpaper" || log "wallpaper_effects fallito: $wallpaper"
+    "$effects_script" "$wallpaper" || log "wallpaper_effects failed: $wallpaper"
 else
-    log "wallpaper_effects non eseguibile: $effects_script"
+    log "wallpaper_effects not executable: $effects_script"
 fi
 
-notify "Sfondo applicato: $(basename "$wallpaper")"
+notify "Wallpaper applied: $(basename "$wallpaper")"

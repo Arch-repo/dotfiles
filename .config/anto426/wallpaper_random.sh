@@ -16,7 +16,7 @@ random_wallpaper="$(
 )"
 
 [[ -n "$random_wallpaper" ]] || {
-    notify "Nessuno sfondo trovato in $wallpapers_dir"
+    notify "No wallpapers found in $wallpapers_dir"
     exit 0
 }
 

@@ -208,15 +208,20 @@ pick_corner() {
     local choice
     choice="$(
         printf '%s\n' \
-            "󰘕 SELECT CORNER" \
-            " ├─ 󰁝 Top left" \
-            " ├─ 󰁔 Top right" \
-            " ├─ 󰁅 Bottom left" \
-            " ├─ 󰁜 Bottom right" \
-            " └─ 󰌍 Back" |
+            "󰇄 SELECT CORNER" \
+            " ├─ 󰁝  Top left" \
+            " ├─ 󰁔  Top right" \
+            " ├─ 󰁅  Bottom left" \
+            " └─ 󰁜  Bottom right" \
+            "" \
+            "󰌍  Back" |
             rofi -dmenu -i -matching fuzzy -p "Corner" -theme "$THEME"
     )"
     [[ -z "$choice" ]] && return 0
+    if [[ "$choice" == *"Back"* ]]; then
+        printf 'Back\n'
+        return 0
+    fi
     if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
         pick_corner
         return 0
@@ -234,38 +239,35 @@ menu() {
 
     if ! has_active_window; then
         choice="$(
-            printf '%s\n' \
-                "󰌍 WINDOW ABSENT" \
-                " └─ 󰌍 Back" |
+            printf '%s\n' "󰌍  Back" |
                 rofi -dmenu -i -matching fuzzy \
                     -p "Floating Manager" \
                     -mesg "No active window" \
                     -theme "$THEME"
         )"
-        [[ "$choice" == *"Indietro"* || "$choice" == *"Back"* ]] && go_back
+        [[ "$choice" == *"Back"* ]] && go_back
         return 0
     fi
 
     choice="$(
         {
-            printf '󰱒 WINDOW POSITION\n'
-            printf ' ├─ 󰱒 Toggle floating\n'
-            printf ' ├─ 󰁌 Center\n'
-            printf ' └─ 󰘕 Move to corners\n'
+            printf '󰒔 WINDOW POSITION\n'
+            printf ' ├─ 󰱒  Toggle floating\n'
+            printf ' ├─ 󰁌  Center\n'
+            printf ' └─ 󰘕  Move to corners\n'
             
-            printf '\n󰾅 SIZE PRESETS\n'
-            printf ' ├─ 󰾆 Compact 45%%\n'
-            printf ' ├─ 󰾅 Comfortable 62%%\n'
-            printf ' └─ 󰓡 Large 78%%\n'
+            printf '\n󰓏 SIZE PRESETS\n'
+            printf ' ├─ 󰾆  Compact 45%%\n'
+            printf ' ├─ 󰾅  Comfortable 62%%\n'
+            printf ' └─ 󰓡  Large 78%%\n'
             
-            printf '\n󰐃 ACTIONS AND STATUS\n'
-            printf ' ├─ 󰐃 Pin / unpin\n'
-            printf ' ├─ 󰓌 Bring to front\n'
-            printf ' ├─ 󰅖 Reset: tiled + unpin\n'
-            printf ' └─ 󰅙 Close window\n'
+            printf '\n󰄬 ACTIONS AND STATUS\n'
+            printf ' ├─ 󰐃  Pin / unpin\n'
+            printf ' ├─ 󰓌  Bring to front\n'
+            printf ' ├─ 󰅖  Reset: tiled + unpin\n'
+            printf ' └─ 󰅙  Close window\n'
             
-            printf '\n󰌍 NAVIGATION\n'
-            printf ' └─ 󰌍 Back\n'
+            printf '\n󰌍  Back\n'
         } |
             rofi -dmenu -i -matching fuzzy \
                 -p "Floating Manager" \
@@ -274,6 +276,10 @@ menu() {
     )"
 
     [[ -z "$choice" ]] && return 0
+    if [[ "$choice" == *"Back"* ]]; then
+        go_back
+        return 0
+    fi
     if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
         menu
         return 0

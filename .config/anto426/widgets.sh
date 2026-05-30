@@ -85,6 +85,49 @@ dispatch_exec() {
     fi
 }
 
+is_music_active() {
+    # 1. If playerctl is playing, check if we also have an uncorked pulse stream (if any pulse streams exist)
+    # This prevents the "always-playing" browser bug when paused.
+    local player_playing=0
+    if playerctl status 2>/dev/null | grep -q "Playing"; then
+        player_playing=1
+    fi
+
+    # 2. Check PulseAudio sink inputs
+    if command -v pactl >/dev/null 2>&1; then
+        local inputs
+        inputs="$(pactl list sink-inputs 2>/dev/null || true)"
+        if [[ -n "$inputs" ]]; then
+            if echo "$inputs" | grep -q "Corked: no"; then
+                return 0 # Definitely playing audio
+            else
+                return 1 # Has streams but all are corked (paused)
+            fi
+        fi
+    fi
+
+    # 3. Check wpctl status streams as fallback
+    if command -v wpctl >/dev/null 2>&1; then
+        local wp_streams
+        wp_streams="$(wpctl status 2>/dev/null | grep -A 15 "Streams:" || true)"
+        if [[ -n "$wp_streams" ]]; then
+            # Filter out cava/input streams and see if any playback streams are active
+            if echo "$wp_streams" | grep -E ">.*\[active\]" | grep -v -E "cava|input" | grep -q .; then
+                return 0 # Active playback stream
+            else
+                return 1 # Has streams but none are active playback
+            fi
+        fi
+    fi
+
+    # 4. Fallback to playerctl status if no audio server info is available
+    if ((player_playing == 1)); then
+        return 0
+    fi
+
+    return 1
+}
+
 launch_terminal() {
     local terminal="$1"
     local class="$2"
@@ -308,7 +351,13 @@ start_widgets() {
                 launch_widget clock "$(widget_meta clock class)" "$(widget_meta clock title)" "$clock_command" && started=1
                 ;;
             cava)
-                launch_widget cava "$(widget_meta cava class)" "$(widget_meta cava title)" "$cava_command" && started=1
+                if is_music_active; then
+                    launch_widget cava "$(widget_meta cava class)" "$(widget_meta cava title)" "$cava_command" && started=1
+                else
+                    # Do not launch cava initially if music is not playing, but mark started=1
+                    # so the background watcher/daemon is successfully initialized to auto-show it.
+                    started=1
+                fi
                 ;;
             system)
                 launch_widget system "$(widget_meta system class)" "$(widget_meta system title)" "$system_command" && started=1
@@ -318,7 +367,16 @@ start_widgets() {
 
     for widget in $(custom_widget_ids); do
         [[ -n "$widget" ]] || continue
-        launch_custom_widget "$widget" no-reload && started=1
+        if [[ "$widget" == "spettro_audio" ]]; then
+            if is_music_active; then
+                launch_custom_widget "spettro_audio" no-reload && started=1
+            else
+                # Mark started=1 so the background daemon runs and auto-shows it
+                started=1
+            fi
+        else
+            launch_custom_widget "$widget" no-reload && started=1
+        fi
     done
 
     if [[ "$started" == "0" ]]; then
@@ -877,16 +935,14 @@ start_widgets_lock_daemon() {
     widgets_locked || return 0
     widgets_lock_daemon_running && return 0
 
-    "$0" lock-daemon >/dev/null 2>&1 &
-    printf '%s\n' "$!" >"$lock_daemon_pid"
+    dispatch_exec bash -c "$0 lock-daemon >/tmp/lock-daemon.log 2>/tmp/lock-daemon.err"
 }
 
 start_widget_delete_watcher() {
     widgets_locked && return 0
     widget_delete_watcher_running && return 0
 
-    "$0" delete-watcher >/dev/null 2>&1 &
-    printf '%s\n' "$!" >"$delete_watcher_pid"
+    dispatch_exec bash -c "$0 delete-watcher >/tmp/delete-watcher.log 2>/tmp/delete-watcher.err"
 }
 
 stop_widgets_lock_daemon() {
@@ -909,14 +965,56 @@ stop_widget_delete_watcher() {
     rm -f "$delete_watcher_pid"
 }
 
+check_cava_auto_hide() {
+    # 1. Handle Built-in Cava Widget
+    if [[ " $(enabled_builtin_widgets | tr '\n' ' ') " == *" cava "* ]]; then
+        if is_music_active; then
+            if ! is_running "cava"; then
+                launch_widget cava "$(widget_meta cava class)" "$(widget_meta cava title)" "$cava_command" && {
+                    apply_widget_layout_locked
+                }
+            fi
+        else
+            if is_running "cava"; then
+                stop_widget cava "$(widget_meta cava class)"
+                apply_widget_layout_locked
+            fi
+        fi
+    fi
+
+    # 2. Handle Custom Spettro Audio Widget
+    if [[ " $(custom_widget_ids | tr '\n' ' ') " == *" spettro_audio "* ]]; then
+        if is_music_active; then
+            if ! is_running "spettro_audio"; then
+                launch_custom_widget "spettro_audio" && {
+                    apply_widget_layout_locked
+                }
+            fi
+        else
+            if is_running "spettro_audio"; then
+                stop_custom_widget "spettro_audio"
+                apply_widget_layout_locked
+            fi
+        fi
+    fi
+}
+
 run_widgets_lock_daemon() {
     printf '%s\n' "$$" >"$lock_daemon_pid"
     trap 'rm -f "$lock_daemon_pid"' EXIT
 
+    local cava_counter=0
     while true; do
         ensure_config
         widgets_locked || break
         sync_locked_widgets
+        
+        ((cava_counter++))
+        if ((cava_counter >= 8)); then
+            cava_counter=0
+            check_cava_auto_hide
+        fi
+        
         sleep 0.25
     done
 }
@@ -932,6 +1030,8 @@ run_widget_delete_watcher() {
         ensure_config
         widgets_locked && break
         [[ -f "$managed_stop_marker" ]] && break
+
+        check_cava_auto_hide
 
         for id in $(widget_order_default); do
             [[ -n "$id" ]] || continue
@@ -1078,9 +1178,9 @@ widget_label() {
     local label
 
     case "$name" in
-        clock) printf '󰥔 Orologio' ;;
-        cava) printf '󰎈 Musica' ;;
-        system) printf '󰍛 Sistema' ;;
+        clock) printf '󰥔 Clock' ;;
+        cava) printf '󰎈 Music' ;;
+        system) printf '󰍛 System' ;;
         *)
             label="$(custom_widget_meta "$name" name 2>/dev/null || printf '%s' "$name")"
             printf '󰧖 %s' "$label"
@@ -1248,7 +1348,7 @@ enable_builtin_widget_from_menu() {
             esac
             widget_label "$name"
             printf '\n'
-        done | rofi -dmenu -i -p "Aggiungi widget base" -theme "$theme"
+        done | rofi -dmenu -i -p "Add base widget" -theme "$theme"
     )"
     [[ -n "$choice" ]] || return 1
 
@@ -1308,28 +1408,28 @@ widget_submenu() {
     choice="$(
         {
             if is_running "$name"; then
-                printf '  󰖭  Nascondi temporaneamente\n'
+                printf '  󰖭  Hide temporarily\n'
             else
-                printf '  󰖯  Mostra widget\n'
+                printf '  󰖯  Show widget\n'
             fi
-            printf '  󰏬  Sposta Su (Cambia ordine)\n'
-            printf '  󰏏  Sposta Giù (Cambia ordine)\n'
-            printf '  󰅙  Rimuovi definitivamente\n'
+            printf '  󰏬  Move Up (Change order)\n'
+            printf '  󰏏  Move Down (Change order)\n'
+            printf '  󰆴  Remove permanently\n'
         } | rofi -dmenu -i -p "$label" -theme "$theme"
     )"
 
     [[ -z "$choice" ]] && return 0
 
     case "$choice" in
-        *"Nascondi temporaneamente"*)
+        *"Hide temporarily"*)
             local addr
             addr="$(widget_client_address "$name")"
             if [[ -n "$addr" ]]; then
                 hyprctl dispatch movetoworkspacesilent "$widget_hidden_workspace,address:$addr" >/dev/null 2>&1 || true
-                notify "$label nascosto"
+                notify "$label hidden"
             fi
             ;;
-        *"Mostra widget"*)
+        *"Show widget"*)
             local addr monitor workspace
             addr="$(widget_client_address "$name")"
             if [[ -n "$addr" ]]; then
@@ -1338,24 +1438,24 @@ widget_submenu() {
                 [[ -n "$workspace" ]] || workspace="$(active_workspace_arg)"
                 if [[ -n "$workspace" ]]; then
                     hyprctl dispatch movetoworkspacesilent "$workspace,address:$addr" >/dev/null 2>&1 || true
-                    notify "$label mostrato"
+                    notify "$label shown"
                 fi
             else
-                launch_named_widget "$name" && notify "$label avviato"
+                launch_named_widget "$name" && notify "$label started"
             fi
             ;;
-        *"Sposta Su"*)
+        *"Move Up"*)
             move_widget_in_order "$name" up
             widget_submenu "$name"
             ;;
-        *"Sposta Giù"*)
+        *"Move Down"*)
             move_widget_in_order "$name" down
             widget_submenu "$name"
             ;;
-        *"Rimuovi definitivamente"*)
+        *"Remove permanently"*)
             disable_named_widget "$name"
             apply_widget_layout_locked
-            notify "$label rimosso"
+            notify "$label removed"
             ;;
     esac
 }
@@ -1370,35 +1470,35 @@ arrange_widgets() {
 
     choice="$(
         {
-            printf '󰨞 GESTISCI STATO\n'
+            printf '󰇄 WIDGET STATUS CONTROLS\n'
             if any_running; then
-                printf ' ├─ 󱓞 Spegni i Widget\n'
+                printf ' ├─ 󱓞  Stop Widgets\n'
             else
-                printf ' ├─ 󱓞 Avvia i Widget\n'
+                printf ' ├─ 󱓞  Start Widgets\n'
             fi
-            printf ' ├─ 󰑓 Riavvia Daemons\n'
+            printf ' ├─ 󰑓  Restart Daemons\n'
             if widgets_locked; then
-                printf ' └─ 󰌾 Sblocca Posizioni\n'
+                printf ' └─ 󰌾  Unlock Widget Positions\n'
             else
-                printf ' └─ 󰌾 Blocca Posizioni\n'
+                printf ' └─ 󰌾  Lock Widget Positions\n'
             fi
             
-            printf '\n󰒓 LAYOUT E SALVATAGGI\n'
-            printf ' ├─ 󰆓 Salva Posizioni Attuali\n'
-            printf ' ├─ 󰒓 Ripristina Layout Salvato\n'
-            printf ' └─ 󰑐 Reset Geometrie Predefinite\n'
+            printf '\n󰒔 LAYOUT & BACKUPS\n'
+            printf ' ├─ 󰆓  Save Current Layout\n'
+            printf ' ├─ 󰒓  Restore Saved Layout\n'
+            printf ' └─ 󰑐  Reset Default Geometries\n'
             
-            printf '\n󰐕 AGGIUNGI NUOVO WIDGET\n'
-            printf ' ├─ 󰎈 Preset Visuale (Cava, Fastfetch, etc.)\n'
-            printf ' ├─ 󰌢 Comando Terminale Personalizzato\n'
-            printf ' └─ 󰐕 Abilita Widget Base (Clock, etc.)\n'
+            printf '\n󰥔 ADD NEW WIDGET\n'
+            printf ' ├─ 󰎈  Visual Presets (Cava, Fastfetch, etc.)\n'
+            printf ' ├─ 󰌢  Custom Terminal Command\n'
+            printf ' └─ 󰐕  Enable Base Widget (Clock, etc.)\n'
             
-            printf '\n󰅙 RIMUOVI WIDGET\n'
-            printf ' └─ 󰅙 Seleziona Widget da Rimuovere\n'
+            printf '\n󰆴 REMOVE WIDGET\n'
+            printf ' └─ 󰅙  Select Widget to Remove\n'
             
             if [[ -n "$order" ]]; then
                 printf '\n──────────────────────────────────────────\n'
-                printf 'WIDGET ATTIVI (Seleziona per ordinare/gestire)\n'
+                printf 'ACTIVE WIDGETS (Select to organize/manage)\n'
                 for name in $order; do
                     [[ -n "$name" ]] || continue
                     local label
@@ -1407,58 +1507,58 @@ arrange_widgets() {
                 done
             fi
         } | rofi -dmenu -i -p "Widget Dashboard" \
-            -mesg "Interfaccia premium per gestire widget e layout di sistema" -theme "$theme"
+            -mesg "Premium interface to manage desktop widgets and system layouts" -theme "$theme"
     )"
 
     [[ -z "$choice" ]] && return 0
 
     case "$choice" in
-        *"GESTISCI STATO"* | *"LAYOUT E SALVATAGGI"* | *"AGGIUNGI NUOVO WIDGET"* | *"RIMUOVI WIDGET"* | *"WIDGET ATTIVI"* | *"────────────────"*)
+        *"STATUS CONTROLS"* | *"GESTISCI STATO"* | *"LAYOUT & BACKUPS"* | *"LAYOUT E SALVATAGGI"* | *"ADD NEW WIDGET"* | *"AGGIUNGI NUOVO WIDGET"* | *"REMOVE WIDGET"* | *"RIMUOVI WIDGET"* | *"ACTIVE WIDGETS"* | *"WIDGET ATTIVI"* | *"────────────────"*)
             arrange_widgets
             ;;
-        *"Avvia i Widget"*|*"Spegni i Widget"*)
+        *"Start Widgets"* | *"Avvia i Widget"* | *"Stop Widgets"* | *"Spegni i Widget"*)
             if any_running; then
                 stop_widgets
             else
                 start_widgets
             fi
             ;;
-        *"Riavvia Daemons"*)
+        *"Restart Daemons"* | *"Riavvia Daemons"*)
             stop_widgets quiet
             sleep 0.3
             start_widgets
             ;;
-        *"Blocca Posizioni"*) set_widgets_lock lock ;;
-        *"Sblocca Posizioni"*) set_widgets_lock unlock ;;
-        *"Salva Posizioni Attuali"*) save_widget_layout && apply_widget_layout_locked && notify "Layout salvato" ;;
-        *"Ripristina Layout Salvato"*) apply_widget_layout_locked && notify "Layout applicato" ;;
-        *"Reset Geometrie Predefinite"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout resettato" ;;
-        *"Preset Visuale"*)
+        *"Lock Widget Positions"* | *"Blocca Posizioni"*) set_widgets_lock lock ;;
+        *"Unlock Widget Positions"* | *"Sblocca Posizioni"*) set_widgets_lock unlock ;;
+        *"Save Current Layout"* | *"Salva Posizioni Attuali"*) save_widget_layout && apply_widget_layout_locked && notify "Layout saved" ;;
+        *"Restore Saved Layout"* | *"Ripristina Layout Salvato"*) apply_widget_layout_locked && notify "Layout applied" ;;
+        *"Reset Default Geometries"* | *"Reset Geometrie Predefinite"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout reset" ;;
+        *"Visual Presets"* | *"Preset Visuale"*)
             if new_id="$(pick_preset_widget)"; then
                 launch_custom_widget "$new_id"
                 layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
                 write_widget_order "$(widget_order_default)"
                 apply_widget_layout_locked
-                notify "Widget visuale aggiunto"
+                notify "Visual widget added"
             fi
             ;;
-        *"Comando Terminale Personalizzato"*)
+        *"Custom Terminal Command"* | *"Comando Terminale Personalizzato"*)
             if new_id="$(pick_terminal_widget)"; then
                 launch_custom_widget "$new_id"
                 layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
                 write_widget_order "$(widget_order_default)"
                 apply_widget_layout_locked
-                notify "Comando widget aggiunto"
+                notify "Custom command widget added"
             fi
             ;;
-        *"Abilita Widget Base"*)
-            enable_builtin_widget_from_menu "$theme" && notify "Widget base aggiunto"
+        *"Enable Base Widget"* | *"Abilita Widget Base"*)
+            enable_builtin_widget_from_menu "$theme" && notify "Base widget added"
             ;;
-        *"Seleziona Widget da Rimuovere"*)
-            selected="$(select_widget_from_order "$theme" "Seleziona widget")" || return 0
+        *"Select Widget to Remove"* | *"Seleziona Widget da Rimuovere"*)
+            selected="$(select_widget_from_order "$theme" "Select widget")" || return 0
             disable_named_widget "$selected"
             apply_widget_layout_locked
-            notify "Widget rimosso"
+            notify "Widget removed"
             ;;
         *"  󰄶  "*)
             selected_widget="$(printf '%s' "$choice" | sed -E 's/.*\(([^)]+)\)/\1/')"

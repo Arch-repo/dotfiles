@@ -133,14 +133,13 @@ external="$(external_monitor "$primary")"
 while true; do
     choice="$(
         {
-            printf '󰍹 DISPLAY MODE\n'
-            printf ' ├─ 󰍹 Main screen only\n'
-            printf ' ├─ 󰍺 Duplicate\n'
-            printf ' ├─ 󰹑 Extend\n'
-            printf ' └─ 󰶐 External screen only\n'
+            printf '󰒔 DISPLAY MODE\n'
+            printf ' ├─ 󰍹  Main screen only\n'
+            printf ' ├─ 󰍺  Duplicate\n'
+            printf ' ├─ 󰹑  Extend\n'
+            printf ' └─ 󰶐  External screen only\n'
             
-            printf '\n󰌍 NAVIGATION\n'
-            printf ' └─ 󰌍 Back\n'
+            printf '\n󰌍  Back\n'
         } |
             rofi -dmenu -i -matching fuzzy \
                 -p "Project" \
@@ -149,6 +148,9 @@ while true; do
     )"
 
     [[ -z "$choice" ]] && exit 0
+    if [[ "$choice" == *"Back"* ]]; then
+        go_back
+    fi
     if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
         continue
     fi
@@ -159,6 +161,5 @@ while true; do
         *"Duplica"* | *"Duplicate"*) duplicate_displays "$primary" "$external"; exit 0 ;;
         *"Estendi"* | *"Extend"*) extend_displays "$primary" "$external"; exit 0 ;;
         *"esterno"* | *"External"*) only_external "$primary" "$external"; exit 0 ;;
-        *"Indietro" | *"Back"*) go_back ;;
     esac
 done
