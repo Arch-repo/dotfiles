@@ -225,6 +225,7 @@ else
 
     if awww img "$wallpaper" --transition-type "$transition" --transition-duration "$duration"; then
         log "wallpaper applied: $wallpaper"
+        printf '%s\n' "$wallpaper" >"$destination_wallpaper_dir/current-wallpaper.path"
     else
         notify "Failed to change wallpaper"
         log "awww img failed: $wallpaper"
