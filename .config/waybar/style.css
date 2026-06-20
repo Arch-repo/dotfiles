@@ -43,8 +43,8 @@ tooltip label {
 
 #workspaces,
 #custom-clock,
+#custom-hardware,
 #custom-background-apps,
-#hardware,
 #status,
 #tools,
 #custom-power {
@@ -107,21 +107,19 @@ tooltip label {
     color: alpha(@foreground, 0.4);
 }
 
-/* Right - Status, Hardware & Tools Groups */
+/* Hardware, Status & Tools Groups */
+#custom-hardware,
 #status,
-#hardware,
 #tools {
     padding: 0 6px;
 }
 
 /* Remove default individual margins and borders for grouped children */
+#custom-hardware,
 #status #network,
 #status #bluetooth,
 #status #pulseaudio,
 #status #battery,
-#hardware #cpu,
-#hardware #memory,
-#hardware #temperature,
 #tools #custom-keyboard,
 #tools #custom-notifications,
 #tools #custom-screenshot,
@@ -131,6 +129,11 @@ tooltip label {
     margin: 3px 6px;
     min-height: 28px;
     color: alpha(@foreground, 0.75);
+}
+
+#custom-hardware {
+    padding: 0 10px;
+    min-width: 205px;
 }
 
 #status #network,
@@ -144,16 +147,13 @@ tooltip label {
 
 #status #pulseaudio,
 #status #battery,
-#hardware #cpu,
-#hardware #memory,
-#hardware #temperature,
 #tools #custom-keyboard {
     padding: 0 4px;
 }
 
 /* Individual Module Hover highlight (no glow, no background) */
+#custom-hardware:hover,
 #status > widget > *:hover,
-#hardware > widget > *:hover,
 #tools > widget > *:hover {
     color: @accent;
 }
@@ -188,7 +188,15 @@ tooltip label {
     color: @yellow;
 }
 
+#custom-hardware.warning {
+    color: @yellow;
+}
+
 #battery.critical {
+    color: @red;
+}
+
+#custom-hardware.critical {
     color: @red;
 }
 
@@ -268,5 +276,9 @@ tooltip label {
 }
 
 #status #battery.critical {
+    animation: battery-heartbeat 1.4s infinite ease-in-out;
+}
+
+#custom-hardware.critical {
     animation: battery-heartbeat 1.4s infinite ease-in-out;
 }

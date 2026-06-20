@@ -10,6 +10,8 @@ colors_dir="$HOME/.config/colors"
 hypr_theme_file="$HOME/.config/hypr/conf/theme.generated.conf"
 ghostty_theme_dir="$HOME/.config/ghostty/themes"
 htop_config_dir="$HOME/.config/htop"
+btop_config_dir="$HOME/.config/btop"
+btop_theme_dir="$btop_config_dir/themes"
 gtk3_dir="$HOME/.config/gtk-3.0"
 gtk4_dir="$HOME/.config/gtk-4.0"
 kvantum_dir="$HOME/.config/Kvantum"
@@ -37,6 +39,7 @@ mkdir -p \
     "$colors_dir" \
     "$ghostty_theme_dir" \
     "$htop_config_dir" \
+    "$btop_theme_dir" \
     "$gtk3_dir" \
     "$gtk4_dir" \
     "$kvantum_theme_dir" \
@@ -115,8 +118,7 @@ if [[ -z "$source_wallpaper_path" ]]; then
     if pgrep -x mpvpaper >/dev/null; then
         mpvpaper_pid="$(pgrep -x mpvpaper | head -n1)"
         if [[ -n "$mpvpaper_pid" ]]; then
-            null_char=$'\0'
-            live_wall="$(cat "/proc/$mpvpaper_pid/cmdline" 2>/dev/null | tr "$null_char" '\n' | grep -v '^$' | tail -n1)"
+            live_wall="$(tr '\0' '\n' <"/proc/$mpvpaper_pid/cmdline" 2>/dev/null | grep -av '^$' | tail -n1)"
             if [[ -f "$live_wall" ]]; then
                 source_wallpaper_path="$live_wall"
             fi

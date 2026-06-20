@@ -24,7 +24,7 @@
 }
 
 control-slider-panel {
-    children: [ slider-volume, slider-mic, slider-brightness ];
+    children: [ slider-volume, slider-mic, slider-brightness, slider-fan ];
     orientation: vertical;
     spacing: 10px;
     padding: 8px 6px 10px 6px;
@@ -34,7 +34,8 @@ control-slider-panel {
 
 slider-volume,
 slider-mic,
-slider-brightness {
+slider-brightness,
+slider-fan {
     min: 0;
     max: 100;
     step: 1;

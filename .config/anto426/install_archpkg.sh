@@ -46,11 +46,11 @@ pacman_packages=(
     xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-wlr xdg-desktop-portal-gtk
 
     # System services and controls
-    brightnessctl iwd network-manager-applet bluez bluez-utils blueman
+    brightnessctl iwd network-manager-applet bluez bluez-utils blueman lm_sensors polkit-gnome
     pipewire pipewire-pulse wireplumber pavucontrol openbsd-netcat
 
     # Apps used by the dotfiles
-    ghostty nemo gvfs curl jq nodejs npm yarn python htop loupe celluloid mpv gnome-text-editor evince
+    ghostty nemo gvfs curl jq nodejs npm yarn python htop btop loupe celluloid mpv gnome-text-editor evince
     ffmpeg cava cliphist gnome-characters keepass playerctl wev
 
     # Qt, display manager, and theming
@@ -133,6 +133,29 @@ configure_networkmanager_iwd() {
     fi
 
     ui_ok "NetworkManager configured to use iwd for Wi-Fi."
+}
+
+configure_lid_suspend() {
+    local logind_conf="/etc/systemd/logind.conf.d/20-anto426-lid-suspend.conf"
+    local tmp
+
+    tmp="$(mktemp)"
+    printf '%s\n' \
+        '[Login]' \
+        'HandleLidSwitch=suspend' \
+        'HandleLidSwitchExternalPower=suspend' \
+        'HandleLidSwitchDocked=suspend' \
+        'LidSwitchIgnoreInhibited=yes' > "$tmp"
+
+    sudo install -Dm644 "$tmp" "$logind_conf"
+    rm -f "$tmp"
+
+    if command -v systemctl >/dev/null 2>&1; then
+        sudo systemctl kill -s HUP systemd-logind.service >/dev/null 2>&1 || \
+            ui_note "Could not reload systemd-logind automatically. Reboot once to activate lid suspend."
+    fi
+
+    ui_ok "Lid close configured to suspend, including docked/external-monitor mode."
 }
 
 build_anto426_rofi() {
@@ -292,28 +315,31 @@ build_anto426_helpers() {
 
 ui_banner
 
-ui_step 1 8 "Installing base build tools"
+ui_step 1 9 "Installing base build tools"
 sudo pacman -S --needed --noconfirm base-devel git
 
-ui_step 2 8 "Checking AUR helper"
+ui_step 2 9 "Checking AUR helper"
 ensure_yay
 
-ui_step 3 8 "Installing official packages"
+ui_step 3 9 "Installing official packages"
 sudo pacman -S --needed --noconfirm "${pacman_packages[@]}"
 
-ui_step 4 8 "Installing AUR packages"
+ui_step 4 9 "Installing AUR packages"
 yay -S --needed --noconfirm "${aur_packages[@]}"
 
-ui_step 5 8 "Installing wallpaper apps"
+ui_step 5 9 "Installing wallpaper apps"
 install_mpvpaper
 
-ui_step 6 8 "Building local Anto426 apps"
+ui_step 6 9 "Building local Anto426 apps"
 build_anto426_helpers
 
-ui_step 7 8 "Building Anto426 rofi"
+ui_step 7 9 "Building Anto426 rofi"
 build_anto426_rofi
 
-ui_step 8 8 "Configuring NetworkManager iwd backend"
+ui_step 8 9 "Configuring NetworkManager iwd backend"
 configure_networkmanager_iwd
+
+ui_step 9 9 "Configuring lid suspend"
+configure_lid_suspend
 
 ui_ok "Package install complete."

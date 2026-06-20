@@ -4,7 +4,7 @@
   "spacing": 4,
   "modules-left": [
     "hyprland/workspaces",
-    "group/hardware"
+    "custom/hardware"
   ],
   "modules-center": [
     "custom/clock"
@@ -50,6 +50,15 @@
     "format": "󰒓",
     "tooltip-format": "Controlli rapidi",
     "on-click": "$HOME/.config/anto426/control_menu.sh main"
+  },
+  "custom/hardware": {
+    "exec": "$HOME/.config/anto426/hardware_stats.sh",
+    "return-type": "json",
+    "interval": 2,
+    "tooltip": true,
+    "on-click": "$HOME/.config/anto426/hardware_stats.sh menu",
+    "on-click-right": "$HOME/.config/anto426/hardware_stats.sh btop",
+    "on-click-middle": "$HOME/.config/anto426/hardware_stats.sh sensors"
   },
   "hyprland/workspaces": {
     "disable-scroll": true,
@@ -147,31 +156,6 @@
       "custom/notifications",
       "custom/screenshot",
       "custom/control"
-    ]
-  },
-  "cpu": {
-    "format": "󰻠 {usage}%",
-    "interval": 2,
-    "tooltip": true
-  },
-  "memory": {
-    "format": "󰍛 {percentage}%",
-    "interval": 2,
-    "tooltip": true,
-    "tooltip-format": "Memoria: {used:0.1f}GiB / {total:0.1f}GiB ({percentage}%)"
-  },
-  "temperature": {
-    "critical-threshold": 80,
-    "format": " {temperatureC}°C",
-    "format-critical": " {temperatureC}°C",
-    "tooltip": false
-  },
-  "group/hardware": {
-    "orientation": "horizontal",
-    "modules": [
-      "cpu",
-      "memory",
-      "temperature"
     ]
   }
 }
