@@ -155,32 +155,34 @@ static void configure_surface(GtkWidget *window) {
         gtk_layer_set_layer(GTK_WINDOW(window), GTK_LAYER_SHELL_LAYER_OVERLAY);
         gtk_layer_set_keyboard_mode(GTK_WINDOW(window), GTK_LAYER_SHELL_KEYBOARD_MODE_NONE);
         gtk_layer_set_exclusive_zone(GTK_WINDOW(window), -1);
-        gtk_layer_set_anchor(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_LEFT, TRUE);
+        gtk_layer_set_anchor(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_LEFT, FALSE);
+        gtk_layer_set_anchor(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_RIGHT, FALSE);
+        gtk_layer_set_anchor(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_TOP, FALSE);
         gtk_layer_set_anchor(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_BOTTOM, TRUE);
+    } else {
+        g_warning("GtkLayerShell is NOT supported. Running in fallback X11 mode.");
     }
 }
 
 static void center_window(GtkWidget *window) {
-    GdkDisplay *display = gdk_display_get_default();
-    GdkMonitor *monitor = NULL;
-    if (display) {
-        monitor = gdk_display_get_primary_monitor(display);
-        if (!monitor) {
-            monitor = gdk_display_get_monitor(display, 0);
-        }
-    }
-    if (!monitor) return;
-
-    GdkRectangle geo;
-    gdk_monitor_get_geometry(monitor, &geo);
-
-    int x = (geo.width - OSD_WIDTH) / 2;
-    if (x < 0) x = 0;
-
     if (gtk_layer_is_supported()) {
-        gtk_layer_set_margin(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_LEFT, x);
         gtk_layer_set_margin(GTK_WINDOW(window), GTK_LAYER_SHELL_EDGE_BOTTOM, BOTTOM_MARGIN);
     } else {
+        GdkDisplay *display = gdk_display_get_default();
+        GdkMonitor *monitor = NULL;
+        if (display) {
+            monitor = gdk_display_get_primary_monitor(display);
+            if (!monitor) {
+                monitor = gdk_display_get_monitor(display, 0);
+            }
+        }
+        if (!monitor) return;
+
+        GdkRectangle geo;
+        gdk_monitor_get_geometry(monitor, &geo);
+
+        int x = (geo.width - OSD_WIDTH) / 2;
+        if (x < 0) x = 0;
         int y = geo.height - OSD_HEIGHT - BOTTOM_MARGIN;
         gtk_window_move(GTK_WINDOW(window), geo.x + x, geo.y + y);
     }
@@ -261,7 +263,9 @@ static void update_osd(GtkWidget *window) {
     }
 
     gtk_label_set_text(GTK_LABEL(icon_label), icon_str);
-    gtk_label_set_text(GTK_LABEL(title_label), title_str);
+    char *title_upper = g_utf8_strup(title_str, -1);
+    gtk_label_set_text(GTK_LABEL(title_label), title_upper);
+    g_free(title_upper);
     gtk_label_set_text(GTK_LABEL(value_label), value_str);
 
     double fraction = state_muted ? 0.0 : ((double)state_value / 100.0);
@@ -285,6 +289,15 @@ static gboolean on_sigusr1(gpointer user_data) {
     GtkWidget *window = GTK_WIDGET(user_data);
     update_osd(window);
     return TRUE;
+}
+
+static gboolean on_draw(GtkWidget *widget, cairo_t *cr, gpointer user_data) {
+    (void)widget;
+    (void)user_data;
+    cairo_set_source_rgba(cr, 0.0, 0.0, 0.0, 0.0);
+    cairo_set_operator(cr, CAIRO_OPERATOR_SOURCE);
+    cairo_paint(cr);
+    return FALSE;
 }
 
 int main(int argc, char *argv[]) {
@@ -313,11 +326,17 @@ int main(int argc, char *argv[]) {
     gtk_widget_set_name(window, "anto426-osd");
     gtk_style_context_add_class(gtk_widget_get_style_context(window), "osd-root");
 
+    gtk_widget_set_app_paintable(window, TRUE);
+    g_signal_connect(window, "draw", G_CALLBACK(on_draw), NULL);
+
+    gtk_widget_set_size_request(window, OSD_WIDTH, OSD_HEIGHT);
+
     configure_surface(window);
     load_css(window);
 
     GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_set_name(outer, "osd-box");
+    gtk_widget_set_size_request(outer, OSD_WIDTH, OSD_HEIGHT);
     gtk_container_add(GTK_CONTAINER(window), outer);
 
     icon_label = gtk_label_new("");
@@ -340,6 +359,8 @@ int main(int argc, char *argv[]) {
     gtk_box_pack_start(GTK_BOX(center_box), progress_bar, FALSE, FALSE, 0);
 
     value_label = gtk_label_new("");
+    gtk_widget_set_halign(value_label, GTK_ALIGN_END);
+    gtk_label_set_xalign(GTK_LABEL(value_label), 1.0);
     gtk_style_context_add_class(gtk_widget_get_style_context(value_label), "osd-value");
     gtk_box_pack_start(GTK_BOX(outer), value_label, FALSE, FALSE, 0);
 

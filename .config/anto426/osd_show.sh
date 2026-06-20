@@ -29,7 +29,7 @@ write_state() {
 start_daemon() {
     [[ -x "$OSD_BIN" ]] || return 1
 
-    ANTO426_OSD_STATE="$STATE_FILE" ANTO426_OSD_PID="$PID_FILE" \
+    GDK_BACKEND=wayland ANTO426_OSD_STATE="$STATE_FILE" ANTO426_OSD_PID="$PID_FILE" \
         "$OSD_BIN" daemon >/dev/null 2>&1 &
     printf '%s\n' "$!" >"$PID_FILE"
 }

@@ -30,7 +30,6 @@ label.osd-title {
   font-family: "JetBrainsMono Nerd Font";
   font-size: 10px;
   font-weight: 700;
-  text-transform: uppercase;
   letter-spacing: 1px;
   color: @muted;
   margin-bottom: 4px;
@@ -42,7 +41,6 @@ label.osd-value {
   font-weight: 800;
   color: @foreground;
   min-width: 44px;
-  text-align: right;
 }
 
 progressbar.osd-track {
