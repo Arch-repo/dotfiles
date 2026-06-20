@@ -41,6 +41,7 @@ label.osd-value {
   font-weight: 800;
   color: @foreground;
   min-width: 44px;
+  margin-left: 16px;
 }
 
 progressbar.osd-track {

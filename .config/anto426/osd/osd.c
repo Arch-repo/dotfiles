@@ -334,35 +334,44 @@ int main(int argc, char *argv[]) {
     configure_surface(window);
     load_css(window);
 
-    GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    GtkWidget *outer = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
     gtk_widget_set_name(outer, "osd-box");
     gtk_widget_set_size_request(outer, OSD_WIDTH, OSD_HEIGHT);
     gtk_container_add(GTK_CONTAINER(window), outer);
 
-    icon_label = gtk_label_new("");
-    gtk_style_context_add_class(gtk_widget_get_style_context(icon_label), "osd-icon");
-    gtk_box_pack_start(GTK_BOX(outer), icon_label, FALSE, FALSE, 0);
+    GtkWidget *grid = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(grid), 0);
+    gtk_grid_set_row_spacing(GTK_GRID(grid), 0);
+    gtk_widget_set_hexpand(grid, TRUE);
+    gtk_widget_set_vexpand(grid, TRUE);
+    gtk_widget_set_valign(grid, GTK_ALIGN_CENTER);
+    gtk_box_pack_start(GTK_BOX(outer), grid, TRUE, TRUE, 0);
 
-    GtkWidget *center_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_name(center_box, "osd-center-box");
-    gtk_box_pack_start(GTK_BOX(outer), center_box, TRUE, TRUE, 0);
+    icon_label = gtk_label_new("");
+    gtk_widget_set_valign(icon_label, GTK_ALIGN_CENTER);
+    gtk_style_context_add_class(gtk_widget_get_style_context(icon_label), "osd-icon");
+    gtk_grid_attach(GTK_GRID(grid), icon_label, 0, 1, 1, 1);
 
     title_label = gtk_label_new("");
     gtk_widget_set_halign(title_label, GTK_ALIGN_START);
     gtk_style_context_add_class(gtk_widget_get_style_context(title_label), "osd-title");
-    gtk_box_pack_start(GTK_BOX(center_box), title_label, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), title_label, 1, 0, 1, 1);
 
     progress_bar = gtk_progress_bar_new();
     gtk_progress_bar_set_show_text(GTK_PROGRESS_BAR(progress_bar), FALSE);
     gtk_widget_set_size_request(progress_bar, BAR_WIDTH, 8);
+    gtk_widget_set_hexpand(progress_bar, TRUE);
+    gtk_widget_set_halign(progress_bar, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(progress_bar, GTK_ALIGN_CENTER);
     gtk_style_context_add_class(gtk_widget_get_style_context(progress_bar), "osd-track");
-    gtk_box_pack_start(GTK_BOX(center_box), progress_bar, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), progress_bar, 1, 1, 1, 1);
 
     value_label = gtk_label_new("");
     gtk_widget_set_halign(value_label, GTK_ALIGN_END);
     gtk_label_set_xalign(GTK_LABEL(value_label), 1.0);
+    gtk_widget_set_valign(value_label, GTK_ALIGN_CENTER);
     gtk_style_context_add_class(gtk_widget_get_style_context(value_label), "osd-value");
-    gtk_box_pack_start(GTK_BOX(outer), value_label, FALSE, FALSE, 0);
+    gtk_grid_attach(GTK_GRID(grid), value_label, 2, 1, 1, 1);
 
     write_pid_file();
     update_osd(window);
