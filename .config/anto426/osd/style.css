@@ -1,5 +1,6 @@
-window.osd-root {
+window.osd-root, window.osd-root decoration {
   background-color: transparent;
+  background: transparent;
   border: none;
   box-shadow: none;
 }
@@ -8,10 +9,9 @@ box#osd-box {
   min-width: 380px;
   min-height: 64px;
   padding: 12px 20px;
-  background-color: alpha(@panel-bg, 0.30);
+  background-color: alpha(@panel-bg, 0.35);
   border: 1px solid @border-medium;
   border-radius: 999px; /* Modern capsule shape */
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
 label.osd-icon {
