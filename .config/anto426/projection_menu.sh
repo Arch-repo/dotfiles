@@ -133,13 +133,11 @@ external="$(external_monitor "$primary")"
 while true; do
     choice="$(
         {
-            printf '󰒔 DISPLAY MODE\n'
-            printf ' ├─ 󰍹  Main screen only\n'
-            printf ' ├─ 󰍺  Duplicate\n'
-            printf ' ├─ 󰹑  Extend\n'
-            printf ' └─ 󰶐  External screen only\n'
-            
-            printf '\n󰌍  Back\n'
+            printf 'Main screen only\0icon\x1fvideo-display\n'
+            printf 'Duplicate\0icon\x1fvideo-display\n'
+            printf 'Extend\0icon\x1fvideo-display\n'
+            printf 'External screen only\0icon\x1fvideo-display\n'
+            printf 'Back\0icon\x1fgo-previous\n'
         } |
             rofi -dmenu -i -matching fuzzy \
                 -p "Project" \
@@ -148,18 +146,12 @@ while true; do
     )"
 
     [[ -z "$choice" ]] && exit 0
-    if [[ "$choice" == *"Back"* ]]; then
-        go_back
-    fi
-    if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-        continue
-    fi
-    clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
 
-    case "$clean_choice" in
-        *"principale"* | *"Main"*) only_primary "$primary"; exit 0 ;;
-        *"Duplica"* | *"Duplicate"*) duplicate_displays "$primary" "$external"; exit 0 ;;
-        *"Estendi"* | *"Extend"*) extend_displays "$primary" "$external"; exit 0 ;;
-        *"esterno"* | *"External"*) only_external "$primary" "$external"; exit 0 ;;
+    case "$choice" in
+        "Main screen only") only_primary "$primary"; exit 0 ;;
+        "Duplicate") duplicate_displays "$primary" "$external"; exit 0 ;;
+        "Extend") extend_displays "$primary" "$external"; exit 0 ;;
+        "External screen only") only_external "$primary" "$external"; exit 0 ;;
+        "Back") go_back ;;
     esac
 done

@@ -208,25 +208,15 @@ pick_corner() {
     local choice
     choice="$(
         printf '%s\n' \
-            "󰇄 SELECT CORNER" \
-            " ├─ 󰁝  Top left" \
-            " ├─ 󰁔  Top right" \
-            " ├─ 󰁅  Bottom left" \
-            " └─ 󰁜  Bottom right" \
-            "" \
-            "󰌍  Back" |
+            "Top left"$'\0'"icon"$'\x1f'"go-up" \
+            "Top right"$'\0'"icon"$'\x1f'"go-next" \
+            "Bottom left"$'\0'"icon"$'\x1f'"go-down" \
+            "Bottom right"$'\0'"icon"$'\x1f'"go-last" \
+            "Back"$'\0'"icon"$'\x1f'"go-previous" |
             rofi -dmenu -i -matching fuzzy -p "Corner" -theme "$THEME"
     )"
     [[ -z "$choice" ]] && return 0
-    if [[ "$choice" == *"Back"* ]]; then
-        printf 'Back\n'
-        return 0
-    fi
-    if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-        pick_corner
-        return 0
-    fi
-    printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//'
+    printf '%s' "$choice"
 }
 
 menu() {
@@ -239,35 +229,29 @@ menu() {
 
     if ! has_active_window; then
         choice="$(
-            printf '%s\n' "󰌍  Back" |
+            printf 'Back\0icon\x1fgo-previous\n' |
                 rofi -dmenu -i -matching fuzzy \
                     -p "Floating Manager" \
                     -mesg "No active window" \
                     -theme "$THEME"
         )"
-        [[ "$choice" == *"Back"* ]] && go_back
+        [[ "$choice" == "Back" ]] && go_back
         return 0
     fi
 
     choice="$(
         {
-            printf '󰒔 WINDOW POSITION\n'
-            printf ' ├─ 󰱒  Toggle floating\n'
-            printf ' ├─ 󰁌  Center\n'
-            printf ' └─ 󰘕  Move to corners\n'
-            
-            printf '\n󰓏 SIZE PRESETS\n'
-            printf ' ├─ 󰾆  Compact 45%%\n'
-            printf ' ├─ 󰾅  Comfortable 62%%\n'
-            printf ' └─ 󰓡  Large 78%%\n'
-            
-            printf '\n󰄬 ACTIONS AND STATUS\n'
-            printf ' ├─ 󰐃  Pin / unpin\n'
-            printf ' ├─ 󰓌  Bring to front\n'
-            printf ' ├─ 󰅖  Reset: tiled + unpin\n'
-            printf ' └─ 󰅙  Close window\n'
-            
-            printf '\n󰌍  Back\n'
+            printf 'Toggle floating\0icon\x1fwindow-restore\n'
+            printf 'Center window\0icon\x1fzoom-fit-best\n'
+            printf 'Move to corners\0icon\x1fopen-menu\n'
+            printf 'Compact 45%%\0icon\x1fzoom-out\n'
+            printf 'Comfortable 62%%\0icon\x1fzoom-in\n'
+            printf 'Large 78%%\0icon\x1fzoom-fit-best\n'
+            printf 'Pin / unpin\0icon\x1fpin\n'
+            printf 'Bring to front\0icon\x1fgo-up\n'
+            printf 'Reset: tiled + unpin\0icon\x1fview-refresh\n'
+            printf 'Close window\0icon\x1fwindow-close\n'
+            printf 'Back\0icon\x1fgo-previous\n'
         } |
             rofi -dmenu -i -matching fuzzy \
                 -p "Floating Manager" \
@@ -276,38 +260,29 @@ menu() {
     )"
 
     [[ -z "$choice" ]] && return 0
-    if [[ "$choice" == *"Back"* ]]; then
-        go_back
-        return 0
-    fi
-    if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-        menu
-        return 0
-    fi
-    local clean_choice
-    clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
+    local clean_choice="$choice"
 
     case "$clean_choice" in
-        *"Toggle"*) toggle_floating ;;
-        *"Center"* | *"Centra"*) center_window ;;
-        *"Compact"* | *"Compatta"*) resize_preset small ;;
-        *"Comfortable"* | *"Comoda"*) resize_preset medium ;;
-        *"Large"* | *"Grande"*) resize_preset large ;;
-        *"Pin"*) dispatch pin ;;
-        *"Bring to front"* | *"Porta sopra"*) dispatch alterzorder top ;;
-        *"corners"* | *"angoli"*)
+        "Toggle floating") toggle_floating ;;
+        "Center window") center_window ;;
+        "Compact 45%") resize_preset small ;;
+        "Comfortable 62%") resize_preset medium ;;
+        "Large 78%") resize_preset large ;;
+        "Pin / unpin") dispatch pin ;;
+        "Bring to front") dispatch alterzorder top ;;
+        "Move to corners")
             corner="$(pick_corner)"
             case "$corner" in
-                *"Top left"* | *"Alto sinistra"*) move_corner tl ;;
-                *"Top right"* | *"Alto destra"*) move_corner tr ;;
-                *"Bottom left"* | *"Basso sinistra"*) move_corner bl ;;
-                *"Bottom right"* | *"Basso destra"*) move_corner br ;;
-                *"Back"* | *"Indietro"*) menu ;;
+                "Top left") move_corner tl ;;
+                "Top right") move_corner tr ;;
+                "Bottom left") move_corner bl ;;
+                "Bottom right") move_corner br ;;
+                "Back") menu ;;
             esac
             ;;
-        *"Reset"*) reset_window ;;
-        *"Close"* | *"Chiudi"*) dispatch killactive ;;
-        *"Back"* | *"Indietro"*) go_back ;;
+        "Reset: tiled + unpin") reset_window ;;
+        "Close window") dispatch killactive ;;
+        "Back") go_back ;;
     esac
 }
 

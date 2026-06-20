@@ -1,12 +1,13 @@
 #!/usr/bin/env bash
+set -uo pipefail
 
-if pgrep -x rofi > /dev/null; then
-    pkill -x rofi
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/rofi.sh
+source "$SCRIPT_DIR/lib/rofi.sh"
 
-THEME="$HOME/.config/rofi/control_menu.rasi"
+anto426_close_rofi
 
-choice="$(cliphist list | rofi -dmenu -p "Clipboard" -theme "$THEME")"
+choice="$(cliphist list | anto426_rofi_dmenu "Clipboard" "$ANTO426_THEME_CONTROL")"
 [[ -n "$choice" ]] || exit 0
 
 printf '%s' "$choice" | cliphist decode | wl-copy

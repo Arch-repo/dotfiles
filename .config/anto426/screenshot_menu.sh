@@ -30,6 +30,66 @@ notify() {
     notify-send "Capture" "$*" 2>/dev/null || true
 }
 
+notify_file_saved() {
+    local title="$1"
+    local file="$2"
+    local folder="$3"
+    local icon="$4"
+
+    [[ -n "$file" ]] || {
+        notify "$title"
+        return 0
+    }
+
+    (
+        local action
+        action="$(
+            notify-send \
+                -a "Capture" \
+                -i "$icon" \
+                -A "default=Open Folder" \
+                -A "file=Open File" \
+                "$title" \
+                "$file" 2>/dev/null || true
+        )"
+
+        case "$action" in
+            default)
+                open_folder "$folder" >/dev/null 2>&1 &
+                ;;
+            file)
+                xdg-open "$file" >/dev/null 2>&1 &
+                ;;
+        esac
+    ) &
+}
+
+notify_recording_started() {
+    local file="$1"
+
+    (
+        local action
+        action="$(
+            notify-send \
+                -a "Capture" \
+                -i "media-record" \
+                -A "default=Open Folder" \
+                -A "stop=Stop" \
+                "Recording started" \
+                "$file" 2>/dev/null || true
+        )"
+
+        case "$action" in
+            default)
+                open_folder "$RECORDING_DIR" >/dev/null 2>&1 &
+                ;;
+            stop)
+                "$0" record-stop >/dev/null 2>&1 &
+                ;;
+        esac
+    ) &
+}
+
 desktop_background_color() {
     local colors="$HOME/.config/colors/colors.sh"
 
@@ -136,7 +196,20 @@ pick_image_file() {
     normalize_image_path "$file"
 }
 
+require_capture_tools() {
+    local cmd
+
+    for cmd in "$@"; do
+        command -v "$cmd" >/dev/null 2>&1 || {
+            notify "$cmd not found"
+            return 1
+        }
+    done
+}
+
 active_output_name() {
+    require_capture_tools hyprctl jq || return 1
+
     hyprctl monitors -j 2>/dev/null |
         jq -r '.[] | select(.focused == true) | .name' |
         sed -n '1p'
@@ -147,14 +220,17 @@ geometry_for_mode() {
 
     case "$mode" in
         area)
+            require_capture_tools slurp || return 1
             sleep 0.12
             slurp -b 00000066 -c 8cb8e4ff -s 8cb8e433 -w 2
             ;;
         window)
+            require_capture_tools hyprctl jq || return 1
             hyprctl activewindow -j 2>/dev/null |
                 jq -r 'select(.at != null and .size != null) | "\(.at[0]),\(.at[1]) \(.size[0])x\(.size[1])"'
             ;;
         monitor)
+            require_capture_tools hyprctl jq || return 1
             hyprctl monitors -j 2>/dev/null |
                 jq -r '.[] | select(.focused == true) | "\(.x),\(.y) \(.width)x\(.height)"' |
                 sed -n '1p'
@@ -187,7 +263,7 @@ save_screenshot_hyprshot() {
         if [[ -s "$file" ]]; then
             finalize_screenshot "$file"
             wl-copy < "$file" 2>/dev/null || true
-            notify "Screenshot saved: $file"
+            notify_file_saved "Screenshot saved" "$file" "$dir" "image-x-generic"
             return 0
         fi
     fi
@@ -210,7 +286,7 @@ save_screenshot_grim() {
         if [[ -n "$output" ]] && grim -o "$output" "$file"; then
             finalize_screenshot "$file"
             wl-copy < "$file" 2>/dev/null || true
-            notify "Screenshot saved: $file"
+            notify_file_saved "Screenshot saved" "$file" "$(dirname "$file")" "image-x-generic"
             return 0
         fi
     fi
@@ -224,7 +300,7 @@ save_screenshot_grim() {
     if grim -g "$geometry" "$file"; then
         finalize_screenshot "$file"
         wl-copy < "$file" 2>/dev/null || true
-        notify "Screenshot saved: $file"
+        notify_file_saved "Screenshot saved" "$file" "$(dirname "$file")" "image-x-generic"
         return 0
     fi
 
@@ -330,7 +406,7 @@ start_recording() {
 
     (
         child=""
-        trap '[[ -n "$child" ]] && kill -INT "$child" 2>/dev/null; wait "$child" 2>/dev/null; rm -f "$RECORD_PID_FILE" "$RECORD_FILE_STATE"; [[ -s "$file" ]] && notify "Recording saved: $file"; exit 0' INT TERM
+        trap '[[ -n "$child" ]] && kill -INT "$child" 2>/dev/null; wait "$child" 2>/dev/null; rm -f "$RECORD_PID_FILE" "$RECORD_FILE_STATE"; [[ -s "$file" ]] && notify_file_saved "Recording saved" "$file" "$RECORDING_DIR" "video-x-generic"; exit 0' INT TERM
         wf-recorder "${args[@]}" >>"$RECORD_LOG" 2>&1 &
         child=$!
         wait "$child"
@@ -338,7 +414,7 @@ start_recording() {
         rm -f "$RECORD_PID_FILE" "$RECORD_FILE_STATE"
 
         if [[ -s "$file" ]]; then
-            notify "Recording saved: $file"
+            notify_file_saved "Recording saved" "$file" "$RECORDING_DIR" "video-x-generic"
         elif ((status != 0)); then
             notify "Recording failed"
         fi
@@ -348,7 +424,7 @@ start_recording() {
     pid=$!
     printf '%s\n' "$pid" > "$RECORD_PID_FILE"
     printf '%s\n' "$file" > "$RECORD_FILE_STATE"
-    notify "Recording started: $(basename "$file")"
+    notify_recording_started "$file"
 }
 
 stop_recording() {
@@ -366,66 +442,54 @@ stop_recording() {
 pick_action() {
     local stop_line=""
     if recording_pid >/dev/null; then
-        stop_line="󰓛  Stop Recording"
+        stop_line="Stop Recording"$'\0'"icon"$'\x1f'"media-playback-stop"
     fi
 
     {
         [[ -n "$stop_line" ]] && printf '%s\n' "$stop_line"
-        printf '󰇄 SCREENSHOT ACTIONS\n'
-        printf '%s\n' \
-            " ├─ 󰆞  Screenshot Area" \
-            " ├─ 󰖲  Screenshot Window" \
-            " └─ 󰍹  Screenshot Fullscreen"
-        printf '\n󰒔 SCREEN RECORDING\n'
-        printf '%s\n' \
-            " ├─ 󰑊  Record Selected Area" \
-            " ├─ 󰑊  Record Active Window" \
-            " ├─ 󰑊  Record Active Screen" \
-            " └─ 󰕾  Record Screen with Audio"
-        printf '\n󰥔 DIRECTORIES & TOOLS\n'
-        printf '%s\n' \
-            " ├─   Open Screenshots Folder" \
-            " └─   Open Recordings Folder"
+        printf 'Screenshot Area\0icon\x1fcamera-photo\n'
+        printf 'Screenshot Window\0icon\x1fcamera-photo\n'
+        printf 'Screenshot Fullscreen\0icon\x1fcamera-photo\n'
+        printf 'Record Selected Area\0icon\x1fmedia-record\n'
+        printf 'Record Active Window\0icon\x1fmedia-record\n'
+        printf 'Record Active Screen\0icon\x1fmedia-record\n'
+        printf 'Record Screen with Audio\0icon\x1fmedia-record\n'
+        printf 'Open Screenshots Folder\0icon\x1ffolder-pictures\n'
+        printf 'Open Recordings Folder\0icon\x1ffolder-videos\n'
         if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
-            printf '\n󰐌  Studio Tools\n'
-            printf '%s\n' " └─ 󰐌  Open OBS Studio"
+            printf 'Open OBS Studio\0icon\x1fobs\n'
         fi
-        printf '\n󰌍  Back\n'
+        printf 'Back\0icon\x1fgo-previous\n'
     } | rofi_pick_msg "Capture" "$(recording_status)"
 }
 
 pick_record_action() {
     local stop_line=""
     if recording_pid >/dev/null; then
-        stop_line="󰓛  Stop Recording"
+        stop_line="Stop Recording"$'\0'"icon"$'\x1f'"media-playback-stop"
     fi
 
     {
         [[ -n "$stop_line" ]] && printf '%s\n' "$stop_line"
-        printf '󰒔 SCREEN RECORDING\n'
-        printf '%s\n' \
-            " ├─ 󰑊  Record Selected Area" \
-            " ├─ 󰑊  Record Active Window" \
-            " ├─ 󰑊  Record Active Screen" \
-            " ├─ 󰕾  Record Screen with Audio" \
-            " └─   Open Recordings Folder"
+        printf 'Record Selected Area\0icon\x1fmedia-record\n'
+        printf 'Record Active Window\0icon\x1fmedia-record\n'
+        printf 'Record Active Screen\0icon\x1fmedia-record\n'
+        printf 'Record Screen with Audio\0icon\x1fmedia-record\n'
+        printf 'Open Recordings Folder\0icon\x1ffolder-videos\n'
         if ! command -v wf-recorder >/dev/null 2>&1 && command -v obs >/dev/null 2>&1; then
-            printf '\n󰐌  Studio Tools\n'
-            printf '%s\n' " └─ 󰐌  Open OBS Studio"
+            printf 'Open OBS Studio\0icon\x1fobs\n'
         fi
-        printf '\n󰌍  Back\n'
+        printf 'Back\0icon\x1fgo-previous\n'
     } | rofi_pick_msg "Record" "$(recording_status)"
 }
 
 pick_screenshot_action() {
     {
-        printf '󰇄 SCREENSHOT ACTIONS\n'
-        printf '%s\n' \
-            " ├─ 󰆞  Screenshot Area" \
-            " ├─ 󰖲  Screenshot Window" \
-            " ├─ 󰍹  Screenshot Fullscreen" \
-            " └─   Open Screenshots Folder"
-        printf '\n󰌍  Back\n'
+        printf 'Screenshot Area\0icon\x1fcamera-photo\n'
+        printf 'Screenshot Window\0icon\x1fcamera-photo\n'
+        printf 'Screenshot Fullscreen\0icon\x1fcamera-photo\n'
+        printf 'Open Screenshots Folder\0icon\x1ffolder-pictures\n'
+        printf 'Back\0icon\x1fgo-previous\n'
     } |
         rofi_pick_msg "Screenshot" "Folder: $SCREENSHOT_DIR"
 }
@@ -435,40 +499,36 @@ run_menu() {
 
     choice="$(pick_action)"
     [[ -n "$choice" ]] || return 0
-    if [[ "$choice" == *"Back"* ]]; then
+    if [[ "$choice" == "Back" ]]; then
         return 0
     fi
 
     case "$choice" in
-        "󰇄"* | "󰒔"* | "󰥔"* | "󰌍"*) run_menu ;;
-        *"Stop Recording" | *"Ferma registrazione"*) stop_recording ;;
-        *"Screenshot Area" | *"Screenshot area"*)
+        "Stop Recording") stop_recording ;;
+        "Screenshot Area")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot area "$(default_screenshot_path)"
             ;;
-        *"Screenshot Window" | *"Screenshot finestra"*)
+        "Screenshot Window")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot window "$(default_screenshot_path)"
             ;;
-        *"Screenshot Fullscreen" | *"Screenshot schermo intero"*)
+        "Screenshot Fullscreen")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot monitor "$(default_screenshot_path)"
             ;;
-        *"Record Selected Area" | *"Registra area"*) start_recording area false ;;
-        *"Record Active Window" | *"Registra finestra"*) start_recording window false ;;
-        *"Record Active Screen" | *"Registra schermo attivo"*) start_recording monitor false ;;
-        *"Record Screen with Audio" | *"Registra schermo + audio"*) start_recording monitor true ;;
-        *"Open Screenshots Folder" | *"Apri screenshot"*)
+        "Record Selected Area") start_recording area false ;;
+        "Record Active Window") start_recording window false ;;
+        "Record Active Screen") start_recording monitor false ;;
+        "Record Screen with Audio") start_recording monitor true ;;
+        "Open Screenshots Folder")
             open_folder "$SCREENSHOT_DIR"
             ;;
-        *"Open Recordings Folder" | *"Apri registrazioni"*)
+        "Open Recordings Folder")
             open_folder "$RECORDING_DIR"
             ;;
-        *"Open OBS Studio" | *"Apri OBS Studio"*)
+        "Open OBS Studio")
             obs >/dev/null 2>&1 &
-            ;;
-        *"Back" | *"Indietro"*)
-            return 0
             ;;
     esac
 }
@@ -478,26 +538,24 @@ run_screenshot_menu() {
 
     choice="$(pick_screenshot_action)"
     [[ -n "$choice" ]] || return 0
-    if [[ "$choice" == *"Back"* ]]; then
+    if [[ "$choice" == "Back" ]]; then
         return 0
     fi
 
     case "$choice" in
-        "󰇄"* | "󰌍"*) run_screenshot_menu ;;
-        *"Screenshot Area" | *"Screenshot area"*)
+        "Screenshot Area")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot area "$(default_screenshot_path)"
             ;;
-        *"Screenshot Window" | *"Screenshot finestra"*)
+        "Screenshot Window")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot window "$(default_screenshot_path)"
             ;;
-        *"Screenshot Fullscreen" | *"Screenshot schermo intero"*)
+        "Screenshot Fullscreen")
             mkdir -p "$SCREENSHOT_DIR"
             save_screenshot monitor "$(default_screenshot_path)"
             ;;
-        *"Open Screenshots Folder" | *"Apri screenshot"*) open_folder "$SCREENSHOT_DIR" ;;
-        *"Back" | *"Indietro"*) return 0 ;;
+        "Open Screenshots Folder") open_folder "$SCREENSHOT_DIR" ;;
     esac
 }
 
@@ -506,20 +564,18 @@ run_record_menu() {
 
     choice="$(pick_record_action)"
     [[ -n "$choice" ]] || return 0
-    if [[ "$choice" == *"Back"* ]]; then
+    if [[ "$choice" == "Back" ]]; then
         return 0
     fi
 
     case "$choice" in
-        "󰒔"* | "󰌍"*) run_record_menu ;;
-        *"Stop Recording" | *"Ferma registrazione"*) stop_recording ;;
-        *"Record Selected Area" | *"Registra area"*) start_recording area false ;;
-        *"Record Active Window" | *"Registra finestra"*) start_recording window false ;;
-        *"Record Active Screen" | *"Registra schermo attivo"*) start_recording monitor false ;;
-        *"Record Screen with Audio" | *"Registra schermo + audio"*) start_recording monitor true ;;
-        *"Open Recordings Folder" | *"Apri registrazioni"*) open_folder "$RECORDING_DIR" ;;
-        *"Open OBS Studio" | *"Apri OBS Studio"*) obs >/dev/null 2>&1 & ;;
-        *"Back" | *"Indietro"*) return 0 ;;
+        "Stop Recording") stop_recording ;;
+        "Record Selected Area") start_recording area false ;;
+        "Record Active Window") start_recording window false ;;
+        "Record Active Screen") start_recording monitor false ;;
+        "Record Screen with Audio") start_recording monitor true ;;
+        "Open Recordings Folder") open_folder "$RECORDING_DIR" ;;
+        "Open OBS Studio") obs >/dev/null 2>&1 & ;;
     esac
 }
 

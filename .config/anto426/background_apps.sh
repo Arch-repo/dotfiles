@@ -210,7 +210,7 @@ build_menu_files() {
         local short_title="$title"
         ((${#short_title} > 15)) && short_title="${short_title:0:13}.."
         
-        label="󰨞  [WS $workspace]  $short_class  •  $short_title"
+        label="[WS $workspace]  $short_class  •  $short_title"
         ((${#label} > 80)) && label="${label:0:77}..."
         
         win_lines+=("$label|$icon")
@@ -237,7 +237,7 @@ build_menu_files() {
         local short_comm="$comm"
         ((${#short_comm} > 12)) && short_comm="${short_comm:0:10}.."
         
-        display_line="$short_comm  [$pid]  󰻠 $cpu%  󰍛 $mem%"
+        display_line="$short_comm  [$pid]  CPU: $cpu%  MEM: $mem%"
         
         if [[ "$cat" == "daemon" ]]; then
             daemon_lines+=("$display_line|$icon_name")
@@ -251,70 +251,48 @@ build_menu_files() {
     # 3. Write Quick Actions to map and menu
     printf 'Refresh Dashboard\taction\trefresh\n' >>"$MAP_FILE"
     printf 'Kill All Background Apps\taction\tkillall\n' >>"$MAP_FILE"
+    printf 'Back\taction\tback\n' >>"$MAP_FILE"
 
-    printf '󰇄  DASHBOARD QUICK CONTROLS\n' >>"$MENU_FILE"
-    printf ' ├─ 󰑓  Refresh Dashboard\0icon\x1fview-refresh\n' >>"$MENU_FILE"
-    printf ' └─ 󰅖  Kill All Background Apps\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
+    printf 'Refresh Dashboard\0icon\x1fview-refresh\n' >>"$MENU_FILE"
+    printf 'Kill All Background Apps\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
 
     # 4. Write GUI Windows
     local win_count=${#win_lines[@]}
-    printf '\n󰘔  ACTIVE GRAPHICAL WINDOWS (%d)\n' "$win_count" >>"$MENU_FILE"
     if (( win_count > 0 )); then
         for ((i=0; i<win_count; i++)); do
             local item="${win_lines[i]}"
             local lbl="${item%|*}"
             local icn="${item#*|}"
             printf '%s\n' "${win_data[i]}" >>"$MAP_FILE"
-            
-            if (( i == win_count - 1 )); then
-                printf ' └─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            else
-                printf ' ├─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            fi
+            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
         done
-    else
-        printf ' └─ 󰂲  No background windows active\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
     fi
 
     # 5. Write Desktop Services
     local daemon_count=${#daemon_lines[@]}
-    printf '\n󱚞  RUNNING DAEMONS & SERVICES (%d)\n' "$daemon_count" >>"$MENU_FILE"
     if (( daemon_count > 0 )); then
         for ((i=0; i<daemon_count; i++)); do
             local item="${daemon_lines[i]}"
             local lbl="${item%|*}"
             local icn="${item#*|}"
             printf '%s\n' "${daemon_data[i]}" >>"$MAP_FILE"
-            
-            if (( i == daemon_count - 1 )); then
-                printf ' └─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            else
-                printf ' ├─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            fi
+            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
         done
-    else
-        printf ' └─ 󰂲  No user daemons active\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
     fi
 
     # 6. Write User Background Processes
     local app_count=${#app_lines[@]}
-    printf '\n󰒔  USER PROCESSES & APPS (%d)\n' "$app_count" >>"$MENU_FILE"
     if (( app_count > 0 )); then
         for ((i=0; i<app_count; i++)); do
             local item="${app_lines[i]}"
             local lbl="${item%|*}"
             local icn="${item#*|}"
             printf '%s\n' "${app_data[i]}" >>"$MAP_FILE"
-            
-            if (( i == app_count - 1 )); then
-                printf ' └─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            else
-                printf ' ├─ %s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-            fi
+            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
         done
-    else
-        printf ' └─ 󰂲  No user processes active\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
     fi
+
+    printf 'Back\0icon\x1fgo-previous\n' >>"$MENU_FILE"
 }
 
 focus_app() {
@@ -378,8 +356,6 @@ build_workspace_menu_files() {
     : >"$WORKSPACE_MAP_FILE"
     : >"$WORKSPACE_MENU_FILE"
 
-    printf '󰒔  CHOOSE WORKSPACE\n' >>"$WORKSPACE_MENU_FILE"
-
     while IFS=$'\t' read -r id name; do
         [[ -n "$id" ]] || continue
         label="$(workspace_label_from_name "$id" "$name")"
@@ -406,15 +382,13 @@ build_workspace_menu_files() {
             label="${lines[i]}"
             arg="${args[i]}"
             printf '%s\t%s\n' "$label" "$arg" >>"$WORKSPACE_MAP_FILE"
-            if (( i == count - 1 )); then
-                printf ' └─ %s\0icon\x1fview-grid-symbolic\n' "$label" >>"$WORKSPACE_MENU_FILE"
-            else
-                printf ' ├─ %s\0icon\x1fview-grid-symbolic\n' "$label" >>"$WORKSPACE_MENU_FILE"
-            fi
+            printf '%s\0icon\x1fview-grid-symbolic\n' "$label" >>"$WORKSPACE_MENU_FILE"
         done
     else
-        printf ' └─ 󰋼  No workspaces available\n' >>"$WORKSPACE_MENU_FILE"
+        printf 'No workspaces available\0icon\x1fdialog-error\n' >>"$WORKSPACE_MENU_FILE"
     fi
+    printf 'Back\0icon\x1fgo-previous\n' >>"$WORKSPACE_MENU_FILE"
+    printf 'Back\tback\n' >>"$WORKSPACE_MAP_FILE"
 }
 
 move_app_to_workspace_menu() {
@@ -428,14 +402,11 @@ move_app_to_workspace_menu() {
             -theme "$THEME" <"$WORKSPACE_MENU_FILE"
     )"
     [[ -n "$choice" ]] || return 0
-    if [[ "$choice" == *"Back"* ]]; then
+    if [[ "$choice" == "Back" ]]; then
         return 0
     fi
 
-    local clean_choice
-    clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
-
-    workspace="$(awk -F'\t' -v label="$clean_choice" '$1 == label { print $2; exit }' "$WORKSPACE_MAP_FILE" 2>/dev/null)"
+    workspace="$(awk -F'\t' -v label="$choice" '$1 == label { print $2; exit }' "$WORKSPACE_MAP_FILE" 2>/dev/null)"
     [[ -n "$workspace" ]] || return 0
     hyprctl dispatch movetoworkspacesilent "$workspace,address:$address" >/dev/null 2>&1 &&
         notify "App moved successfully"
@@ -457,12 +428,11 @@ app_actions_menu() {
     while true; do
         choice="$(
             {
-                printf '󰨞  WINDOW OPTIONS\n'
-                printf ' ├─ 󰍉  Focus & Raise Window\n'
-                printf ' ├─ 󰁝  Bring Window Here\n'
-                printf ' ├─ 󰏫  Send Window to Workspace...\n'
-                printf ' └─ 󰅖  Close Window\n'
-                printf '\n󰌍  Back\n'
+                printf 'Focus & Raise Window\0icon\x1fwindow-restore\n'
+                printf 'Bring Window Here\0icon\x1fgo-home\n'
+                printf 'Send Window to Workspace...\0icon\x1fview-grid-symbolic\n'
+                printf 'Close Window\0icon\x1fwindow-close\n'
+                printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -matching fuzzy \
                     -p "$short_name" \
@@ -470,31 +440,24 @@ app_actions_menu() {
         )"
 
         [[ -z "$choice" ]] && return 0
-        if [[ "$choice" == *"Back"* ]]; then
+        if [[ "$choice" == "Back" ]]; then
             return 2
         fi
 
-        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-            continue
-        fi
-
-        local clean_choice
-        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
-
-        case "$clean_choice" in
-            *"Focus & Raise Window"*)
+        case "$choice" in
+            "Focus & Raise Window")
                 focus_app "$address" || notify "Could not open window"
                 return 0
                 ;;
-            *"Bring Window Here"*)
+            "Bring Window Here")
                 move_app_to_current "$address" || notify "Could not bring window here"
                 return 0
                 ;;
-            *"Send Window to Workspace"*)
+            "Send Window to Workspace...")
                 move_app_to_workspace_menu "$address"
                 return 0
                 ;;
-            *"Close Window"*)
+            "Close Window")
                 close_app "$address" && notify "Close request sent"
                 return 0
                 ;;
@@ -539,12 +502,11 @@ process_actions_menu() {
     while true; do
         choice="$(
             {
-                printf '󰻠  PROCESS ACTIONS\n'
-                printf ' ├─ 󰋼  Show Child Processes\n'
-                printf ' ├─ 󰓌  Terminate Process (SIGTERM)\n'
-                printf ' ├─ 󰓌  Force Kill Process (SIGKILL)\n'
-                printf ' └─ 󰑓  Relaunch & Restart Process\n'
-                printf '\n󰌍  Back\n'
+                printf 'Show Child Processes\0icon\x1fpreferences-system\n'
+                printf 'Terminate Process (SIGTERM)\0icon\x1fprocess-stop\n'
+                printf 'Force Kill Process (SIGKILL)\0icon\x1fprocess-stop\n'
+                printf 'Relaunch & Restart Process\0icon\x1fview-refresh\n'
+                printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -matching fuzzy \
                     -p "$short_comm" \
@@ -552,22 +514,15 @@ process_actions_menu() {
         )"
 
         [[ -z "$choice" ]] && return 0
-        if [[ "$choice" == *"Back"* ]]; then
+        if [[ "$choice" == "Back" ]]; then
             return 2
         fi
 
-        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-            continue
-        fi
-
-        local clean_choice
-        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
-
-        case "$clean_choice" in
-            *"Show Child Processes"*)
+        case "$choice" in
+            "Show Child Processes")
                 subprocesses_menu "$pid" "$comm"
                 ;;
-            *"Terminate Process"*)
+            "Terminate Process (SIGTERM)")
                 if kill -15 "$pid" 2>/dev/null; then
                     notify "Sent SIGTERM to PID $pid ($comm)"
                 else
@@ -575,7 +530,7 @@ process_actions_menu() {
                 fi
                 return 0
                 ;;
-            *"Force Kill Process"*)
+            "Force Kill Process (SIGKILL)")
                 if kill -9 "$pid" 2>/dev/null; then
                     notify "Sent SIGKILL to PID $pid ($comm)"
                 else
@@ -583,7 +538,7 @@ process_actions_menu() {
                 fi
                 return 0
                 ;;
-            *"Relaunch"*)
+            "Relaunch & Restart Process")
                 restart_process "$comm" "$pid" "$args"
                 return 0
                 ;;
@@ -593,12 +548,12 @@ process_actions_menu() {
 
 get_process_tree() {
     local parent="$1"
-    local prefix="${2:-}"
+    local level="${2:-0}"
     local children=()
     mapfile -t children < <(pgrep -P "$parent" 2>/dev/null)
     local count=${#children[@]}
-    local i child comm cpu mem connector next_prefix
-    
+    local i child comm cpu mem next_level
+
     for ((i=0; i<count; i++)); do
         child="${children[i]}"
         [[ -n "$child" ]] || continue
@@ -606,21 +561,22 @@ get_process_tree() {
         cpu="$(ps -p "$child" -o %cpu= 2>/dev/null | tr -d ' ' || printf '0')"
         mem="$(ps -p "$child" -o %mem= 2>/dev/null | tr -d ' ' || printf '0')"
         
-        connector="├─ "
-        next_prefix="${prefix}│  "
-        if (( i == count - 1 )); then
-            connector="└─ "
-            next_prefix="${prefix}   "
-        fi
+        next_level=$((level + 1))
+
+        local indent=""
+        local j
+        for ((j=0; j<level; j++)); do
+            indent="${indent}    "
+        done
         
-        # Dynamically scale command length to fit nested tree inside 430px wide window
+        # Dynamically scale command length to fit nested tree
         local short_comm="$comm"
-        local max_comm_len=$((14 - ${#prefix}))
+        local max_comm_len=$((14 - (level * 2)))
         ((max_comm_len < 6)) && max_comm_len=6
         ((${#short_comm} > max_comm_len)) && short_comm="${short_comm:0:$((max_comm_len-2))}.."
         
-        printf '%s%s%s  [%s]  󰻠 %s%%  󰍛 %s%%\t%s\t%s\n' "$prefix" "$connector" "$short_comm" "$child" "$cpu" "$mem" "$child" "$comm"
-        get_process_tree "$child" "$next_prefix"
+        printf '%s%s  [%s]  CPU: %s%%  MEM: %s%%\t%s\t%s\n' "$indent" "$short_comm" "$child" "$cpu" "$mem" "$child" "$comm"
+        get_process_tree "$child" "$next_level"
     done
 }
 
@@ -643,22 +599,21 @@ subprocesses_menu() {
         
         choice="$(
             {
-                printf '󰋼  CHILD PROCESS PROCESS TREE\n'
                 if (( tree_count > 0 )); then
                     for tl in "${tree_lines[@]}"; do
-                        printf '%s\n' "$tl"
+                        printf '%s\0icon\x1fapplication-x-executable\n' "$tl"
                     done
                 else
-                    printf ' └─ 󰋼  No active child processes\n'
+                    printf 'No active child processes\0icon\x1finfo\n'
                 fi
-                printf '\n󰌍  Back\n'
+                printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -p "${parent_comm:0:15} (Children)" \
                     -theme "$THEME"
         )"
         
         [[ -z "$choice" ]] && return 0
-        if [[ "$choice" == *"Back"* ]]; then
+        if [[ "$choice" == "Back" ]]; then
             return 0
         fi
         
@@ -684,33 +639,25 @@ subprocesses_menu() {
         while true; do
             child_action="$(
                 {
-                    printf '󰓌  SUBPROCESS ACTIONS\n'
-                    printf ' ├─ 󰓌  Terminate Process (SIGTERM)\n'
-                    printf ' └─ 󰓌  Force Kill Process (SIGKILL)\n'
-                    printf '\n󰌍  Back\n'
+                    printf 'Terminate Process (SIGTERM)\0icon\x1fprocess-stop\n'
+                    printf 'Force Kill Process (SIGKILL)\0icon\x1fprocess-stop\n'
+                    printf 'Back\0icon\x1fgo-previous\n'
                 } |
                     rofi -dmenu -i -p "${child_comm:0:15} [$child_pid]" \
                         -theme "$THEME"
             )"
             
             [[ -z "$child_action" ]] && break
-            if [[ "$child_action" == *"Back"* ]]; then
+            if [[ "$child_action" == "Back" ]]; then
                 break
             fi
 
-            if [[ "$child_action" != *"├─ "* && "$child_action" != *"└─ "* ]]; then
-                continue
-            fi
-
-            local clean_child_action
-            clean_child_action="$(printf '%s' "$child_action" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
-            
-            case "$clean_child_action" in
-                *"Terminate Process"*)
+            case "$child_action" in
+                "Terminate Process (SIGTERM)")
                     kill -15 "$child_pid" 2>/dev/null && notify "Terminated PID $child_pid"
                     break 2
                     ;;
-                *"Force Kill Process"*)
+                "Force Kill Process (SIGKILL)")
                     kill -9 "$child_pid" 2>/dev/null && notify "Killed PID $child_pid"
                     break 2
                     ;;
@@ -752,25 +699,20 @@ open_menu() {
         )"
 
         [[ -n "$choice" ]] || return 0
+        local clean_choice="$choice"
         
-        if [[ "$choice" == *"Back"* ]]; then
+        if [[ "$clean_choice" == "Back" ]]; then
             go_back
             return 0
         fi
         
-        if [[ "$choice" != *"├─ "* && "$choice" != *"└─ "* ]]; then
-            continue
-        fi
-        local clean_choice
-        clean_choice="$(printf '%s' "$choice" | sed -E 's/^[[:space:]]*(├─|└─)[[:space:]]*//')"
-
         row="$(awk -F'\t' -v label="$clean_choice" '$1 == label { print; exit }' "$MAP_FILE" 2>/dev/null)"
         
         if [[ -z "$row" ]]; then
-            if [[ "$clean_choice" == *"Refresh Dashboard"* ]]; then
+            if [[ "$clean_choice" == "Refresh Dashboard" ]]; then
                 continue
             fi
-            if [[ "$clean_choice" == *"Kill All Background"* ]]; then
+            if [[ "$clean_choice" == "Kill All Background Apps" ]]; then
                 while IFS=$'\t' read -r pid _ _ _ comm args; do
                     [[ -n "$pid" ]] || continue
                     if [[ "$(categorize_process "$comm" "$args")" == "app" ]]; then

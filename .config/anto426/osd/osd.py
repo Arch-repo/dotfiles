@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Centred GTK OSD slider (CSS) for volume and brightness."""
+"""Centred GTK OSD slider for volume, mic and brightness."""
 
 from __future__ import annotations
 
@@ -51,8 +51,13 @@ FALLBACK_CSS = b"""
 @define-color muted #b9c4d2;
 @define-color accent #8cb8e4;
 @define-color border #6c7086;
-@define-color background-alpha rgba(30, 30, 46, 0.60);
-@define-color surface-alpha rgba(49, 50, 68, 0.78);
+@define-color panel-bg rgba(30, 30, 46, 0.62);
+@define-color overlay-bg rgba(30, 30, 46, 0.28);
+@define-color item-bg rgba(49, 50, 68, 0.18);
+@define-color item-bg-active rgba(140, 184, 228, 0.42);
+@define-color border-medium rgba(108, 112, 134, 0.34);
+@define-color background-alpha @panel-bg;
+@define-color surface-alpha @item-bg;
 """
 
 ICONS = {

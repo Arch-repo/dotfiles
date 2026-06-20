@@ -1,6 +1,6 @@
 /* =============================================================================
-   SWAYNC MINIMALIST & SOBER STYLE SHEET
-   Theme: Flat Glassmorphic Clean Minimalism
+   SWAYNC CYBER-GLASSMORPHIC STYLE SHEET
+   Theme: Premium Glassmorphic Control Center Design
    ============================================================================= */
 
 @import url("../colors/colors.css");
@@ -14,16 +14,18 @@
     color: @foreground;
     background-color: transparent;
     background: transparent;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 /* Main Control Center Panel */
 .control-center {
-    background-color: @background-alpha;
-    border: 2px solid @border-alpha;
+    background-color: @panel-bg;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid @border-medium;
     border-radius: 24px;
-    box-shadow: none;
-    padding: 14px;
+    box-shadow: 0 8px 32px @shadow-medium;
+    padding: 18px;
     margin: 8px;
 }
 
@@ -57,7 +59,7 @@
 .notification-row .notification-background {
     background-color: transparent;
     background-image: none;
-    border-radius: 16px;
+    border-radius: 20px;
     box-shadow: none;
     margin: 0;
     padding: 0;
@@ -69,40 +71,48 @@
 
 /* Individual Notification Bubble */
 .notification {
-    background-color: @background-alpha;
+    background-color: @panel-bg;
     background-image: none;
-    border: 1px solid alpha(@border, 0.32);
-    border-radius: 16px;
-    box-shadow: none;
+    border: 1px solid @border-soft;
+    border-radius: 18px;
+    box-shadow: 0 4px 16px @shadow-soft;
     margin: 0;
 }
 
 .notification-row:focus .notification,
 .notification-row:hover .notification,
 .notification:hover {
-    background-color: @surface-alpha;
-    border-color: @accent-alpha;
+    background-color: @panel-bg-hover;
+    border-color: @accent-strong;
+    box-shadow: 0 8px 24px @shadow-medium, 0 0 0 1px @accent-soft;
 }
 
 .control-center .notification {
-    background-color: alpha(@surface, 0.24);
-    border: 1px solid alpha(@border, 0.24);
+    background-color: @panel-bg;
+    border: 1px solid @border-soft;
     border-radius: 16px;
     box-shadow: none;
+}
+
+.control-center .notification-row:hover .notification,
+.control-center .notification-row:focus .notification,
+.control-center .notification:hover {
+    background-color: @panel-bg-hover;
+    border-color: @accent-strong;
 }
 
 .notification-default-action,
 .notification-default-action:hover,
 .notification-action,
 .notification-action:hover {
-    background: transparent;
+    background: inherit;
     border: none;
     box-shadow: none;
 }
 
 /* Text Elements */
 .summary {
-    font-size: 17px;
+    font-size: 16px;
     font-weight: 700;
     color: @foreground;
 }
@@ -114,18 +124,18 @@
 
 .body {
     font-size: 12px;
-    color: alpha(@foreground, 0.82);
-    margin-top: 3px;
+    color: alpha(@foreground, 0.85);
+    margin-top: 4px;
 }
 
 .notification-content {
-    padding: 10px 16px;
+    padding: 12px 18px;
 }
 
 .notification-content image,
 .notification-content .image {
-    border-radius: 12px;
-    margin-right: 10px;
+    border-radius: 14px;
+    margin-right: 12px;
 }
 
 .notification-content .app-icon {
@@ -134,24 +144,25 @@
 
 /* Action Buttons */
 .notification-action > button {
-    padding: 5px 11px;
-    margin: 4px;
-    background: alpha(@surface, 0.38);
-    border: 1px solid alpha(@border, 0.24);
-    border-radius: 10px;
+    padding: 6px 12px;
+    margin: 6px;
+    background: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 12px;
     color: @foreground;
 }
 
 .notification-action > button:hover {
-    background: @select-alpha;
+    background: @item-bg-active;
     color: @foreground;
-    border-color: @accent-alpha;
+    border-color: @accent-strong;
+    box-shadow: 0 0 8px @accent-soft;
 }
 
 /* Critical Notification Style */
 .notification.critical {
-    background-color: alpha(@red, 0.22);
-    border-color: alpha(@red, 0.72);
+    background-color: alpha(@red, 0.16);
+    border-color: alpha(@red, 0.6);
 }
 
 /* Close Button on Notifications */
@@ -159,15 +170,16 @@
     background-color: transparent;
     border-radius: 10px;
     border: none;
-    min-width: 18px;
-    min-height: 18px;
-    margin: 5px 8px 5px 4px;
+    min-width: 20px;
+    min-height: 20px;
+    margin: 6px 10px 6px 4px;
 }
 
 .close-button:hover {
     background-color: @red;
     color: @background;
     border-color: @red;
+    box-shadow: 0 0 8px alpha(@red, 0.3);
 }
 
 /* Group Headers */
@@ -175,27 +187,28 @@
     font-size: 12px;
     font-weight: 700;
     color: @accent;
-    padding: 4px 6px;
+    padding: 6px 8px;
 }
 
 .notification-group-collapse-button,
 .notification-group-close-all-button {
-    background-color: alpha(@surface, 0.35);
-    border: 1px solid alpha(@border, 0.16);
-    border-radius: 6px;
-    padding: 3px 8px;
+    background-color: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 8px;
+    padding: 4px 10px;
 }
 
 .notification-group-collapse-button:hover {
-    background-color: @select-alpha;
+    background-color: @item-bg-active;
     color: @foreground;
-    border-color: @accent-alpha;
+    border-color: @accent-strong;
 }
 
 .notification-group-close-all-button:hover {
     background-color: @red;
     color: @background;
     border-color: @red;
+    box-shadow: 0 0 8px alpha(@red, 0.3);
 }
 
 /* --- Control Widgets --- */
@@ -206,74 +219,77 @@
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button {
-    background: alpha(@surface, 0.25);
-    border: 1px solid alpha(@border, 0.16);
-    border-radius: 12px;
+    background: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 16px;
     min-width: 60px;
-    min-height: 34px;
+    min-height: 38px;
     padding: 6px;
-    margin: 3px;
+    margin: 4px;
     color: @foreground;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button:hover {
-    background: @select-alpha;
-    border-color: @accent-alpha;
+    background: @item-bg-active;
+    border-color: @accent-strong;
+    box-shadow: 0 0 8px @accent-soft;
 }
 
 .widget-buttons-grid > flowbox > flowboxchild > button.toggle:checked {
-    background: @select-alpha;
+    background: @item-bg-active;
     color: @foreground;
-    border-color: @accent-alpha;
+    border-color: @accent-strong;
     font-weight: 700;
+    box-shadow: 0 0 8px @accent-soft;
 }
 
 /* Volume & Backlight Sliders */
 .widget-volume,
 .widget-backlight {
-    padding: 8px 12px;
+    padding: 10px 14px;
 }
 
 scale trough {
     margin: 0rem 0.5rem;
-    background-color: alpha(@surface, 0.45);
-    border: 1px solid alpha(@border, 0.14);
-    border-radius: 8px;
-    min-height: 8px;
+    background-color: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 10px;
+    min-height: 10px;
     min-width: 80px;
 }
 
 trough highlight {
     background: @accent;
-    border-radius: 8px;
+    border-radius: 10px;
 }
 
 slider {
     background-color: @foreground;
     border: 1px solid @accent;
-    border-radius: 8px;
-    min-width: 12px;
-    min-height: 12px;
+    border-radius: 10px;
+    min-width: 14px;
+    min-height: 14px;
 }
 
 /* MPRIS Media Player Card */
 .widget-mpris .widget-mpris-player {
-    padding: 12px;
+    padding: 14px;
     margin: 8px 12px;
-    background-color: alpha(@background, 0.5);
-    border: 1px solid alpha(@border, 0.16);
-    border-radius: 12px;
+    background-color: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 20px;
+    box-shadow: 0 4px 16px @shadow-soft;
 }
 
 .widget-mpris .widget-mpris-player .widget-mpris-album-art {
-    border-radius: 8px;
-    border: 1px solid alpha(@border, 0.14);
+    border-radius: 14px;
+    border: 1px solid @border-soft;
 }
 
 .widget-mpris .widget-mpris-player .widget-mpris-title {
     font-weight: 700;
-    font-size: 14px;
-    margin: 0px 6px 2px 6px;
+    font-size: 15px;
+    margin: 0px 6px 4px 6px;
     color: @foreground;
 }
 
@@ -283,61 +299,62 @@ slider {
 }
 
 .widget-mpris .widget-mpris-player > box > button {
-    background: alpha(@surface, 0.35);
-    border: 1px solid alpha(@border, 0.16);
-    border-radius: 8px;
-    min-width: 28px;
-    min-height: 28px;
-    margin: 0 4px;
+    background: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 10px;
+    min-width: 32px;
+    min-height: 32px;
+    margin: 0 6px;
     color: @foreground;
 }
 
 .widget-mpris .widget-mpris-player > box > button:hover {
-    background-color: @select-alpha;
+    background-color: @item-bg-active;
     color: @foreground;
-    border-color: @accent-alpha;
+    border-color: @accent-strong;
+    box-shadow: 0 0 6px @accent-soft;
 }
 
 /* Do Not Disturb Toggle Switch Widget */
 .widget-dnd {
     font-weight: 700;
-    margin: 0 4px 6px;
-    padding: 6px 12px;
-    background: alpha(@background, 0.2);
-    border: 1px solid alpha(@border, 0.14);
-    border-radius: 8px;
+    margin: 0 4px 8px;
+    padding: 8px 14px;
+    background: @item-bg;
+    border: 1px solid @border-soft;
+    border-radius: 12px;
 }
 
 .widget-dnd > switch {
     font-size: initial;
     border-radius: 100px;
-    background: alpha(@surface, 0.45);
-    border: 1px solid alpha(@border, 0.14);
-    padding: 2px;
+    background: @item-bg;
+    border: 1px solid @border-soft;
+    padding: 3px;
 }
 
 .widget-dnd > switch:checked {
-    background: alpha(@accent, 0.6);
-    border-color: alpha(@accent, 0.7);
+    background: @accent-strong;
+    border-color: @accent;
 }
 
 .widget-dnd > switch slider {
     background: @background;
     border-radius: 100px;
-    min-width: 16px;
-    min-height: 16px;
+    min-width: 18px;
+    min-height: 18px;
     border: none;
 }
 
 /* Title Widget */
 .widget-title {
-    margin: 0 2px 2px;
+    margin: 0 2px 4px;
     font-weight: 700;
-    padding: 6px 10px;
+    padding: 8px 12px;
 }
 
 .widget-title > label {
-    font-size: 14px;
+    font-size: 15px;
     color: @foreground;
 }
 
@@ -345,8 +362,8 @@ slider {
     background: alpha(@red, 0.08);
     color: @red;
     border: 1px solid alpha(@red, 0.25);
-    border-radius: 8px;
-    padding: 3px 10px;
+    border-radius: 10px;
+    padding: 4px 12px;
     font-weight: 600;
 }
 
@@ -354,4 +371,5 @@ slider {
     background: @red;
     color: @background;
     border-color: @red;
+    box-shadow: 0 0 8px alpha(@red, 0.3);
 }

@@ -5,7 +5,7 @@ script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
 effects_lib_dir="$script_dir/wallpaper_effects.d"
 widgets_script="$script_dir/widgets.sh"
 
-destination_wallpaper_dir="$HOME/.cache/awww"
+destination_wallpaper_dir="${XDG_CACHE_HOME:-$HOME/.cache}/awww"
 colors_dir="$HOME/.config/colors"
 hypr_theme_file="$HOME/.config/hypr/conf/theme.generated.conf"
 ghostty_theme_dir="$HOME/.config/ghostty/themes"
@@ -108,11 +108,52 @@ if [[ "${1:-}" == "--setup-admin" ]]; then
     exit $?
 fi
 
-current_wallpaper_path="${1:-$(awww query 2>/dev/null | awk -F'image: ' '/image:/ {print $2; exit}')}"
+source_wallpaper_path="${1:-}"
 
-if [[ -z "$current_wallpaper_path" || ! -f "$current_wallpaper_path" ]]; then
-    log "Invalid wallpaper: ${current_wallpaper_path:-empty}"
+# Se non è stato passato un argomento, proviamo a rilevare il wallpaper corrente
+if [[ -z "$source_wallpaper_path" ]]; then
+    if pgrep -x mpvpaper >/dev/null; then
+        mpvpaper_pid="$(pgrep -x mpvpaper | head -n1)"
+        if [[ -n "$mpvpaper_pid" ]]; then
+            null_char=$'\0'
+            live_wall="$(cat "/proc/$mpvpaper_pid/cmdline" 2>/dev/null | tr "$null_char" '\n' | grep -v '^$' | tail -n1)"
+            if [[ -f "$live_wall" ]]; then
+                source_wallpaper_path="$live_wall"
+            fi
+        fi
+    fi
+    if [[ -z "$source_wallpaper_path" ]]; then
+        source_wallpaper_path="$(awww query 2>/dev/null | awk -F'image: ' '/image:/ {print $2; exit}')"
+    fi
+fi
+
+if [[ -z "$source_wallpaper_path" || ! -f "$source_wallpaper_path" ]]; then
+    log "Invalid wallpaper: ${source_wallpaper_path:-empty}"
     exit 0
+fi
+
+# Rileva se il file è un video
+is_video=false
+mime_type="$(file --mime-type -b "$source_wallpaper_path" 2>/dev/null || true)"
+if [[ "$mime_type" =~ ^video/ ]]; then
+    is_video=true
+fi
+
+current_wallpaper_path="$source_wallpaper_path"
+
+if $is_video; then
+    require_command ffmpeg
+    live_thumb="$destination_wallpaper_dir/live_wallpaper_thumb.png"
+    log "Extracting thumbnail from video: $source_wallpaper_path"
+    # Estrae un frame a 1 secondo, altrimenti prova dall'inizio
+    if ! ffmpeg -y -ss 00:00:01 -i "$source_wallpaper_path" -vframes 1 "$live_thumb" >/dev/null 2>&1; then
+        ffmpeg -y -i "$source_wallpaper_path" -vframes 1 "$live_thumb" >/dev/null 2>&1 || true
+    fi
+    if [[ -f "$live_thumb" ]]; then
+        current_wallpaper_path="$live_thumb"
+    else
+        log "Failed to extract video thumbnail!"
+    fi
 fi
 
 require_command magick
@@ -296,6 +337,89 @@ make_cover_image() {
     magick "${args[@]}"
 }
 
+extract_average_rgb() {
+    local src="$1"
+
+    magick "$src" \
+        -auto-orient \
+        -resize 1x1\! \
+        -format '%[fx:int(255*r)] %[fx:int(255*g)] %[fx:int(255*b)]\n' \
+        info:
+}
+
+extract_vibrant_rgb() {
+    local src="$1"
+    local rgb
+
+    rgb="$(
+        magick "$src" \
+            -auto-orient \
+            -resize 180x180^ \
+            -gravity center \
+            -extent 180x180 \
+            -crop 72%x84%+0+0 +repage \
+            -colorspace sRGB \
+            -modulate 108,155,100 \
+            -colors 14 \
+            -depth 8 \
+            -format %c histogram:info:- |
+            awk '
+                function abs(x) { return x < 0 ? -x : x }
+                function max3(a, b, c) { m = a > b ? a : b; return m > c ? m : c }
+                function min3(a, b, c) { m = a < b ? a : b; return m < c ? m : c }
+                BEGIN {
+                    found = 0
+                }
+                {
+                    line = $0
+                    gsub(/^[[:space:]]+/, "", line)
+
+                    count = line
+                    sub(/:.*/, "", count)
+
+                    rgb = line
+                    sub(/^[^(]*\(/, "", rgb)
+                    sub(/\).*/, "", rgb)
+                    split(rgb, channel, ",")
+
+                    r = channel[1] + 0
+                    g = channel[2] + 0
+                    b = channel[3] + 0
+
+                    count = count + 0
+                    sat = max3(r, g, b) - min3(r, g, b)
+                    bright = (299 * r + 587 * g + 114 * b) / 1000
+
+                    if (bright < 48 || bright > 224 || sat < 34)
+                        next
+
+                    score = sqrt(count) * (sat * sat) * (1 - abs(bright - 145) / 180)
+                    if (score > best_score) {
+                        best_score = score
+                        best_r = r
+                        best_g = g
+                        best_b = b
+                        found = 1
+                    }
+                }
+                END {
+                    if (found)
+                        printf "%d %d %d\n", best_r, best_g, best_b
+                }
+            '
+    )"
+
+    if [[ "$rgb" =~ ^[0-9]+[[:space:]][0-9]+[[:space:]][0-9]+$ ]]; then
+        printf '%s\n' "$rgb"
+    else
+        magick "$src" \
+            -auto-orient \
+            -resize 1x1\! \
+            -format '%[fx:int(255*r)] %[fx:int(255*g)] %[fx:int(255*b)]\n' \
+            info:
+    fi
+}
+
 make_grub_background() {
     local src="$1"
     local size="$2"
@@ -367,23 +491,10 @@ trap 'rm -rf "$tmp_dir"' EXIT
 log "Updating theme from: $current_wallpaper_path ($canvas_size)"
 
 make_cover_image "$current_wallpaper_path" "$canvas_size" "$destination_wallpaper_dir/normal.png"
-printf '%s\n' "$current_wallpaper_path" >"$destination_wallpaper_dir/current-wallpaper.path"
+printf '%s\n' "$source_wallpaper_path" >"$destination_wallpaper_dir/current-wallpaper.path"
 
-read -r r g b < <(
-    magick "$current_wallpaper_path" \
-        -auto-orient \
-        -resize 1x1\! \
-        -format '%[fx:int(255*r)] %[fx:int(255*g)] %[fx:int(255*b)]\n' \
-        info:
-)
-read -r ar ag ab < <(
-    magick "$current_wallpaper_path" \
-        -auto-orient \
-        -resize 1x1\! \
-        -modulate 115,170,100 \
-        -format '%[fx:int(255*r)] %[fx:int(255*g)] %[fx:int(255*b)]\n' \
-        info:
-)
+read -r r g b < <(extract_average_rgb "$current_wallpaper_path")
+read -r ar ag ab < <(extract_vibrant_rgb "$current_wallpaper_path")
 
 generate_palette_from_samples "$r" "$g" "$b" "$ar" "$ag" "$ab"
 

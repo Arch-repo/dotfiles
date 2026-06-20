@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
+set -uo pipefail
 
-if pgrep -x rofi > /dev/null; then
-    pkill -x rofi
-fi
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/rofi.sh
+source "$SCRIPT_DIR/lib/rofi.sh"
 
-THEME="$HOME/.config/rofi/control_menu.rasi"
+anto426_close_rofi
 
-rofi -show emoji -theme "$THEME"
+rofi -show emoji -theme "$ANTO426_THEME_LAUNCHER"

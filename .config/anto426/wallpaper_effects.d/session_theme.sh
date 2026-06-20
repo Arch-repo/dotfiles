@@ -16,11 +16,24 @@ write_color_files() {
 @define-color selected-fg $selected_fg;
 @define-color border     $border;
 
-@define-color background-alpha $(hex_to_css_rgba "$background" 0.60);
-@define-color surface-alpha    $(hex_to_css_rgba "$surface" 0.78);
-@define-color select-alpha     $(hex_to_css_rgba "$select" 0.76);
-@define-color accent-alpha     $(hex_to_css_rgba "$accent" 0.84);
-@define-color border-alpha     $(hex_to_css_rgba "$border" 0.55);
+@define-color panel-bg         $(hex_to_css_rgba "$background" 0.62);
+@define-color panel-bg-hover   $(hex_to_css_rgba "$background" 0.78);
+@define-color overlay-bg       $(hex_to_css_rgba "$background" 0.28);
+@define-color item-bg          $(hex_to_css_rgba "$surface" 0.18);
+@define-color item-bg-hover    $(hex_to_css_rgba "$select" 0.30);
+@define-color item-bg-active   $(hex_to_css_rgba "$select" 0.42);
+@define-color accent-soft      $(hex_to_css_rgba "$accent" 0.22);
+@define-color accent-strong    $(hex_to_css_rgba "$accent" 0.42);
+@define-color border-soft      $(hex_to_css_rgba "$border" 0.16);
+@define-color border-medium    $(hex_to_css_rgba "$border" 0.34);
+@define-color shadow-soft      $(hex_to_css_rgba "$background" 0.18);
+@define-color shadow-medium    $(hex_to_css_rgba "$background" 0.30);
+
+@define-color background-alpha @panel-bg;
+@define-color surface-alpha    @item-bg;
+@define-color select-alpha     @item-bg-active;
+@define-color accent-alpha     @accent-strong;
+@define-color border-alpha     @border-medium;
 
 @define-color pink       $pink;
 @define-color purple     $purple;
@@ -29,6 +42,7 @@ write_color_files() {
 @define-color yellow     $yellow;
 @define-color green      $green;
 @define-color blue       @accent;
+@define-color cyan       @muted;
 @define-color gray       $gray;
 EOF
 
@@ -41,6 +55,18 @@ EOF
     titlebar: $titlebar;
     titlebar-backdrop: $titlebar_backdrop;
     popover: $popover;
+    panel-bg: $panel_bg;
+    panel-bg-hover: $panel_bg_hover;
+    overlay-bg: $overlay_bg;
+    item-bg: $item_bg;
+    item-bg-hover: $item_bg_hover;
+    item-bg-active: $item_bg_active;
+    accent-soft: $accent_soft;
+    accent-strong: $accent_strong;
+    border-soft: $border_soft;
+    border-medium: $border_medium;
+    shadow-soft: $shadow_soft;
+    shadow-medium: $shadow_medium;
     background-alpha: $background_alpha;
     surface-alpha: $surface_alpha;
     foreground: $foreground;
@@ -60,6 +86,7 @@ EOF
     yellow: $yellow;
     green: $green;
     blue: @accent;
+    cyan: @muted;
     gray: $gray;
 
     active-background: @select;
@@ -87,8 +114,830 @@ export ANTO426_SELECT="$select"
 export ANTO426_ACCENT="$accent"
 export ANTO426_SELECTED_FG="$selected_fg"
 export ANTO426_BORDER="$border"
+export ANTO426_PANEL_BG="$(hex_to_css_rgba "$background" 0.62)"
+export ANTO426_PANEL_BG_HOVER="$(hex_to_css_rgba "$background" 0.78)"
+export ANTO426_OVERLAY_BG="$(hex_to_css_rgba "$background" 0.28)"
+export ANTO426_ITEM_BG="$(hex_to_css_rgba "$surface" 0.18)"
+export ANTO426_ITEM_BG_HOVER="$(hex_to_css_rgba "$select" 0.30)"
+export ANTO426_ITEM_BG_ACTIVE="$(hex_to_css_rgba "$select" 0.42)"
+export ANTO426_ACCENT_SOFT="$(hex_to_css_rgba "$accent" 0.22)"
+export ANTO426_ACCENT_STRONG="$(hex_to_css_rgba "$accent" 0.42)"
+export ANTO426_BORDER_SOFT="$(hex_to_css_rgba "$border" 0.16)"
+export ANTO426_BORDER_MEDIUM="$(hex_to_css_rgba "$border" 0.34)"
+export ANTO426_SHADOW_SOFT="$(hex_to_css_rgba "$background" 0.18)"
+export ANTO426_SHADOW_MEDIUM="$(hex_to_css_rgba "$background" 0.30)"
 export ANTO426_WALLPAPER="$current_wallpaper_path"
 EOF
+}
+
+enrich_vscode_theme_json() {
+    local output="$1"
+
+    if command -v node >/dev/null 2>&1; then
+        ANTO426_BACKGROUND="$background" \
+            ANTO426_SURFACE="$surface" \
+            ANTO426_BASE="$base" \
+            ANTO426_BASE_ALT="$base_alt" \
+            ANTO426_SELECT="$select" \
+            ANTO426_ACCENT="$accent" \
+            ANTO426_FOREGROUND="$foreground" \
+            ANTO426_MUTED="$muted" \
+            ANTO426_BORDER="$border" \
+            ANTO426_SELECTED_FG="$selected_fg" \
+            ANTO426_RED="$red" \
+            ANTO426_ORANGE="$orange" \
+            ANTO426_YELLOW="$yellow" \
+            ANTO426_GREEN="$green" \
+            ANTO426_PINK="$pink" \
+            ANTO426_PURPLE="$purple" \
+            ANTO426_GRAY="$gray" \
+            node - "$output" <<'NODE'
+const fs = require('fs')
+const [themePath] = process.argv.slice(2)
+const env = process.env
+
+const c = {
+  background: env.ANTO426_BACKGROUND,
+  surface: env.ANTO426_SURFACE,
+  base: env.ANTO426_BASE,
+  baseAlt: env.ANTO426_BASE_ALT,
+  select: env.ANTO426_SELECT,
+  accent: env.ANTO426_ACCENT,
+  foreground: env.ANTO426_FOREGROUND,
+  muted: env.ANTO426_MUTED,
+  border: env.ANTO426_BORDER,
+  selectedFg: env.ANTO426_SELECTED_FG,
+  red: env.ANTO426_RED,
+  orange: env.ANTO426_ORANGE,
+  yellow: env.ANTO426_YELLOW,
+  green: env.ANTO426_GREEN,
+  pink: env.ANTO426_PINK,
+  purple: env.ANTO426_PURPLE,
+  gray: env.ANTO426_GRAY,
+  white: '#ffffff',
+  transparent: '#00000000'
+}
+
+function alpha(color, value) {
+  return `${color}${value}`
+}
+
+const glass = {
+  bg: alpha(c.background, '9e'),
+  bgSoft: alpha(c.background, '47'),
+  bgClear: alpha(c.background, '00'),
+  base: alpha(c.base, '4d'),
+  baseStrong: alpha(c.base, '9e'),
+  baseAlt: alpha(c.baseAlt, '6b'),
+  surface: alpha(c.surface, '9e'),
+  surfaceSoft: alpha(c.surface, '4d'),
+  surfaceHover: alpha(c.surface, '78'),
+  selectSoft: alpha(c.select, '33'),
+  selectMedium: alpha(c.select, '66'),
+  selectStrong: alpha(c.select, '99'),
+  accentSoft: alpha(c.accent, '33'),
+  accentMedium: alpha(c.accent, '66'),
+  accentStrong: alpha(c.accent, '99'),
+  borderSoft: alpha(c.border, '33'),
+  borderMedium: alpha(c.border, '55'),
+  borderStrong: alpha(c.border, '8c'),
+  redSoft: alpha(c.red, '22'),
+  redMedium: alpha(c.red, '66'),
+  greenSoft: alpha(c.green, '22'),
+  greenMedium: alpha(c.green, '66'),
+  yellowSoft: alpha(c.yellow, '22'),
+  yellowMedium: alpha(c.yellow, '66')
+}
+
+const expandedColors = {
+  'contrastActiveBorder': c.transparent,
+  'contrastBorder': c.transparent,
+  'disabledForeground': alpha(c.muted, '88'),
+  'selection.background': glass.selectStrong,
+  'descriptionForeground': c.muted,
+  'icon.foreground': c.muted,
+  'sash.hoverBorder': c.accent,
+  'window.activeBorder': c.accent,
+  'window.inactiveBorder': glass.borderMedium,
+
+  'textPreformat.background': glass.base,
+  'textPreformat.border': glass.borderMedium,
+  'textSeparator.foreground': glass.borderMedium,
+
+  'toolbar.hoverBackground': glass.surfaceHover,
+  'toolbar.hoverOutline': glass.borderStrong,
+  'toolbar.activeBackground': glass.selectStrong,
+  'editorActionList.background': glass.baseStrong,
+  'editorActionList.foreground': c.foreground,
+  'editorActionList.focusForeground': c.selectedFg,
+  'editorActionList.focusBackground': c.accent,
+
+  'button.border': glass.borderMedium,
+  'button.separator': glass.borderMedium,
+  'button.secondaryBorder': glass.borderMedium,
+  'checkbox.foreground': c.foreground,
+  'checkbox.disabled.background': glass.base,
+  'checkbox.disabled.foreground': c.muted,
+  'checkbox.selectBackground': glass.accentSoft,
+  'checkbox.selectBorder': c.accent,
+  'radio.activeForeground': c.selectedFg,
+  'radio.activeBackground': c.accent,
+  'radio.activeBorder': c.accent,
+  'radio.inactiveForeground': c.muted,
+  'radio.inactiveBackground': glass.base,
+  'radio.inactiveBorder': glass.borderStrong,
+  'radio.inactiveHoverBackground': glass.surfaceHover,
+
+  'inputOption.activeForeground': c.selectedFg,
+  'inputOption.hoverBackground': glass.surfaceHover,
+  'inputValidation.errorBackground': glass.redSoft,
+  'inputValidation.errorForeground': c.red,
+  'inputValidation.errorBorder': c.red,
+  'inputValidation.infoBackground': glass.accentSoft,
+  'inputValidation.infoForeground': c.accent,
+  'inputValidation.infoBorder': c.accent,
+  'inputValidation.warningBackground': glass.yellowSoft,
+  'inputValidation.warningForeground': c.yellow,
+  'inputValidation.warningBorder': c.yellow,
+
+  'scrollbar.background': glass.bgClear,
+  'list.activeSelectionIconForeground': c.selectedFg,
+  'list.focusHighlightForeground': c.selectedFg,
+  'list.focusOutline': c.accent,
+  'list.focusAndSelectionOutline': c.accent,
+  'list.inactiveSelectionIconForeground': c.foreground,
+  'list.inactiveFocusBackground': glass.surfaceSoft,
+  'list.inactiveFocusOutline': glass.borderMedium,
+  'list.invalidItemForeground': c.red,
+  'list.errorForeground': c.red,
+  'listFilterWidget.outline': c.accent,
+  'listFilterWidget.shadow': c.transparent,
+  'list.filterMatchBackground': glass.accentSoft,
+  'list.filterMatchBorder': c.accent,
+  'list.deemphasizedForeground': c.muted,
+  'list.dropBetweenBackground': c.accent,
+  'tree.inactiveIndentGuidesStroke': glass.borderSoft,
+  'tree.tableColumnsBorder': glass.borderMedium,
+  'tree.tableOddRowsBackground': alpha(c.surface, '18'),
+
+  'activityBar.dropBorder': c.accent,
+  'activityBar.activeBorder': c.accent,
+  'activityBar.activeBackground': glass.surfaceSoft,
+  'activityBar.activeFocusBorder': c.accent,
+  'activityBarTop.foreground': c.foreground,
+  'activityBarTop.activeBorder': c.accent,
+  'activityBarTop.inactiveForeground': c.muted,
+  'activityBarTop.dropBorder': c.accent,
+  'activityBarTop.background': glass.bg,
+  'activityBarTop.activeBackground': glass.surfaceSoft,
+  'activityWarningBadge.foreground': c.background,
+  'activityWarningBadge.background': c.yellow,
+  'activityErrorBadge.foreground': c.selectedFg,
+  'activityErrorBadge.background': c.red,
+  'profileBadge.background': c.accent,
+  'profileBadge.foreground': c.selectedFg,
+  'profiles.sashBorder': glass.borderMedium,
+
+  'sideBarActivityBarTop.border': glass.borderMedium,
+  'sideBarTitle.background': glass.bg,
+  'sideBarTitle.border': glass.borderMedium,
+  'sideBarStickyScroll.background': glass.bg,
+  'sideBarStickyScroll.border': glass.borderMedium,
+  'sideBarStickyScroll.shadow': c.transparent,
+
+  'minimap.findMatchHighlight': glass.accentStrong,
+  'minimap.errorHighlight': c.red,
+  'minimap.warningHighlight': c.yellow,
+  'minimap.selectionOccurrenceHighlight': glass.selectStrong,
+  'minimap.foregroundOpacity': alpha(c.foreground, '66'),
+  'minimap.infoHighlight': c.accent,
+  'minimap.chatEditHighlight': c.green,
+  'minimapSlider.background': alpha(c.border, '44'),
+  'minimapSlider.hoverBackground': glass.selectStrong,
+  'minimapSlider.activeBackground': glass.accentStrong,
+  'minimapGutter.addedBackground': c.green,
+  'minimapGutter.modifiedBackground': c.yellow,
+  'minimapGutter.deletedBackground': c.red,
+  'editorMinimap.inlineChatInserted': c.green,
+
+  'editorGroupHeader.noTabsBackground': glass.bg,
+  'editorGroupHeader.tabsBorder': glass.borderMedium,
+  'editorGroupHeader.border': glass.borderMedium,
+  'editorGroup.focusedEmptyBorder': c.accent,
+  'editorGroup.dropIntoPromptForeground': c.foreground,
+  'editorGroup.dropIntoPromptBackground': glass.baseStrong,
+  'editorGroup.dropIntoPromptBorder': c.accent,
+  'tab.selectedBorderTop': c.accent,
+  'tab.selectedBackground': glass.base,
+  'tab.selectedForeground': c.foreground,
+  'tab.dragAndDropBorder': c.accent,
+  'tab.unfocusedActiveBorder': glass.borderMedium,
+  'tab.activeBorderTop': c.accent,
+  'tab.unfocusedActiveBorderTop': glass.borderMedium,
+  'tab.lastPinnedBorder': glass.borderMedium,
+  'tab.unfocusedActiveBackground': glass.base,
+  'tab.unfocusedInactiveBackground': alpha(c.background, '33'),
+  'tab.unfocusedActiveForeground': c.foreground,
+  'tab.unfocusedInactiveForeground': c.muted,
+  'tab.hoverForeground': c.foreground,
+  'tab.unfocusedHoverBackground': glass.surfaceSoft,
+  'tab.unfocusedHoverForeground': c.foreground,
+  'tab.hoverBorder': c.accent,
+  'tab.unfocusedHoverBorder': glass.borderMedium,
+  'tab.activeModifiedBorder': c.yellow,
+  'tab.inactiveModifiedBorder': glass.yellowMedium,
+  'tab.unfocusedActiveModifiedBorder': glass.yellowMedium,
+  'tab.unfocusedInactiveModifiedBorder': glass.yellowSoft,
+  'editorPane.background': glass.bg,
+  'sideBySideEditor.horizontalBorder': glass.borderMedium,
+  'sideBySideEditor.verticalBorder': glass.borderMedium,
+
+  'editorLineNumber.dimmedForeground': alpha(c.border, '88'),
+  'editorMultiCursor.primary.foreground': c.accent,
+  'editorMultiCursor.primary.background': c.background,
+  'editorMultiCursor.secondary.foreground': c.purple,
+  'editorMultiCursor.secondary.background': c.background,
+  'editor.placeholder.foreground': alpha(c.muted, '99'),
+  'editor.compositionBorder': c.accent,
+  'editor.inactiveSelectionBackground': alpha(c.select, '55'),
+  'editor.selectionHighlightBorder': glass.borderMedium,
+  'editor.wordHighlightTextBackground': alpha(c.purple, '33'),
+  'editor.wordHighlightTextBorder': c.purple,
+  'editor.findMatchForeground': c.selectedFg,
+  'editor.findMatchHighlightForeground': c.foreground,
+  'editor.findRangeHighlightBackground': alpha(c.accent, '22'),
+  'editor.findMatchHighlightBorder': glass.accentStrong,
+  'editor.findRangeHighlightBorder': glass.borderMedium,
+  'search.resultsInfoForeground': c.muted,
+  'searchEditor.findMatchBackground': glass.accentSoft,
+  'searchEditor.findMatchBorder': c.accent,
+  'searchEditor.textInputBorder': glass.borderStrong,
+  'editor.hoverHighlightBackground': glass.accentSoft,
+  'editor.inactiveLineHighlightBackground': alpha(c.surface, '1f'),
+  'editorUnicodeHighlight.border': c.yellow,
+  'editorUnicodeHighlight.background': glass.yellowSoft,
+  'editor.linkedEditingBackground': glass.accentSoft,
+  'editor.rangeHighlightBackground': glass.selectSoft,
+  'editor.rangeHighlightBorder': glass.borderMedium,
+  'editor.symbolHighlightBackground': glass.accentSoft,
+  'editor.symbolHighlightBorder': c.accent,
+  'editorIndentGuide.background': glass.borderSoft,
+  'editorIndentGuide.background2': alpha(c.accent, '2c'),
+  'editorIndentGuide.background3': alpha(c.yellow, '2c'),
+  'editorIndentGuide.background4': alpha(c.green, '2c'),
+  'editorIndentGuide.background5': alpha(c.pink, '2c'),
+  'editorIndentGuide.background6': alpha(c.purple, '2c'),
+  'editorIndentGuide.activeBackground': glass.borderStrong,
+  'editorIndentGuide.activeBackground2': alpha(c.accent, '8c'),
+  'editorIndentGuide.activeBackground3': alpha(c.yellow, '8c'),
+  'editorIndentGuide.activeBackground4': alpha(c.green, '8c'),
+  'editorIndentGuide.activeBackground5': alpha(c.pink, '8c'),
+  'editorIndentGuide.activeBackground6': alpha(c.purple, '8c'),
+  'editorInlayHint.typeForeground': c.muted,
+  'editorInlayHint.typeBackground': glass.surfaceSoft,
+  'editorInlayHint.parameterForeground': c.muted,
+  'editorInlayHint.parameterBackground': glass.surfaceSoft,
+  'editorCodeLens.foreground': c.muted,
+  'editorLightBulb.foreground': c.yellow,
+  'editorLightBulbAutoFix.foreground': c.green,
+  'editorLightBulbAi.foreground': c.accent,
+  'editorBracketMatch.foreground': c.foreground,
+  'editorBracketHighlight.foreground4': c.green,
+  'editorBracketHighlight.foreground5': c.pink,
+  'editorBracketHighlight.foreground6': c.purple,
+  'editorBracketHighlight.unexpectedBracket.foreground': c.red,
+  'editorBracketPairGuide.activeBackground1': c.accent,
+  'editorBracketPairGuide.activeBackground2': c.muted,
+  'editorBracketPairGuide.activeBackground3': c.yellow,
+  'editorBracketPairGuide.activeBackground4': c.green,
+  'editorBracketPairGuide.activeBackground5': c.pink,
+  'editorBracketPairGuide.activeBackground6': c.purple,
+  'editorBracketPairGuide.background1': alpha(c.accent, '55'),
+  'editorBracketPairGuide.background2': alpha(c.muted, '55'),
+  'editorBracketPairGuide.background3': alpha(c.yellow, '55'),
+  'editorBracketPairGuide.background4': alpha(c.green, '55'),
+  'editorBracketPairGuide.background5': alpha(c.pink, '55'),
+  'editorBracketPairGuide.background6': alpha(c.purple, '55'),
+  'editor.foldPlaceholderForeground': c.muted,
+  'editorOverviewRuler.background': glass.bgClear,
+  'editorOverviewRuler.findMatchForeground': alpha(c.accent, 'aa'),
+  'editorOverviewRuler.rangeHighlightForeground': alpha(c.select, '99'),
+  'editorOverviewRuler.selectionHighlightForeground': alpha(c.accent, '88'),
+  'editorOverviewRuler.wordHighlightForeground': alpha(c.select, '99'),
+  'editorOverviewRuler.wordHighlightStrongForeground': alpha(c.accent, '99'),
+  'editorOverviewRuler.wordHighlightTextForeground': alpha(c.purple, '99'),
+  'editorOverviewRuler.modifiedForeground': alpha(c.yellow, '99'),
+  'editorOverviewRuler.addedForeground': alpha(c.green, '99'),
+  'editorOverviewRuler.deletedForeground': alpha(c.red, '99'),
+  'editorOverviewRuler.errorForeground': alpha(c.red, 'cc'),
+  'editorOverviewRuler.warningForeground': alpha(c.yellow, 'cc'),
+  'editorOverviewRuler.infoForeground': alpha(c.accent, 'cc'),
+  'editorOverviewRuler.bracketMatchForeground': alpha(c.accent, 'cc'),
+  'editorOverviewRuler.inlineChatInserted': alpha(c.green, 'aa'),
+  'editorOverviewRuler.inlineChatRemoved': alpha(c.red, 'aa'),
+  'editorOverviewRuler.commentDraftForeground': alpha(c.yellow, '99'),
+  'editorError.border': c.red,
+  'editorError.background': glass.redSoft,
+  'editorWarning.border': c.yellow,
+  'editorWarning.background': glass.yellowSoft,
+  'editorInfo.foreground': c.accent,
+  'editorInfo.border': c.accent,
+  'editorInfo.background': glass.accentSoft,
+  'editorHint.foreground': c.muted,
+  'editorHint.border': glass.borderMedium,
+  'problemsErrorIcon.foreground': c.red,
+  'problemsWarningIcon.foreground': c.yellow,
+  'problemsInfoIcon.foreground': c.accent,
+  'editorUnnecessaryCode.border': glass.borderMedium,
+  'editorUnnecessaryCode.opacity': alpha(c.muted, '88'),
+  'editorGutter.modifiedSecondaryBackground': alpha(c.yellow, '66'),
+  'editorGutter.addedSecondaryBackground': alpha(c.green, '66'),
+  'editorGutter.deletedSecondaryBackground': alpha(c.red, '66'),
+  'editorGutter.commentRangeForeground': c.muted,
+  'editorGutter.commentGlyphForeground': c.muted,
+  'editorGutter.commentUnresolvedGlyphForeground': c.yellow,
+  'editorGutter.foldingControlForeground': c.muted,
+  'editorGutter.itemGlyphForeground': c.accent,
+  'editorGutter.itemBackground': glass.accentSoft,
+  'editorGutter.commentDraftGlyphForeground': c.yellow,
+  'editorCommentsWidget.resolvedBorder': glass.borderMedium,
+  'editorCommentsWidget.unresolvedBorder': c.yellow,
+  'editorCommentsWidget.rangeBackground': glass.yellowSoft,
+  'editorCommentsWidget.rangeActiveBackground': alpha(c.yellow, '33'),
+  'editorCommentsWidget.replyInputBackground': glass.base,
+
+  'inlineEdit.gutterIndicator.primaryBorder': c.accent,
+  'inlineEdit.gutterIndicator.primaryForeground': c.selectedFg,
+  'inlineEdit.gutterIndicator.primaryBackground': c.accent,
+  'inlineEdit.gutterIndicator.secondaryBorder': c.border,
+  'inlineEdit.gutterIndicator.secondaryForeground': c.foreground,
+  'inlineEdit.gutterIndicator.secondaryBackground': glass.base,
+  'inlineEdit.gutterIndicator.successfulBorder': c.green,
+  'inlineEdit.gutterIndicator.successfulForeground': c.selectedFg,
+  'inlineEdit.gutterIndicator.successfulBackground': c.green,
+  'inlineEdit.gutterIndicator.background': glass.base,
+  'inlineEdit.originalBackground': glass.redSoft,
+  'inlineEdit.modifiedBackground': glass.greenSoft,
+  'inlineEdit.originalChangedLineBackground': alpha(c.red, '18'),
+  'inlineEdit.originalChangedTextBackground': glass.redSoft,
+  'inlineEdit.modifiedChangedLineBackground': alpha(c.green, '18'),
+  'inlineEdit.modifiedChangedTextBackground': glass.greenSoft,
+  'inlineEdit.originalBorder': c.red,
+  'inlineEdit.modifiedBorder': c.green,
+  'inlineEdit.tabWillAcceptModifiedBorder': c.green,
+  'inlineEdit.tabWillAcceptOriginalBorder': c.red,
+
+  'diffEditor.insertedTextBackground': glass.greenSoft,
+  'diffEditor.insertedTextBorder': alpha(c.green, '55'),
+  'diffEditor.removedTextBackground': glass.redSoft,
+  'diffEditor.removedTextBorder': alpha(c.red, '55'),
+  'diffEditor.border': glass.borderMedium,
+  'diffEditor.diagonalFill': alpha(c.border, '33'),
+  'diffEditor.insertedLineBackground': alpha(c.green, '18'),
+  'diffEditor.removedLineBackground': alpha(c.red, '18'),
+  'diffEditorGutter.insertedLineBackground': alpha(c.green, '22'),
+  'diffEditorGutter.removedLineBackground': alpha(c.red, '22'),
+  'diffEditorOverview.insertedForeground': alpha(c.green, '99'),
+  'diffEditorOverview.removedForeground': alpha(c.red, '99'),
+  'diffEditor.unchangedRegionBackground': glass.base,
+  'diffEditor.unchangedRegionForeground': c.muted,
+  'diffEditor.unchangedRegionShadow': c.transparent,
+  'diffEditor.unchangedCodeBackground': glass.base,
+  'diffEditor.move.border': c.yellow,
+  'diffEditor.moveActive.border': c.accent,
+  'multiDiffEditor.background': glass.bg,
+  'multiDiffEditor.border': glass.borderMedium,
+
+  'chat.requestBorder': glass.borderMedium,
+  'chat.requestBackground': glass.base,
+  'chat.slashCommandBackground': glass.accentSoft,
+  'chat.slashCommandForeground': c.accent,
+  'chat.avatarBackground': c.accent,
+  'chat.avatarForeground': c.selectedFg,
+  'chat.editedFileForeground': c.yellow,
+  'chat.linesAddedForeground': c.green,
+  'chat.linesRemovedForeground': c.red,
+  'chat.requestCodeBorder': glass.borderMedium,
+  'chat.requestBubbleBackground': glass.base,
+  'chat.requestBubbleHoverBackground': glass.surfaceHover,
+  'chat.checkpointSeparator': glass.borderMedium,
+  'chat.thinkingShimmer': glass.accentMedium,
+  'chatManagement.sashBorder': glass.borderMedium,
+  'inlineChat.background': glass.baseStrong,
+  'inlineChat.foreground': c.foreground,
+  'inlineChat.border': glass.borderStrong,
+  'inlineChat.shadow': c.transparent,
+  'inlineChatInput.border': glass.borderStrong,
+  'inlineChatInput.focusBorder': c.accent,
+  'inlineChatInput.placeholderForeground': alpha(c.muted, '99'),
+  'inlineChatInput.background': glass.base,
+  'inlineChatDiff.inserted': glass.greenSoft,
+  'inlineChatDiff.removed': glass.redSoft,
+  'interactive.activeCodeBorder': c.accent,
+  'interactive.inactiveCodeBorder': glass.borderMedium,
+
+  'editorWidget.foreground': c.foreground,
+  'editorWidget.resizeBorder': c.accent,
+  'editorSuggestWidget.focusHighlightForeground': c.accent,
+  'editorSuggestWidget.selectedIconForeground': c.selectedFg,
+  'editorSuggestWidgetStatus.foreground': c.muted,
+  'editorHoverWidget.statusBarBackground': glass.baseAlt,
+  'editorGhostText.border': glass.borderMedium,
+  'editorGhostText.background': glass.bgClear,
+  'editorGhostText.foreground': alpha(c.muted, '88'),
+  'editorStickyScroll.border': glass.borderMedium,
+  'editorStickyScroll.shadow': c.transparent,
+  'editorStickyScrollGutter.background': glass.bg,
+  'editorStickyScrollHover.background': glass.surfaceHover,
+  'debugExceptionWidget.background': glass.baseStrong,
+  'debugExceptionWidget.border': c.red,
+  'editorMarkerNavigationError.background': c.red,
+  'editorMarkerNavigationWarning.background': c.yellow,
+  'editorMarkerNavigationInfo.background': c.accent,
+  'editorMarkerNavigationError.headerBackground': glass.redSoft,
+  'editorMarkerNavigationWarning.headerBackground': glass.yellowSoft,
+  'editorMarkerNavigationInfo.headerBackground': glass.accentSoft,
+
+  'peekViewEditorGutter.background': glass.bgClear,
+  'peekViewEditor.matchHighlightBorder': c.accent,
+  'peekViewResult.fileForeground': c.foreground,
+  'peekViewResult.lineForeground': c.muted,
+  'peekViewResult.matchHighlightBackground': glass.accentMedium,
+  'peekViewResult.selectionForeground': c.foreground,
+  'peekViewTitleDescription.foreground': c.muted,
+  'peekViewTitleLabel.foreground': c.foreground,
+  'peekViewEditorStickyScroll.background': glass.bg,
+  'peekViewEditorStickyScrollGutter.background': glass.bgClear,
+
+  'merge.currentHeaderBackground': alpha(c.green, '33'),
+  'merge.currentContentBackground': alpha(c.green, '18'),
+  'merge.incomingHeaderBackground': alpha(c.accent, '33'),
+  'merge.incomingContentBackground': alpha(c.accent, '18'),
+  'merge.border': glass.borderMedium,
+  'merge.commonContentBackground': alpha(c.yellow, '18'),
+  'merge.commonHeaderBackground': alpha(c.yellow, '33'),
+  'editorOverviewRuler.currentContentForeground': alpha(c.green, '99'),
+  'editorOverviewRuler.incomingContentForeground': alpha(c.accent, '99'),
+  'editorOverviewRuler.commonContentForeground': alpha(c.yellow, '99'),
+  'editorOverviewRuler.commentForeground': alpha(c.muted, '99'),
+  'editorOverviewRuler.commentUnresolvedForeground': alpha(c.yellow, '99'),
+  'mergeEditor.change.background': alpha(c.green, '18'),
+  'mergeEditor.change.word.background': glass.greenSoft,
+  'mergeEditor.conflict.unhandledUnfocused.border': c.red,
+  'mergeEditor.conflict.unhandledFocused.border': c.red,
+  'mergeEditor.conflict.handledUnfocused.border': c.green,
+  'mergeEditor.conflict.handledFocused.border': c.green,
+  'mergeEditor.conflict.handled.minimapOverViewRuler': alpha(c.green, '99'),
+  'mergeEditor.conflict.unhandled.minimapOverViewRuler': alpha(c.red, '99'),
+  'mergeEditor.conflictingLines.background': glass.redSoft,
+  'mergeEditor.changeBase.background': alpha(c.yellow, '18'),
+  'mergeEditor.changeBase.word.background': glass.yellowSoft,
+  'mergeEditor.conflict.input1.background': alpha(c.green, '18'),
+  'mergeEditor.conflict.input2.background': alpha(c.accent, '18'),
+
+  'panelTitle.border': glass.borderMedium,
+  'panelTitleBadge.background': c.accent,
+  'panelTitleBadge.foreground': c.selectedFg,
+  'panelInput.border': glass.borderMedium,
+  'panelSection.border': glass.borderMedium,
+  'panelSection.dropBackground': glass.accentSoft,
+  'panelSectionHeader.foreground': c.foreground,
+  'panelStickyScroll.background': glass.bg,
+  'panelStickyScroll.border': glass.borderMedium,
+  'panelStickyScroll.shadow': c.transparent,
+  'panelSectionHeader.border': glass.borderMedium,
+  'outputView.background': glass.bg,
+  'outputViewStickyScroll.background': glass.bg,
+
+  'statusBar.debuggingBorder': glass.borderMedium,
+  'statusBar.noFolderForeground': c.foreground,
+  'statusBar.noFolderBorder': glass.borderMedium,
+  'statusBarItem.activeBackground': glass.selectStrong,
+  'statusBarItem.hoverForeground': c.foreground,
+  'statusBarItem.prominentForeground': c.selectedFg,
+  'statusBarItem.prominentBackground': c.accent,
+  'statusBarItem.prominentHoverForeground': c.selectedFg,
+  'statusBarItem.prominentHoverBackground': c.select,
+  'statusBarItem.remoteHoverBackground': c.select,
+  'statusBarItem.remoteHoverForeground': c.selectedFg,
+  'statusBarItem.errorBackground': c.red,
+  'statusBarItem.errorForeground': c.selectedFg,
+  'statusBarItem.errorHoverBackground': alpha(c.red, 'dd'),
+  'statusBarItem.errorHoverForeground': c.selectedFg,
+  'statusBarItem.warningHoverBackground': alpha(c.yellow, 'dd'),
+  'statusBarItem.warningHoverForeground': c.background,
+  'statusBarItem.compactHoverBackground': glass.selectStrong,
+  'statusBarItem.focusBorder': c.accent,
+  'statusBar.focusBorder': c.accent,
+  'statusBarItem.offlineBackground': c.gray,
+  'statusBarItem.offlineForeground': c.foreground,
+  'statusBarItem.offlineHoverForeground': c.foreground,
+  'statusBarItem.offlineHoverBackground': glass.selectStrong,
+
+  'menubar.selectionBorder': glass.borderMedium,
+  'menu.selectionBorder': c.accent,
+  'commandCenter.activeForeground': c.foreground,
+  'commandCenter.activeBackground': glass.surfaceHover,
+  'commandCenter.inactiveForeground': c.muted,
+  'commandCenter.inactiveBorder': glass.borderMedium,
+  'commandCenter.activeBorder': c.accent,
+  'commandCenter.debuggingBackground': c.orange,
+
+  'notificationCenterHeader.foreground': c.foreground,
+  'notificationToast.border': glass.borderStrong,
+  'notificationsErrorIcon.foreground': c.red,
+  'notificationsWarningIcon.foreground': c.yellow,
+  'notificationsInfoIcon.foreground': c.accent,
+  'banner.background': glass.baseStrong,
+  'banner.foreground': c.foreground,
+  'banner.iconForeground': c.accent,
+
+  'extensionButton.prominentForeground': c.selectedFg,
+  'extensionButton.prominentBackground': c.accent,
+  'extensionButton.prominentHoverBackground': c.select,
+  'extensionButton.background': glass.baseAlt,
+  'extensionButton.foreground': c.foreground,
+  'extensionButton.hoverBackground': glass.surfaceHover,
+  'extensionButton.separator': glass.borderMedium,
+  'extensionButton.border': glass.borderMedium,
+  'extensionBadge.remoteBackground': c.accent,
+  'extensionBadge.remoteForeground': c.selectedFg,
+  'extensionIcon.starForeground': c.yellow,
+  'extensionIcon.verifiedForeground': c.green,
+  'extensionIcon.preReleaseForeground': c.purple,
+  'extensionIcon.sponsorForeground': c.pink,
+  'extensionIcon.privateForeground': c.muted,
+  'mcpIcon.starForeground': c.yellow,
+
+  'quickInputList.focusIconForeground': c.selectedFg,
+  'quickInputTitle.background': glass.baseAlt,
+  'keybindingLabel.background': glass.base,
+  'keybindingLabel.foreground': c.foreground,
+  'keybindingLabel.border': glass.borderMedium,
+  'keybindingLabel.bottomBorder': glass.borderStrong,
+  'keybindingTable.headerBackground': glass.base,
+  'keybindingTable.rowsBackground': alpha(c.surface, '18'),
+
+  'terminal.selectionForeground': c.foreground,
+  'terminal.inactiveSelectionBackground': alpha(c.select, '55'),
+  'terminal.findMatchBackground': glass.accentMedium,
+  'terminal.findMatchBorder': c.accent,
+  'terminal.findMatchHighlightBackground': glass.selectMedium,
+  'terminal.findMatchHighlightBorder': glass.borderStrong,
+  'terminal.hoverHighlightBackground': glass.surfaceHover,
+  'terminalCursor.background': c.background,
+  'terminalCursor.foreground': c.accent,
+  'terminal.dropBackground': glass.accentSoft,
+  'terminal.tab.activeBorder': c.accent,
+  'terminalCommandDecoration.defaultBackground': c.muted,
+  'terminalCommandDecoration.successBackground': c.green,
+  'terminalCommandDecoration.errorBackground': c.red,
+  'terminalOverviewRuler.cursorForeground': c.accent,
+  'terminalOverviewRuler.findMatchForeground': c.accent,
+  'terminalStickyScroll.background': glass.bg,
+  'terminalStickyScroll.border': glass.borderMedium,
+  'terminalStickyScrollHover.background': glass.surfaceHover,
+  'terminal.initialHintForeground': c.muted,
+  'terminalOverviewRuler.border': glass.borderMedium,
+  'terminalCommandGuide.foreground': glass.borderStrong,
+  'terminalSymbolIcon.aliasForeground': c.accent,
+  'terminalSymbolIcon.branchForeground': c.green,
+  'terminalSymbolIcon.commitForeground': c.yellow,
+  'terminalSymbolIcon.flagForeground': c.pink,
+  'terminalSymbolIcon.optionForeground': c.accent,
+  'terminalSymbolIcon.optionValueForeground': c.orange,
+  'terminalSymbolIcon.methodForeground': c.accent,
+  'terminalSymbolIcon.argumentForeground': c.foreground,
+  'terminalSymbolIcon.inlineSuggestionForeground': c.muted,
+  'terminalSymbolIcon.fileForeground': c.foreground,
+  'terminalSymbolIcon.folderForeground': c.yellow,
+  'terminalSymbolIcon.pullRequestDoneForeground': c.green,
+  'terminalSymbolIcon.pullRequestForeground': c.purple,
+  'terminalSymbolIcon.remoteForeground': c.accent,
+  'terminalSymbolIcon.stashForeground': c.pink,
+  'terminalSymbolIcon.symbolText': c.foreground,
+  'terminalSymbolIcon.symbolicLinkFileForeground': c.accent,
+  'terminalSymbolIcon.symbolicLinkFolderForeground': c.accent,
+  'terminalSymbolIcon.tagForeground': c.yellow,
+
+  'debugToolBar.border': glass.borderMedium,
+  'editor.stackFrameHighlightBackground': glass.yellowSoft,
+  'editor.focusedStackFrameHighlightBackground': glass.greenSoft,
+  'editor.inlineValuesForeground': c.muted,
+  'editor.inlineValuesBackground': glass.surfaceSoft,
+  'debugView.exceptionLabelForeground': c.selectedFg,
+  'debugView.exceptionLabelBackground': c.red,
+  'debugView.stateLabelForeground': c.selectedFg,
+  'debugView.stateLabelBackground': c.accent,
+  'debugView.valueChangedHighlight': c.yellow,
+  'debugTokenExpression.name': c.foreground,
+  'debugTokenExpression.value': c.pink,
+  'debugTokenExpression.string': c.green,
+  'debugTokenExpression.boolean': c.accent,
+  'debugTokenExpression.number': c.orange,
+  'debugTokenExpression.error': c.red,
+  'debugTokenExpression.type': c.yellow,
+  'debugIcon.breakpointForeground': c.red,
+  'debugIcon.breakpointDisabledForeground': c.gray,
+  'debugIcon.breakpointUnverifiedForeground': c.orange,
+  'debugIcon.breakpointCurrentStackframeForeground': c.yellow,
+  'debugIcon.breakpointStackframeForeground': c.purple,
+  'debugIcon.startForeground': c.green,
+  'debugIcon.pauseForeground': c.yellow,
+  'debugIcon.stopForeground': c.red,
+  'debugIcon.disconnectForeground': c.red,
+  'debugIcon.restartForeground': c.green,
+  'debugIcon.stepOverForeground': c.accent,
+  'debugIcon.stepIntoForeground': c.accent,
+  'debugIcon.stepOutForeground': c.accent,
+  'debugIcon.continueForeground': c.green,
+  'debugIcon.stepBackForeground': c.accent,
+  'debugConsole.infoForeground': c.accent,
+  'debugConsole.warningForeground': c.yellow,
+  'debugConsole.errorForeground': c.red,
+  'debugConsole.sourceForeground': c.muted,
+  'debugConsoleInputIcon.foreground': c.accent,
+
+  'testing.runAction': c.green,
+  'testing.iconErrored': c.red,
+  'testing.iconFailed': c.red,
+  'testing.iconPassed': c.green,
+  'testing.iconQueued': c.yellow,
+  'testing.iconUnset': c.muted,
+  'testing.iconSkipped': c.gray,
+  'testing.iconErrored.retired': alpha(c.red, '99'),
+  'testing.iconFailed.retired': alpha(c.red, '99'),
+  'testing.iconPassed.retired': alpha(c.green, '99'),
+  'testing.iconQueued.retired': alpha(c.yellow, '99'),
+  'testing.iconUnset.retired': alpha(c.muted, '99'),
+  'testing.iconSkipped.retired': alpha(c.gray, '99'),
+  'testing.peekBorder': c.accent,
+  'testing.peekHeaderBackground': glass.baseStrong,
+  'testing.message.error.lineBackground': glass.redSoft,
+  'testing.message.info.decorationForeground': c.accent,
+  'testing.message.info.lineBackground': glass.accentSoft,
+  'testing.messagePeekBorder': c.accent,
+  'testing.messagePeekHeaderBackground': glass.baseStrong,
+  'testing.coveredBackground': glass.greenSoft,
+  'testing.coveredBorder': c.green,
+  'testing.coveredGutterBackground': glass.greenSoft,
+  'testing.uncoveredBranchBackground': glass.redSoft,
+  'testing.uncoveredBackground': glass.redSoft,
+  'testing.uncoveredBorder': c.red,
+  'testing.uncoveredGutterBackground': glass.redSoft,
+  'testing.coverCountBadgeBackground': c.accent,
+  'testing.coverCountBadgeForeground': c.selectedFg,
+  'testing.message.error.badgeBackground': c.red,
+  'testing.message.error.badgeBorder': c.red,
+  'testing.message.error.badgeForeground': c.selectedFg,
+
+  'welcomePage.background': glass.bg,
+  'welcomePage.progress.background': glass.base,
+  'welcomePage.progress.foreground': c.accent,
+  'welcomePage.tileBackground': glass.base,
+  'welcomePage.tileHoverBackground': glass.surfaceHover,
+  'welcomePage.tileBorder': glass.borderMedium,
+  'walkthrough.stepTitle.foreground': c.foreground,
+
+  'gitDecoration.renamedResourceForeground': c.accent,
+  'gitDecoration.stageModifiedResourceForeground': c.yellow,
+  'gitDecoration.stageDeletedResourceForeground': c.red,
+  'gitDecoration.untrackedResourceForeground': c.green,
+  'gitDecoration.conflictingResourceForeground': c.orange,
+  'gitDecoration.submoduleResourceForeground': c.muted,
+  'git.blame.editorDecorationForeground': c.muted,
+  'scmGraph.historyItemHoverLabelForeground': c.foreground,
+  'scmGraph.foreground1': c.accent,
+  'scmGraph.foreground2': c.green,
+  'scmGraph.foreground3': c.yellow,
+  'scmGraph.foreground4': c.pink,
+  'scmGraph.foreground5': c.purple,
+  'scmGraph.historyItemHoverAdditionsForeground': c.green,
+  'scmGraph.historyItemHoverDeletionsForeground': c.red,
+  'scmGraph.historyItemRefColor': c.accent,
+  'scmGraph.historyItemRemoteRefColor': c.green,
+  'scmGraph.historyItemBaseRefColor': c.yellow,
+  'scmGraph.historyItemHoverDefaultLabelForeground': c.foreground,
+  'scmGraph.historyItemHoverDefaultLabelBackground': glass.base,
+
+  'settings.dropdownForeground': c.foreground,
+  'settings.dropdownListBorder': glass.borderStrong,
+  'settings.checkboxForeground': c.foreground,
+  'settings.rowHoverBackground': glass.surfaceHover,
+  'settings.textInputForeground': c.foreground,
+  'settings.numberInputForeground': c.foreground,
+  'settings.focusedRowBorder': c.accent,
+  'settings.headerBorder': glass.borderMedium,
+  'settings.sashBorder': glass.borderMedium,
+  'settings.settingsHeaderHoverForeground': c.accent,
+  'breadcrumbPicker.background': glass.baseStrong,
+  'editor.snippetTabstopHighlightBackground': glass.accentSoft,
+  'editor.snippetTabstopHighlightBorder': c.accent,
+  'editor.snippetFinalTabstopHighlightBackground': glass.yellowSoft,
+  'editor.snippetFinalTabstopHighlightBorder': c.yellow,
+
+  'symbolIcon.arrayForeground': c.yellow,
+  'symbolIcon.booleanForeground': c.accent,
+  'symbolIcon.classForeground': c.yellow,
+  'symbolIcon.colorForeground': c.accent,
+  'symbolIcon.constantForeground': c.orange,
+  'symbolIcon.constructorForeground': c.accent,
+  'symbolIcon.enumeratorForeground': c.yellow,
+  'symbolIcon.enumeratorMemberForeground': c.accent,
+  'symbolIcon.eventForeground': c.accent,
+  'symbolIcon.fieldForeground': c.pink,
+  'symbolIcon.fileForeground': c.foreground,
+  'symbolIcon.folderForeground': c.yellow,
+  'symbolIcon.functionForeground': c.accent,
+  'symbolIcon.interfaceForeground': c.green,
+  'symbolIcon.keyForeground': c.pink,
+  'symbolIcon.keywordForeground': c.accent,
+  'symbolIcon.methodForeground': c.accent,
+  'symbolIcon.moduleForeground': c.yellow,
+  'symbolIcon.namespaceForeground': c.yellow,
+  'symbolIcon.nullForeground': c.accent,
+  'symbolIcon.numberForeground': c.orange,
+  'symbolIcon.objectForeground': c.pink,
+  'symbolIcon.operatorForeground': c.accent,
+  'symbolIcon.packageForeground': c.yellow,
+  'symbolIcon.propertyForeground': c.pink,
+  'symbolIcon.referenceForeground': c.accent,
+  'symbolIcon.snippetForeground': c.green,
+  'symbolIcon.stringForeground': c.green,
+  'symbolIcon.structForeground': c.yellow,
+  'symbolIcon.textForeground': c.foreground,
+  'symbolIcon.typeParameterForeground': c.yellow,
+  'symbolIcon.unitForeground': c.orange,
+  'symbolIcon.variableForeground': c.pink,
+
+  'notebook.editorBackground': glass.bg,
+  'notebook.cellBorderColor': glass.borderMedium,
+  'notebook.cellHoverBackground': glass.surfaceSoft,
+  'notebook.cellInsertionIndicator': c.accent,
+  'notebook.cellStatusBarItemHoverBackground': glass.surfaceHover,
+  'notebook.cellToolbarSeparator': glass.borderMedium,
+  'notebook.cellEditorBackground': glass.base,
+  'notebook.focusedCellBackground': glass.base,
+  'notebook.focusedCellBorder': c.accent,
+  'notebook.focusedEditorBorder': c.accent,
+  'notebook.inactiveFocusedCellBorder': glass.borderMedium,
+  'notebook.inactiveSelectedCellBorder': glass.borderMedium,
+  'notebook.outputContainerBackgroundColor': glass.base,
+  'notebook.outputContainerBorderColor': glass.borderMedium,
+  'notebook.selectedCellBackground': glass.surfaceSoft,
+  'notebook.selectedCellBorder': c.accent,
+  'notebook.symbolHighlightBackground': glass.accentSoft,
+  'notebookScrollbarSlider.activeBackground': glass.accentStrong,
+  'notebookScrollbarSlider.background': alpha(c.border, '66'),
+  'notebookScrollbarSlider.hoverBackground': glass.selectStrong,
+  'notebookStatusErrorIcon.foreground': c.red,
+  'notebookStatusRunningIcon.foreground': c.yellow,
+  'notebookStatusSuccessIcon.foreground': c.green,
+  'notebookEditorOverviewRuler.runningCellForeground': c.yellow,
+
+  'charts.foreground': c.foreground,
+  'charts.lines': glass.borderMedium,
+  'charts.red': c.red,
+  'charts.blue': c.accent,
+  'charts.yellow': c.yellow,
+  'charts.orange': c.orange,
+  'charts.green': c.green,
+  'charts.purple': c.purple,
+  'chart.line': c.accent,
+  'chart.axis': c.muted,
+  'chart.guide': glass.borderMedium,
+  'ports.iconRunningProcessForeground': c.green,
+  'commentsView.resolvedIcon': c.green,
+  'commentsView.unresolvedIcon': c.yellow,
+  'actionBar.toggledBackground': glass.accentSoft,
+  'simpleFindWidget.sashBorder': glass.borderMedium,
+  'gauge.background': glass.base,
+  'gauge.foreground': c.accent,
+  'gauge.border': glass.borderMedium,
+  'gauge.warningBackground': c.yellow,
+  'gauge.warningForeground': c.background,
+  'gauge.errorBackground': c.red,
+  'gauge.errorForeground': c.selectedFg,
+  'markdownAlert.note.foreground': c.accent,
+  'markdownAlert.tip.foreground': c.green,
+  'markdownAlert.important.foreground': c.purple,
+  'markdownAlert.warning.foreground': c.yellow,
+  'markdownAlert.caution.foreground': c.red,
+  'agentSessionReadIndicator.foreground': c.accent,
+  'agentSessionSelectedBadge.border': c.accent,
+  'agentSessionSelectedUnfocusedBadge.border': glass.borderMedium,
+  'agentStatusIndicator.background': c.accent,
+  'aiCustomizationManagement.sashBorder': glass.borderMedium
+}
+
+const theme = JSON.parse(fs.readFileSync(themePath, 'utf8'))
+theme.colors = {
+  ...(theme.colors || {}),
+  ...expandedColors
+}
+fs.writeFileSync(themePath, `${JSON.stringify(theme, null, 2)}\n`)
+NODE
+    fi
 }
 
 write_hypr_theme() {
@@ -106,6 +955,18 @@ write_hypr_theme() {
 \$anto426_active_border = $(hypr_rgba "$accent" ee)
 \$anto426_inactive_border = $(hypr_rgba "$background" aa)
 \$anto426_shadow = rgba(00000055)
+\$anto426_panel_bg = $(hypr_rgba "$background" 9e)
+\$anto426_panel_bg_hover = $(hypr_rgba "$background" c7)
+\$anto426_overlay_bg = $(hypr_rgba "$background" 47)
+\$anto426_item_bg = $(hypr_rgba "$surface" 2e)
+\$anto426_item_bg_hover = $(hypr_rgba "$select" 4d)
+\$anto426_item_bg_active = $(hypr_rgba "$select" 6b)
+\$anto426_accent_soft = $(hypr_rgba "$accent" 38)
+\$anto426_accent_strong = $(hypr_rgba "$accent" 6b)
+\$anto426_border_soft = $(hypr_rgba "$border" 29)
+\$anto426_border_medium = $(hypr_rgba "$border" 57)
+\$anto426_shadow_soft = $(hypr_rgba "$background" 2e)
+\$anto426_shadow_medium = $(hypr_rgba "$background" 4d)
 \$anto426_background_panel = $(hypr_rgba "$background" cc)
 \$anto426_background_soft = $(hypr_rgba "$background" 99)
 \$anto426_surface_panel = $(hypr_rgba "$surface" c7)
@@ -178,14 +1039,14 @@ EOF
 
 write_vscode_theme_json() {
     local output="$1"
-    local vscode_bg="${background}8c"
-    local vscode_bg_soft="${background}66"
-    local vscode_editor_bg="${background}99"
+    local vscode_bg="${background}9e"
+    local vscode_bg_soft="${background}47"
+    local vscode_editor_bg="${background}9e"
     local vscode_bg_clear="${background}00"
-    local vscode_base="${base}a8"
-    local vscode_base_strong="${base}d9"
-    local vscode_base_alt="${base_alt}b8"
-    local vscode_surface="${surface}ba"
+    local vscode_base="${base}4d"
+    local vscode_base_strong="${base}9e"
+    local vscode_base_alt="${base_alt}6b"
+    local vscode_surface="${surface}9e"
 
     cat >"$output" <<EOF
 {
@@ -515,6 +1376,7 @@ write_vscode_theme_json() {
   ]
 }
 EOF
+    enrich_vscode_theme_json "$output"
 }
 
 write_vscode_extension_stub() {
@@ -586,6 +1448,7 @@ vscode_is_running() {
 }
 
 write_vscode_user_settings() {
+    local generated_theme="${1:-}"
     local settings_dirs=(
         "$HOME/.config/Code/User"
         "$HOME/.config/Code - OSS/User"
@@ -614,9 +1477,9 @@ write_vscode_user_settings() {
                 ANTO426_YELLOW="$yellow" \
                 ANTO426_GREEN="$green" \
                 ANTO426_PINK="$pink" \
-                node - "$settings_file" "$vscode_theme_name" <<'NODE'
+                node - "$settings_file" "$vscode_theme_name" "$generated_theme" <<'NODE'
 const fs = require('fs')
-const [settingsPath, themeName] = process.argv.slice(2)
+const [settingsPath, themeName, themePath] = process.argv.slice(2)
 
 function stripJsonc(text) {
   let output = ''
@@ -707,38 +1570,55 @@ const colorCustomizations =
     ? settings['workbench.colorCustomizations']
     : {}
 
-colorCustomizations[scopedTheme] = {
-  'activityBar.background': `${process.env.ANTO426_BACKGROUND}8c`,
-  'breadcrumb.background': `${process.env.ANTO426_BACKGROUND}8c`,
-  'commandCenter.background': `${process.env.ANTO426_BASE}a8`,
-  'dropdown.background': `${process.env.ANTO426_BASE}a8`,
-  'dropdown.listBackground': `${process.env.ANTO426_BACKGROUND}8c`,
-  'editor.background': `${process.env.ANTO426_BACKGROUND}99`,
-  'editorGroup.background': `${process.env.ANTO426_BACKGROUND}8c`,
-  'editorGroup.emptyBackground': `${process.env.ANTO426_BACKGROUND}8c`,
-  'editorGroupHeader.tabsBackground': `${process.env.ANTO426_BACKGROUND}8c`,
-  'editorGutter.background': `${process.env.ANTO426_BACKGROUND}00`,
-  'editor.foreground': process.env.ANTO426_FOREGROUND,
-  'editor.selectionBackground': `${process.env.ANTO426_SELECT}99`,
-  'editorCursor.foreground': process.env.ANTO426_ACCENT,
-  'input.background': `${process.env.ANTO426_BASE}a8`,
-  'list.activeSelectionBackground': process.env.ANTO426_ACCENT,
-  'list.hoverBackground': `${process.env.ANTO426_SURFACE}78`,
-  'menu.background': `${process.env.ANTO426_BASE}d9`,
-  'minimap.background': `${process.env.ANTO426_BACKGROUND}00`,
-  'panel.background': `${process.env.ANTO426_BACKGROUND}8c`,
-  'quickInput.background': `${process.env.ANTO426_BASE}d9`,
-  'sideBar.background': `${process.env.ANTO426_BACKGROUND}8c`,
-  'sideBarSectionHeader.background': `${process.env.ANTO426_BASE}a8`,
-  'statusBar.background': `${process.env.ANTO426_SURFACE}ba`,
-  'tab.activeBackground': `${process.env.ANTO426_BASE}a8`,
-  'tab.inactiveBackground': `${process.env.ANTO426_BACKGROUND}66`,
-  'terminal.background': `${process.env.ANTO426_BACKGROUND}99`,
-  'terminal.foreground': process.env.ANTO426_FOREGROUND,
-  'titleBar.activeBackground': `${process.env.ANTO426_BACKGROUND}8c`,
-  'titleBar.inactiveBackground': `${process.env.ANTO426_BACKGROUND}66`,
-  'widget.border': `${process.env.ANTO426_BORDER}8c`
+let generatedColors = {}
+if (themePath && fs.existsSync(themePath)) {
+  try {
+    const generatedTheme = JSON.parse(fs.readFileSync(themePath, 'utf8'))
+    if (
+      generatedTheme.colors &&
+      typeof generatedTheme.colors === 'object' &&
+      !Array.isArray(generatedTheme.colors)
+    ) {
+      generatedColors = generatedTheme.colors
+    }
+  } catch (error) {}
 }
+
+colorCustomizations[scopedTheme] =
+  Object.keys(generatedColors).length > 0
+    ? generatedColors
+    : {
+        'activityBar.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'breadcrumb.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'commandCenter.background': `${process.env.ANTO426_BASE}4d`,
+        'dropdown.background': `${process.env.ANTO426_BASE}4d`,
+        'dropdown.listBackground': `${process.env.ANTO426_BACKGROUND}9e`,
+        'editor.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'editorGroup.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'editorGroup.emptyBackground': `${process.env.ANTO426_BACKGROUND}9e`,
+        'editorGroupHeader.tabsBackground': `${process.env.ANTO426_BACKGROUND}9e`,
+        'editorGutter.background': `${process.env.ANTO426_BACKGROUND}00`,
+        'editor.foreground': process.env.ANTO426_FOREGROUND,
+        'editor.selectionBackground': `${process.env.ANTO426_SELECT}6b`,
+        'editorCursor.foreground': process.env.ANTO426_ACCENT,
+        'input.background': `${process.env.ANTO426_BASE}4d`,
+        'list.activeSelectionBackground': process.env.ANTO426_ACCENT,
+        'list.hoverBackground': `${process.env.ANTO426_SURFACE}4d`,
+        'menu.background': `${process.env.ANTO426_BASE}9e`,
+        'minimap.background': `${process.env.ANTO426_BACKGROUND}00`,
+        'panel.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'quickInput.background': `${process.env.ANTO426_BASE}9e`,
+        'sideBar.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'sideBarSectionHeader.background': `${process.env.ANTO426_BASE}4d`,
+        'statusBar.background': `${process.env.ANTO426_SURFACE}9e`,
+        'tab.activeBackground': `${process.env.ANTO426_BASE}4d`,
+        'tab.inactiveBackground': `${process.env.ANTO426_BACKGROUND}47`,
+        'terminal.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'terminal.foreground': process.env.ANTO426_FOREGROUND,
+        'titleBar.activeBackground': `${process.env.ANTO426_BACKGROUND}9e`,
+        'titleBar.inactiveBackground': `${process.env.ANTO426_BACKGROUND}47`,
+        'widget.border': `${process.env.ANTO426_BORDER}57`
+      }
 
 const tokenColorCustomizations =
   settings['editor.tokenColorCustomizations'] &&
@@ -907,7 +1787,7 @@ write_vscode_theme() {
         fi
     fi
 
-    write_vscode_user_settings
+    write_vscode_user_settings "$generated_theme"
 }
 
 write_htop_theme() {

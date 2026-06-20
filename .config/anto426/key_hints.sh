@@ -102,15 +102,13 @@ menu_rows() {
     row "SUPER Shift P" "Project Screen (Display Mode)"
     row "SUPER Shift Ctrl Esc" "Exit Hyprland Session"
     row "SUPER Shift N" "Identify Copilot Key"
-    printf '\n'
-
-    printf ' ├─ 󱂬  Open Floating Manager\n'
-    printf ' ├─ 󰃠  Open Brightness Menu\n'
-    printf ' ├─ 󰍹  Open Project Screen\n'
-    printf ' ├─ 󱓞  Toggle Widgets Visibility\n'
-    printf ' ├─ 󱓞  Manage Widgets Dashboard\n'
-    printf ' └─ 󰈙  View keybindings.conf\n'
-    printf '\n󰌍  Back\n'
+    printf 'Open Floating Manager\0icon\x1fwindow-restore\n'
+    printf 'Open Brightness Menu\0icon\x1fdisplay-brightness\n'
+    printf 'Open Project Screen\0icon\x1fvideo-display\n'
+    printf 'Toggle Widgets Visibility\0icon\x1fpreferences-desktop-theme\n'
+    printf 'Manage Widgets Dashboard\0icon\x1fpreferences-desktop-theme\n'
+    printf 'View keybindings.conf\0icon\x1ftext-x-generic\n'
+    printf 'Back\0icon\x1fgo-previous\n'
 }
 
 while true; do
@@ -125,12 +123,12 @@ while true; do
     case "$choice" in
         "") exit 0 ;;
         "── "* | "  "*) continue ;;
-        *"Floating Manager"*) "$HOME/.config/anto426/floating_manager.sh" menu; exit 0 ;;
-        *"Brightness Menu"*) "$HOME/.config/anto426/brightness_menu.sh" menu; exit 0 ;;
-        *"Project Screen"*) "$HOME/.config/anto426/projection_menu.sh"; exit 0 ;;
-        *"Toggle Widgets"*) "$HOME/.config/anto426/widgets.sh" toggle; exit 0 ;;
-        *"Manage Widgets"*) "$HOME/.config/anto426/widgets.sh" arrange; exit 0 ;;
-        *"keybindings.conf"*) xdg-open "$KEYBINDS" >/dev/null 2>&1 & exit 0 ;;
-        *"Back"*) exit 0 ;;
+        "Open Floating Manager") "$HOME/.config/anto426/floating_manager.sh" menu; exit 0 ;;
+        "Open Brightness Menu") "$HOME/.config/anto426/brightness_menu.sh" menu; exit 0 ;;
+        "Open Project Screen") "$HOME/.config/anto426/projection_menu.sh"; exit 0 ;;
+        "Toggle Widgets Visibility") "$HOME/.config/anto426/widgets.sh" toggle; exit 0 ;;
+        "Manage Widgets Dashboard") "$HOME/.config/anto426/widgets.sh" arrange; exit 0 ;;
+        "View keybindings.conf") xdg-open "$KEYBINDS" >/dev/null 2>&1 & exit 0 ;;
+        "Back") exit 0 ;;
     esac
 done

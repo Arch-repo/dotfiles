@@ -11,7 +11,7 @@
 }
 
 window {
-    background-color: alpha(@background, 0.60);
+    background-color: @overlay-bg;
 }
 
 button, button label {
@@ -19,9 +19,9 @@ button, button label {
 }
 
 button {
-    background-color: @surface-alpha;
+    background-color: @panel-bg;
     outline-style: none;
-    border: 1px solid @border-alpha;
+    border: 1px solid @border-medium;
     border-radius: 18px;
     font-size: 15px;
     font-weight: 700;
@@ -64,7 +64,7 @@ button:hover, button:focus, button:hover label, button:focus label {
 
 button:hover, button:focus {
     background-color: @accent;
-    border-color: @accent-alpha;
+    border-color: @accent-strong;
 }
 
 #lock:hover, #lock:focus {

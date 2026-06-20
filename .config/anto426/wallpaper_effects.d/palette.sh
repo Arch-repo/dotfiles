@@ -17,25 +17,25 @@ generate_palette_from_samples() {
             function mix(a, b, ratio) { return a * (1 - ratio) + b * ratio }
             function brightness(rr, gg, bb) { return (299 * rr + 587 * gg + 114 * bb) / 1000 }
             BEGIN {
-                bg_r = clamp(r * 0.44)
-                bg_g = clamp(g * 0.44)
-                bg_b = clamp(b * 0.44)
+                bg_r = clamp(r * 0.36 + ar * 0.08)
+                bg_g = clamp(g * 0.36 + ag * 0.08)
+                bg_b = clamp(b * 0.36 + ab * 0.08)
 
-                surface_r = clamp(r * 0.70 + 255 * 0.14)
-                surface_g = clamp(g * 0.70 + 255 * 0.14)
-                surface_b = clamp(b * 0.70 + 255 * 0.14)
+                surface_r = clamp(r * 0.52 + ar * 0.22 + 255 * 0.12)
+                surface_g = clamp(g * 0.52 + ag * 0.22 + 255 * 0.12)
+                surface_b = clamp(b * 0.52 + ab * 0.22 + 255 * 0.12)
 
-                select_r = clamp(r * 0.78 + 255 * 0.22)
-                select_g = clamp(g * 0.78 + 255 * 0.22)
-                select_b = clamp(b * 0.78 + 255 * 0.22)
+                select_r = clamp(r * 0.45 + ar * 0.35 + 255 * 0.20)
+                select_g = clamp(g * 0.45 + ag * 0.35 + 255 * 0.20)
+                select_b = clamp(b * 0.45 + ab * 0.35 + 255 * 0.20)
 
                 accent_r = clamp(ar * 0.70 + 255 * 0.30)
                 accent_g = clamp(ag * 0.70 + 255 * 0.30)
                 accent_b = clamp(ab * 0.70 + 255 * 0.30)
 
-                border_r = clamp(r * 0.58 + 255 * 0.30)
-                border_g = clamp(g * 0.58 + 255 * 0.30)
-                border_b = clamp(b * 0.58 + 255 * 0.30)
+                border_r = clamp(r * 0.45 + ar * 0.25 + 255 * 0.24)
+                border_g = clamp(g * 0.45 + ag * 0.25 + 255 * 0.24)
+                border_b = clamp(b * 0.45 + ab * 0.25 + 255 * 0.24)
 
                 bg_brightness = brightness(bg_r, bg_g, bg_b)
                 fg = bg_brightness > 155 ? "#11111b" : "#f6f7fb"
@@ -67,11 +67,24 @@ generate_palette_from_samples() {
         '
     )
 
-    background_alpha="$(hex_to_rofi_rgba "$background" 60)"
-    surface_alpha="$(hex_to_rofi_rgba "$surface" 78)"
-    select_alpha="$(hex_to_rofi_rgba "$select" 76)"
-    accent_alpha="$(hex_to_rofi_rgba "$accent" 84)"
-    border_alpha="$(hex_to_rofi_rgba "$border" 55)"
+    panel_bg="$(hex_to_rofi_rgba "$background" 62)"
+    panel_bg_hover="$(hex_to_rofi_rgba "$background" 78)"
+    overlay_bg="$(hex_to_rofi_rgba "$background" 28)"
+    item_bg="$(hex_to_rofi_rgba "$surface" 18)"
+    item_bg_hover="$(hex_to_rofi_rgba "$select" 30)"
+    item_bg_active="$(hex_to_rofi_rgba "$select" 42)"
+    accent_soft="$(hex_to_rofi_rgba "$accent" 22)"
+    accent_strong="$(hex_to_rofi_rgba "$accent" 42)"
+    border_soft="$(hex_to_rofi_rgba "$border" 16)"
+    border_medium="$(hex_to_rofi_rgba "$border" 34)"
+    shadow_soft="$(hex_to_rofi_rgba "$background" 18)"
+    shadow_medium="$(hex_to_rofi_rgba "$background" 30)"
+
+    background_alpha="$panel_bg"
+    surface_alpha="$item_bg"
+    select_alpha="$item_bg_active"
+    accent_alpha="$accent_strong"
+    border_alpha="$border_medium"
 }
 
 write_palette_map() {

@@ -171,23 +171,7 @@ launch_terminal() {
 }
 
 
-pid_file() {
-    printf '%s/%s.pid' "$runtime_dir" "$1"
-}
 
-is_running() {
-    local name="$1"
-    local addr
-    addr="$(widget_client_address "$name")"
-    [[ -n "$addr" ]] && return 0
-
-    local pid_file pid
-    pid_file="$(pid_file "$name")"
-    [[ -r "$pid_file" ]] || return 1
-    pid="$(cat "$pid_file" 2>/dev/null || true)"
-    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
-    kill -0 "$pid" 2>/dev/null
-}
 
 launch_widget() {
     local name="$1"
@@ -302,7 +286,7 @@ bar() {
     printf "%s" "$out"
 }
 pct() {
-    wpctl get-volume "$1" 2>/dev/null | awk "/^Volume:/ { v=int((\$2*100)+0.5); if(v<0)v=0; if(v>100)v=100; print v; exit }"
+    wpctl get-volume "$1" 2>/dev/null | awk '\''/^Volume:/ { v=int(($2*100)+0.5); if(v<0)v=0; if(v>100)v=100; print v; exit }'\''
 }
 while true; do
     clear
@@ -310,12 +294,12 @@ while true; do
     for b in /sys/class/power_supply/BAT*; do
         [ -r "$b/capacity" ] && battery="$(cat "$b/capacity")%" && break
     done
-    mem="$(free -h 2>/dev/null | awk "/^Mem:/ {print \$3 \" / \" \$2}")"
+    mem="$(free -h 2>/dev/null | awk '\''/^Mem:/ {print $3 " / " $2}'\'')"
     load="$(cut -d" " -f1-3 /proc/loadavg 2>/dev/null)"
     vol="$(pct @DEFAULT_AUDIO_SINK@)"
     mic="$(pct @DEFAULT_AUDIO_SOURCE@)"
-    brightness="$(brightnessctl -m 2>/dev/null | awk -F, "{gsub(/%/,\"\",\$4); print int(\$4); exit}")"
-    temp="$(sensors 2>/dev/null | awk "/Package id 0|Tctl|Tdie/ {print \$3; exit}")"
+    brightness="$(brightnessctl -m 2>/dev/null | awk -F, '\''{gsub(/%/,"",$4); print int($4); exit}'\'')"
+    temp="$(sensors 2>/dev/null | awk '\''/Package id 0|Tctl|Tdie/ {print $3; exit}'\'')"
     printf "\n  󰍛  Sistema\n\n"
     printf "  󰁹  Batteria   %4s  %s\n" "$battery" "$(bar "${battery%%%}")"
     printf "  󰍛  RAM        %s\n" "${mem:-n/d}"
@@ -953,6 +937,7 @@ stop_widgets_lock_daemon() {
         kill "$pid" 2>/dev/null || true
     fi
     rm -f "$lock_daemon_pid"
+    pkill -f "widgets.sh lock-daemon" 2>/dev/null || true
 }
 
 stop_widget_delete_watcher() {
@@ -963,6 +948,7 @@ stop_widget_delete_watcher() {
         kill "$pid" 2>/dev/null || true
     fi
     rm -f "$delete_watcher_pid"
+    pkill -f "widgets.sh delete-watcher" 2>/dev/null || true
 }
 
 check_cava_auto_hide() {
@@ -1333,6 +1319,7 @@ disable_named_widget() {
         remove_custom_widget "$name"
         remove_widget_from_saved_order "$name"
     fi
+    layout_remove_widget_vars "$name"
     write_custom_widget_hypr_rules
     write_widget_lock_hypr_rules current
 }
@@ -1357,6 +1344,9 @@ enable_builtin_widget_from_menu() {
     set_builtin_widget_enabled "$name" 1
     layout_place_widget_default "$name" "$monitor"
     write_widget_order "$(widget_order_default)"
+    if widgets_locked; then
+        write_widget_lock_hypr_rules lock
+    fi
     launch_named_widget "$name"
 }
 
@@ -1418,7 +1408,7 @@ widget_submenu() {
         } | rofi -dmenu -i -p "$label" -theme "$theme"
     )"
 
-    [[ -z "$choice" ]] && return 0
+    [[ -z "$choice" ]] && { arrange_widgets; return 0; }
 
     case "$choice" in
         *"Hide temporarily"*)
@@ -1428,6 +1418,7 @@ widget_submenu() {
                 hyprctl dispatch movetoworkspacesilent "$widget_hidden_workspace,address:$addr" >/dev/null 2>&1 || true
                 notify "$label hidden"
             fi
+            arrange_widgets
             ;;
         *"Show widget"*)
             local addr monitor workspace
@@ -1443,6 +1434,7 @@ widget_submenu() {
             else
                 launch_named_widget "$name" && notify "$label started"
             fi
+            arrange_widgets
             ;;
         *"Move Up"*)
             move_widget_in_order "$name" up
@@ -1456,6 +1448,7 @@ widget_submenu() {
             disable_named_widget "$name"
             apply_widget_layout_locked
             notify "$label removed"
+            arrange_widgets
             ;;
     esac
 }
@@ -1470,40 +1463,34 @@ arrange_widgets() {
 
     choice="$(
         {
-            printf '󰇄 WIDGET STATUS CONTROLS\n'
             if any_running; then
-                printf ' ├─ 󱓞  Stop Widgets\n'
+                printf 'Stop Widgets\0icon\x1fprocess-stop\n'
             else
-                printf ' ├─ 󱓞  Start Widgets\n'
+                printf 'Start Widgets\0icon\x1fmedia-play\n'
             fi
-            printf ' ├─ 󰑓  Restart Daemons\n'
+            printf 'Restart Daemons\0icon\x1fview-refresh\n'
             if widgets_locked; then
-                printf ' └─ 󰌾  Unlock Widget Positions\n'
+                printf 'Unlock Widget Positions\0icon\x1fsystem-lock-screen\n'
             else
-                printf ' └─ 󰌾  Lock Widget Positions\n'
+                printf 'Lock Widget Positions\0icon\x1fsystem-lock-screen\n'
             fi
             
-            printf '\n󰒔 LAYOUT & BACKUPS\n'
-            printf ' ├─ 󰆓  Save Current Layout\n'
-            printf ' ├─ 󰒓  Restore Saved Layout\n'
-            printf ' └─ 󰑐  Reset Default Geometries\n'
+            printf 'Save Current Layout\0icon\x1fdocument-save\n'
+            printf 'Restore Saved Layout\0icon\x1fdocument-revert\n'
+            printf 'Reset Default Geometries\0icon\x1fedit-clear\n'
             
-            printf '\n󰥔 ADD NEW WIDGET\n'
-            printf ' ├─ 󰎈  Visual Presets (Cava, Fastfetch, etc.)\n'
-            printf ' ├─ 󰌢  Custom Terminal Command\n'
-            printf ' └─ 󰐕  Enable Base Widget (Clock, etc.)\n'
+            printf 'Visual Presets (Cava, Fastfetch, etc.)\0icon\x1futilities-terminal\n'
+            printf 'Custom Terminal Command\0icon\x1fsystem-run\n'
+            printf 'Enable Base Widget (Clock, etc.)\0icon\x1foffice-calendar\n'
             
-            printf '\n󰆴 REMOVE WIDGET\n'
-            printf ' └─ 󰅙  Select Widget to Remove\n'
+            printf 'Select Widget to Remove\0icon\x1fedit-delete\n'
             
             if [[ -n "$order" ]]; then
-                printf '\n──────────────────────────────────────────\n'
-                printf 'ACTIVE WIDGETS (Select to organize/manage)\n'
                 for name in $order; do
                     [[ -n "$name" ]] || continue
                     local label
                     label="$(widget_label "$name" 2>/dev/null || true)"
-                    [[ -n "$label" ]] && printf '  󰄶  %s (%s)\n' "$label" "$name"
+                    [[ -n "$label" ]] && printf 'Manage Widget: %s (%s)\0icon\x1fpreferences-system-windows\n' "$label" "$name"
                 done
             fi
         } | rofi -dmenu -i -p "Widget Dashboard" \
@@ -1522,45 +1509,57 @@ arrange_widgets() {
             else
                 start_widgets
             fi
+            arrange_widgets
             ;;
         *"Restart Daemons"* | *"Riavvia Daemons"*)
             stop_widgets quiet
             sleep 0.3
             start_widgets
+            arrange_widgets
             ;;
-        *"Lock Widget Positions"* | *"Blocca Posizioni"*) set_widgets_lock lock ;;
-        *"Unlock Widget Positions"* | *"Sblocca Posizioni"*) set_widgets_lock unlock ;;
-        *"Save Current Layout"* | *"Salva Posizioni Attuali"*) save_widget_layout && apply_widget_layout_locked && notify "Layout saved" ;;
-        *"Restore Saved Layout"* | *"Ripristina Layout Salvato"*) apply_widget_layout_locked && notify "Layout applied" ;;
-        *"Reset Default Geometries"* | *"Reset Geometrie Predefinite"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout reset" ;;
+        *"Lock Widget Positions"* | *"Blocca Posizioni"*) set_widgets_lock lock; arrange_widgets ;;
+        *"Unlock Widget Positions"* | *"Sblocca Posizioni"*) set_widgets_lock unlock; arrange_widgets ;;
+        *"Save Current Layout"* | *"Salva Posizioni Attuali"*) save_widget_layout && apply_widget_layout_locked && notify "Layout saved"; arrange_widgets ;;
+        *"Restore Saved Layout"* | *"Ripristina Layout Salvato"*) apply_widget_layout_locked && notify "Layout applied"; arrange_widgets ;;
+        *"Reset Default Geometries"* | *"Reset Geometrie Predefinite"*) reset_widget_layout && apply_widgets_lock_state && notify "Layout reset"; arrange_widgets ;;
         *"Visual Presets"* | *"Preset Visuale"*)
             if new_id="$(pick_preset_widget)"; then
-                launch_custom_widget "$new_id"
                 layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
                 write_widget_order "$(widget_order_default)"
+                if widgets_locked; then
+                    write_widget_lock_hypr_rules lock
+                fi
+                launch_custom_widget "$new_id"
                 apply_widget_layout_locked
                 notify "Visual widget added"
             fi
+            arrange_widgets
             ;;
         *"Custom Terminal Command"* | *"Comando Terminale Personalizzato"*)
             if new_id="$(pick_terminal_widget)"; then
-                launch_custom_widget "$new_id"
                 layout_place_widget_default "$new_id" "$(custom_widget_meta "$new_id" monitor 2>/dev/null || true)"
                 write_widget_order "$(widget_order_default)"
+                if widgets_locked; then
+                    write_widget_lock_hypr_rules lock
+                fi
+                launch_custom_widget "$new_id"
                 apply_widget_layout_locked
                 notify "Custom command widget added"
             fi
+            arrange_widgets
             ;;
         *"Enable Base Widget"* | *"Abilita Widget Base"*)
             enable_builtin_widget_from_menu "$theme" && notify "Base widget added"
+            arrange_widgets
             ;;
         *"Select Widget to Remove"* | *"Seleziona Widget da Rimuovere"*)
-            selected="$(select_widget_from_order "$theme" "Select widget")" || return 0
+            selected="$(select_widget_from_order "$theme" "Select widget")" || { arrange_widgets; return 0; }
             disable_named_widget "$selected"
             apply_widget_layout_locked
             notify "Widget removed"
+            arrange_widgets
             ;;
-        *"  󰄶  "*)
+        *"Manage Widget: "*)
             selected_widget="$(printf '%s' "$choice" | sed -E 's/.*\(([^)]+)\)/\1/')"
             if [[ -n "$selected_widget" ]]; then
                 widget_submenu "$selected_widget"

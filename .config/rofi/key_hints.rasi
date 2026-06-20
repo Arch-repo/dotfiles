@@ -10,14 +10,14 @@
 }
 
 #window {
-    width:            760px;
+    width:            780px;
     padding:          20px;
 }
 
 #listview {
     lines:            15;
     scrollbar:        true;
-    spacing:          4px;
+    spacing:          5px;
 }
 
 #scrollbar {
@@ -29,7 +29,7 @@
 }
 
 #element {
-    padding:          6px 12px;
+    padding:          7px 12px;
 }
 
 #entry {

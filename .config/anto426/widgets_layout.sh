@@ -1,6 +1,26 @@
 #!/usr/bin/env bash
 # Layout persistence for anto426 desktop widgets (Hyprland floating windows).
 
+pid_file() {
+    local runtime_dir="${XDG_RUNTIME_DIR:-/tmp}/anto426-widgets"
+    printf '%s/%s.pid' "$runtime_dir" "$1"
+}
+
+is_running() {
+    local name="$1"
+    local addr
+    addr="$(widget_client_address "$name")"
+    [[ -n "$addr" ]] && return 0
+
+    local pfile
+    pfile="$(pid_file "$name")"
+    [[ -r "$pfile" ]] || return 1
+    local pid
+    pid="$(cat "$pfile" 2>/dev/null || true)"
+    [[ "$pid" =~ ^[0-9]+$ ]] || return 1
+    kill -0 "$pid" 2>/dev/null
+}
+
 widget_layout_file() {
     printf '%s' "${XDG_CONFIG_HOME:-$HOME/.config}/anto426/widgets_layout.env"
 }
@@ -179,6 +199,28 @@ layout_set_var() {
     export "$var"
 }
 
+layout_remove_widget_vars() {
+    local name="$1"
+    local file tmp prefix
+
+    layout_ensure_file
+    file="$(widget_layout_file)"
+    tmp="$(mktemp)"
+    prefix="$(layout_var_prefix "$name")"
+
+    awk -v prefix="$prefix" '
+        $0 ~ "^export LAYOUT_" prefix "_(x|y|w|h|monitor)=" { next }
+        { print }
+    ' "$file" >"$tmp" && mv "$tmp" "$file"
+
+    unset \
+        "LAYOUT_${prefix}_x" \
+        "LAYOUT_${prefix}_y" \
+        "LAYOUT_${prefix}_w" \
+        "LAYOUT_${prefix}_h" \
+        "LAYOUT_${prefix}_monitor"
+}
+
 focused_monitor_name() {
     hyprctl monitors -j 2>/dev/null |
         jq -r '.[] | select(.focused == true) | .name' 2>/dev/null |
@@ -298,6 +340,7 @@ layout_default_stack() {
     local -a stack
     declare -A stack_x
     declare -A stack_y
+    declare -A stack_column_width
 
     gap="${ANTO426_WIDGET_GAP:-18}"
 
@@ -314,10 +357,13 @@ layout_default_stack() {
         [[ -n "${actual_monitor:-}" ]] || actual_monitor="default"
         [[ -n "${monitor_x:-}" ]] || monitor_x=0
         [[ -n "${monitor_y:-}" ]] || monitor_y=0
+        [[ -n "${monitor_height:-}" ]] || monitor_height=1080
+        [[ -n "${monitor_width:-}" ]] || monitor_width=1920
 
         if [[ -z "${stack_y[$actual_monitor]+set}" ]]; then
             stack_x["$actual_monitor"]=$((monitor_x + 40))
             stack_y["$actual_monitor"]=$((monitor_y + 72))
+            stack_column_width["$actual_monitor"]=0
         fi
 
         x="${stack_x[$actual_monitor]}"
@@ -328,6 +374,22 @@ layout_default_stack() {
             w="$(widget_meta "$name" w)"
             h="$(widget_meta "$name" h)"
         }
+
+        # Wrap if it exceeds monitor height
+        local bottom_edge=$((monitor_y + monitor_height - 60))
+        if (( y + h > bottom_edge )) && (( y > monitor_y + 72 )); then
+            local next_col_x=$(( x + stack_column_width["$actual_monitor"] + gap ))
+            stack_x["$actual_monitor"]=$next_col_x
+            stack_y["$actual_monitor"]=$((monitor_y + 72))
+            x=$next_col_x
+            y=$((monitor_y + 72))
+            stack_column_width["$actual_monitor"]=0
+        fi
+
+        local col_w="${stack_column_width["$actual_monitor"]}"
+        if (( w > col_w )); then
+            stack_column_width["$actual_monitor"]=$w
+        fi
 
         layout_set_var "$name" x "$x"
         layout_set_var "$name" y "$y"
@@ -342,7 +404,7 @@ layout_default_stack() {
 layout_place_widget_default() {
     local name="$1"
     local monitor="${2:-}"
-    local x y w h gap other other_monitor other_y other_h next_y
+    local x y w h gap other other_monitor
     local monitor_x monitor_y monitor_width monitor_height actual_monitor
 
     layout_load
@@ -354,26 +416,83 @@ layout_place_widget_default() {
     [[ -n "${actual_monitor:-}" ]] || actual_monitor="default"
     [[ -n "${monitor_x:-}" ]] || monitor_x=0
     [[ -n "${monitor_y:-}" ]] || monitor_y=0
-
-    gap="${ANTO426_WIDGET_GAP:-18}"
-    x=$((monitor_x + 40))
-    y=$((monitor_y + 72))
-
-    for other in $(widget_order_default); do
-        [[ -n "$other" && "$other" != "$name" ]] || continue
-        other_monitor="$(layout_monitor_for_widget "$other")"
-        [[ "$other_monitor" == "$actual_monitor" ]] || continue
-        other_y="$(layout_var "$other" y)"
-        other_h="$(layout_var "$other" h)"
-        [[ "$other_y" =~ ^-?[0-9]+$ && "$other_h" =~ ^[0-9]+$ ]] || continue
-        next_y=$((other_y + other_h + gap))
-        ((next_y > y)) && y="$next_y"
-    done
+    [[ -n "${monitor_height:-}" ]] || monitor_height=1080
+    [[ -n "${monitor_width:-}" ]] || monitor_width=1920
 
     w="$(layout_var "$name" w)"
     h="$(layout_var "$name" h)"
     [[ -n "$w" ]] || w="$(widget_meta "$name" w)"
     [[ -n "$h" ]] || h="$(widget_meta "$name" h)"
+
+    gap="${ANTO426_WIDGET_GAP:-18}"
+    x=$((monitor_x + 40))
+    y=$((monitor_y + 72))
+    local bottom_edge=$((monitor_y + monitor_height - 60))
+
+    local collided=1
+    local safety_counter=0
+    while (( collided == 1 )) && (( safety_counter < 100 )); do
+        collided=0
+        safety_counter=$((safety_counter + 1))
+        local max_w_in_col=$w
+        local intersect_widget=""
+        local intersect_y=0
+        local intersect_h=0
+
+        for other in $(widget_order_default); do
+            [[ -n "$other" && "$other" != "$name" ]] || continue
+            other_monitor="$(layout_monitor_for_widget "$other")"
+            [[ "$other_monitor" == "$actual_monitor" ]] || continue
+
+            local ox oy ow oh
+            ox="$(layout_var "$other" x)"
+            oy="$(layout_var "$other" y)"
+            ow="$(layout_var "$other" w)"
+            oh="$(layout_var "$other" h)"
+            [[ "$ox" =~ ^-?[0-9]+$ && "$oy" =~ ^-?[0-9]+$ && "$ow" =~ ^[0-9]+$ && "$oh" =~ ^[0-9]+$ ]] || continue
+
+            # Check rectangle collision with gap padding
+            if (( x < ox + ow + gap )) && (( x + w + gap > ox )) && (( y < oy + oh + gap )) && (( y + h + gap > oy )); then
+                collided=1
+                if [[ -z "$intersect_widget" ]] || (( oy > intersect_y )); then
+                    intersect_widget="$other"
+                    intersect_y="$oy"
+                    intersect_h="$oh"
+                fi
+            fi
+
+            # If in the same vertical column range, track column width
+            if (( ox + ow + gap > x )) && (( ox < x + w + gap )); then
+                if (( ow > max_w_in_col )); then
+                    max_w_in_col=$ow
+                fi
+            fi
+        done
+
+        if (( collided == 1 )); then
+            y=$(( intersect_y + intersect_h + gap ))
+
+            if (( y + h > bottom_edge )); then
+                local rightmost_x=$(( x + max_w_in_col ))
+                for other in $(widget_order_default); do
+                    [[ -n "$other" && "$other" != "$name" ]] || continue
+                    other_monitor="$(layout_monitor_for_widget "$other")"
+                    [[ "$other_monitor" == "$actual_monitor" ]] || continue
+                    local ox ow
+                    ox="$(layout_var "$other" x)"
+                    ow="$(layout_var "$other" w)"
+                    [[ "$ox" =~ ^-?[0-9]+$ && "$ow" =~ ^[0-9]+$ ]] || continue
+                    if (( ox + ow + gap > x )) && (( ox < x + w + gap )); then
+                        if (( ox + ow > rightmost_x )); then
+                            rightmost_x=$(( ox + ow ))
+                        fi
+                    fi
+                done
+                x=$(( rightmost_x + gap ))
+                y=$(( monitor_y + 72 ))
+            fi
+        fi
+    done
 
     layout_set_var "$name" x "$x"
     layout_set_var "$name" y "$y"
@@ -395,12 +514,15 @@ apply_widget_layout() {
         clients_json="$(hyprctl clients -j 2>/dev/null || echo "[]")"
 
         for name in $order; do
-            [[ -n "$name" ]] && total=$((total + 1))
+            [[ -n "$name" ]] || continue
+            is_running "$name" || continue
+            total=$((total + 1))
         done
         ((total == 0)) && return 0
 
         for name in $order; do
             [[ -n "$name" ]] || continue
+            is_running "$name" || continue
             local x y w h
             x="$(layout_var "$name" x)"
             y="$(layout_var "$name" y)"

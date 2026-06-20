@@ -6,6 +6,7 @@ OSD_PY="$SCRIPT_DIR/osd/osd.py"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
 PID_FILE="$RUNTIME_DIR/anto426-osd.pid"
 STATE_FILE="$RUNTIME_DIR/anto426-osd.state"
+LOCK_DIR="$RUNTIME_DIR/anto426-osd.lock"
 
 clamp_percent() {
     local raw="${1:-0}"
@@ -34,6 +35,30 @@ start_daemon() {
     printf '%s\n' "$!" >"$PID_FILE"
 }
 
+acquire_lock() {
+    local i lock_age
+
+    for ((i = 0; i < 24; i++)); do
+        if mkdir "$LOCK_DIR" 2>/dev/null; then
+            return 0
+        fi
+
+        lock_age="$(($(date +%s) - $(stat -c %Y "$LOCK_DIR" 2>/dev/null || date +%s)))"
+        if (( lock_age > 2 )); then
+            rmdir "$LOCK_DIR" 2>/dev/null || rm -rf "$LOCK_DIR" 2>/dev/null || true
+            continue
+        fi
+
+        sleep 0.025
+    done
+
+    return 1
+}
+
+release_lock() {
+    rmdir "$LOCK_DIR" 2>/dev/null || true
+}
+
 osd_pid_running() {
     local pid="$1"
     local cmdline
@@ -54,15 +79,32 @@ show_osd() {
     value="$(clamp_percent "${2:-0}")"
     write_state "$kind" "$value" "$muted"
 
+    acquire_lock || {
+        if [[ -f "$PID_FILE" ]]; then
+            pid="$(cat "$PID_FILE" 2>/dev/null || true)"
+            osd_pid_running "$pid" && kill -USR1 "$pid" 2>/dev/null && return 0
+        fi
+        return 1
+    }
+
     if [[ -f "$PID_FILE" ]]; then
         pid="$(cat "$PID_FILE" 2>/dev/null || true)"
         if osd_pid_running "$pid"; then
-            kill -USR1 "$pid" 2>/dev/null && return 0
+            if kill -USR1 "$pid" 2>/dev/null; then
+                release_lock
+                return 0
+            fi
         fi
         rm -f "$PID_FILE"
     fi
 
-    start_daemon
+    if start_daemon; then
+        release_lock
+        return 0
+    fi
+
+    release_lock
+    return 1
 }
 
 case "${1:-}" in

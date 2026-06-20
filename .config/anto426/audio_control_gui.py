@@ -252,6 +252,11 @@ class AudioControlCenter(Gtk.Window):
             @define-color muted      #b9c4d2;
             @define-color accent     #8cb8e4;
             @define-color border     #809cb6;
+            @define-color panel-bg   rgba(44, 66, 86, 0.62);
+            @define-color item-bg    rgba(99, 132, 163, 0.18);
+            @define-color item-bg-active rgba(140, 184, 228, 0.42);
+            @define-color border-soft rgba(128, 156, 182, 0.16);
+            @define-color border-medium rgba(128, 156, 182, 0.34);
             """
         
         # Custom Widget CSS
@@ -266,8 +271,8 @@ class AudioControlCenter(Gtk.Window):
         }
 
         #MainContainer {
-            background-color: alpha(@background, 0.60);
-            border: 2px solid alpha(@border, 0.55);
+            background-color: @panel-bg;
+            border: 1px solid @border-medium;
             border-radius: 24px;
         }
 
@@ -279,8 +284,8 @@ class AudioControlCenter(Gtk.Window):
         }
 
         .inputbar {
-            background-color: @surface;
-            border: 1px solid @border;
+            background-color: @item-bg;
+            border: 1px solid @border-soft;
             border-radius: 14px;
             padding: 10px 14px;
         }
@@ -326,8 +331,8 @@ class AudioControlCenter(Gtk.Window):
 
         /* Styling sliders (scales) */
         scale trough {
-            background-color: alpha(@background, 0.48);
-            border: 1px solid alpha(@border, 0.55);
+            background-color: @item-bg;
+            border: 1px solid @border-medium;
             border-radius: 14px;
             min-height: 8px;
         }

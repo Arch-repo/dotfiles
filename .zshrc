@@ -23,7 +23,9 @@ setopt sharehistory
 bindkey -e
 
 # ─── FZF ─────────────────────────────────────────────────────────
-eval "$(fzf --zsh)"
+if command -v fzf >/dev/null 2>&1; then
+    eval "$(fzf --zsh)"
+fi
 # FZF theme, aligned dynamically with the desktop wallpaper palette
 if [[ -f ~/.config/colors/colors.sh ]]; then
     source ~/.config/colors/colors.sh
@@ -47,23 +49,26 @@ fi
 
 # ─── Zinit ───────────────────────────────────────────────────────
 # Set the directory we want to store zinit and plugins
-ZINIT_HOME="${ZDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
+ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
 # Download Zinit, if it's not there yet
-if [ ! -d "$ZINIT_HOME" ]; then
-    mkdir -p "$(dirname $ZINIT_HOME)"
+if [[ ! -d "$ZINIT_HOME" ]] && command -v git >/dev/null 2>&1; then
+    mkdir -p "$(dirname "$ZINIT_HOME")"
     git clone https://github.com/zdharma-continuum/zinit.git "$ZINIT_HOME"
 fi
-source "${ZINIT_HOME}/zinit.zsh"
 
-# Add in zsh plugins
-zinit light zsh-users/zsh-syntax-highlighting
-zinit light zsh-users/zsh-completions
-zinit light zsh-users/zsh-autosuggestions
-zinit light Aloxaf/fzf-tab
+if [[ -r "${ZINIT_HOME}/zinit.zsh" ]]; then
+    source "${ZINIT_HOME}/zinit.zsh"
+
+    # Add in zsh plugins
+    zinit light zsh-users/zsh-syntax-highlighting
+    zinit light zsh-users/zsh-completions
+    zinit light zsh-users/zsh-autosuggestions
+    zinit light Aloxaf/fzf-tab
+fi
 
 # ─── Completion ──────────────────────────────────────────────────
 autoload -Uz compinit && compinit
-zinit cdreplay -q
+(( $+functions[zinit] )) && zinit cdreplay -q
 
 # Completion styling
 zstyle ':completion:*' matcher-list 'm:{A-Za-z}={A-Za-z}'
@@ -118,7 +123,9 @@ export BAT_THEME="base16"
 alias bat='bat --paging=never'
 
 # Setup zoxide (better than cd)
-eval "$(zoxide init zsh)"
+if command -v zoxide >/dev/null 2>&1; then
+    eval "$(zoxide init zsh)"
+fi
 
 # Allowing comments in interactive zsh commands
 setopt interactivecomments
@@ -126,12 +133,14 @@ setopt interactivecomments
 
 # Pokemon startup
 #pokemon-colorscripts --no-title -s -r
-~/neofetch-random.sh
+[[ -x "$HOME/neofetch-random.sh" ]] && "$HOME/neofetch-random.sh"
 # Initialize Oh-My-Posh
-eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/anto426.omp.json)"
+if command -v oh-my-posh >/dev/null 2>&1; then
+    eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/anto426.omp.json)"
+fi
 
 # bun completions
-[ -s "/home/anto426/.bun/_bun" ] && source "/home/anto426/.bun/_bun"
+[ -s "$HOME/.bun/_bun" ] && source "$HOME/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"

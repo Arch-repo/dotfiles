@@ -241,43 +241,43 @@ pick_widget_monitor() {
 
 preset_widget_rows() {
     command -v cava >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰎈 Spettro audio" \
             "spettro_audio" \
             'cava -p "$HOME/.config/anto426/cava_widget.conf"' \
             620 220
     command -v btop >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰍛 Dashboard sistema" \
             "dashboard_sistema" \
             "btop" \
             760 520
     command -v fastfetch >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰌢 Scheda macchina" \
             "scheda_macchina" \
             'while true; do clear; image=$(find "$HOME/Pictures/neofetch" -type f \( -iname "*.jpg" -o -iname "*.jpeg" -o -iname "*.png" -o -iname "*.webp" \) 2>/dev/null | shuf -n 1); if [[ -n "$image" ]]; then fastfetch --logo "$image" --logo-type kitty --logo-width 18 --logo-padding-left 1 --logo-padding-right 2 --logo-preserve-aspect-ratio true --structure Title:Separator:OS:Kernel:Uptime:Packages:WM:CPU:Memory:Battery; else fastfetch --logo small --structure Title:Separator:OS:Kernel:Uptime:Packages:WM:CPU:Memory:Battery; fi; sleep 12; done' \
             620 320
     command -v asciiquarium >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰈺 Acquario ASCII" \
             "acquario_ascii" \
             "asciiquarium -t" \
             620 420
     command -v pipes.sh >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰕮 Tubi animati" \
             "tubi_animati" \
             "pipes.sh -t 2 -r 0 -R" \
             700 360
     command -v cbonsai >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰔱 Bonsai Zen" \
             "bonsai_zen" \
             "cbonsai -l -i -w 12 -L 38 -M 5" \
             540 380
     command -v cmatrix >/dev/null 2>&1 &&
-        printf '%s|%s|%s|%s|%s\n' \
+        printf '%s\t%s\t%s\t%s\t%s\n' \
             "󰫐 Pioggia Matrix" \
             "pioggia_matrix" \
             "cmatrix -a -b -u 2" \
@@ -290,14 +290,14 @@ pick_preset_widget() {
 
     choice="$(
         preset_widget_rows |
-            awk -F'|' '{ print $1 }' |
+            cut -f1 |
             rofi -dmenu -i -matching fuzzy -p "Widget visuale" \
                 -mesg "Preset controllati: belli da vedere e gia dimensionati" \
                 -theme "$theme"
     )"
     [[ -n "$choice" ]] || return 1
 
-    while IFS='|' read -r label id_base command width height; do
+    while IFS=$'\t' read -r label id_base command width height; do
         [[ "$label" == "$choice" ]] || continue
         monitor="$(pick_widget_monitor)" || return 1
         id="$(custom_widget_unique_id "$id_base")"

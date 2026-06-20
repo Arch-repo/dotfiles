@@ -15,6 +15,8 @@ notify() {
     local value="${1:-}"
     if [[ "$value" =~ ^[0-9]+$ ]]; then
         show_osd "$value"
+    elif [[ -n "$value" ]]; then
+        notify-send "Brightness" "$value" 2>/dev/null || true
     fi
 }
 
@@ -82,6 +84,12 @@ adjust_brightness() {
 
 pick_slider() {
     local current value
+
+    command -v brightnessctl >/dev/null 2>&1 || {
+        notify "brightnessctl not found"
+        return 1
+    }
+
     current="$(current_percent)"
     [[ -n "$current" ]] || current=0
 
@@ -100,7 +108,10 @@ case "${1:-menu}" in
     50 | 50%) set_brightness "50%" ;;
     75 | 75%) set_brightness "75%" ;;
     100 | 100%) set_brightness "100%" ;;
-    menu) pick_slider ;;
+    menu)
+        pick_slider
+        go_back
+        ;;
     *)
         printf 'Uso: %s [menu|up|down|25|50|75|100]\n' "$0" >&2
         exit 2

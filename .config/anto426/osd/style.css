@@ -1,5 +1,5 @@
 window.osd-root {
-  background-color: transparent;
+  background-color: @overlay-bg;
   border: none;
   box-shadow: none;
 }
@@ -8,8 +8,8 @@ box.osd-box {
   min-width: 300px;
   min-height: 50px;
   padding: 12px 18px;
-  background-color: @background-alpha;
-  border: 1px solid @border-alpha;
+  background-color: @panel-bg;
+  border: 1px solid @border-medium;
   border-radius: 16px;
   box-shadow: none;
 }
@@ -44,7 +44,7 @@ progressbar.osd-track {
 
 progressbar.osd-track trough {
   min-height: 8px;
-  background-color: alpha(@foreground, 0.16);
+  background-color: @item-bg;
   border-radius: 8px;
 }
 
@@ -55,5 +55,5 @@ progressbar.osd-track progress {
 }
 
 progressbar.osd-track.muted progress {
-  background-color: alpha(@muted, 0.55);
+  background-color: @item-bg-active;
 }

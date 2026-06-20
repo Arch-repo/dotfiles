@@ -1,8 +1,12 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-mkdir -p ~/.icons/default/
-touch ~/.icons/default/index.theme
-echo "[icon theme]" >> ~/.icons/default/index.theme
-echo "Inherits=macOS" >> ~/.icons/default/index.theme
-sudo rm -rf /usr/share/icons/default/index.theme
-sudo cp ~/.icons/default/index.theme /usr/share/icons/default/
+cursor_file="$HOME/.icons/default/index.theme"
+
+mkdir -p "$(dirname "$cursor_file")"
+cat >"$cursor_file" <<'EOF'
+[icon theme]
+Inherits=macOS
+EOF
+
+sudo install -Dm644 "$cursor_file" /usr/share/icons/default/index.theme

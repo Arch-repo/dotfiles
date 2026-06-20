@@ -1,6 +1,6 @@
 /* =============================================================================
-   WAYBAR MINIMALIST & SOBER STYLE SHEET
-   Theme: Flat Glassmorphic Clean Minimalism
+   WAYBAR CYBER-GLASSMORPHIC FLOATING CAPSULE STYLE SHEET
+   Theme: Floating Premium Glassmorphic Minimalist Design
    ============================================================================= */
 
 @import "../colors/colors.css";
@@ -8,22 +8,22 @@
 /* Universal Reset & Sleek Defaults */
 * {
     font-family: "JetBrainsMono Nerd Font", sans-serif;
-    font-size: 13px;
+    font-size: 12px;
     font-weight: 600;
     background-color: transparent;
     border-radius: 0;
     min-height: 0;
-    transition: all 0.2s ease-in-out;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
-
 
 /* Premium Sober Tooltip */
 tooltip {
     color: @foreground;
-    background: alpha(@background, 0.92);
-    border: 1px solid @border-alpha;
-    border-radius: 10px;
-    padding: 6px 10px;
+    background: @panel-bg;
+    border: 1px solid @border-medium;
+    border-radius: 14px;
+    padding: 8px 12px;
+    box-shadow: 0 4px 15px @shadow-medium;
 }
 
 tooltip label {
@@ -31,130 +31,156 @@ tooltip label {
     color: @foreground;
 }
 
-/* Main Bar Container - Full Width & Clean */
+/* Main Bar Container - Transparent & Floating */
 #waybar {
-    background: @background-alpha;
-    border-bottom: 1px solid alpha(@border, 0.2);
-    border-radius: 0;
+    background: transparent;
+    border: none;
 }
 
-/* Workspaces Container */
+/* =============================================================================
+   Floating Capsule System
+   ============================================================================= */
+
+#workspaces,
+#custom-clock,
+#custom-background-apps,
+#status,
+#tools,
+#custom-power {
+    background: @panel-bg;
+    border: 1px solid @border-soft;
+    border-radius: 14px;
+    margin: 5px 4px;
+    box-shadow: 0 3px 10px @shadow-soft;
+}
+
+/* Global Hover glow for all capsules */
+#workspaces:hover,
+#custom-clock:hover,
+#custom-background-apps:hover,
+#status:hover,
+#tools:hover {
+    border-color: @accent-strong;
+    background: @panel-bg-hover;
+    box-shadow: 0 6px 16px @accent-soft, 0 4px 12px @shadow-medium;
+}
+
+/* Left - Workspaces */
 #workspaces {
-    margin: 5px 6px;
+    margin-left: 12px;
+    padding: 0 4px;
 }
 
-/* Individual Workspaces */
 #workspaces button {
-    color: alpha(@foreground, 0.6);
+    color: alpha(@foreground, 0.55);
     background: transparent;
     border: 1px solid transparent;
-    margin: 0 3px;
+    margin: 3px 2px;
     padding: 0;
-    min-width: 30px;
-    min-height: 30px;
+    min-width: 28px;
+    min-height: 28px;
     border-radius: 10px;
 }
 
-/* Workspace Hover */
 #workspaces button:hover {
     color: @foreground;
-    background: @select-alpha;
-    border-color: @accent-alpha;
+    background: @item-bg-hover;
+    border-color: @accent-strong;
 }
 
-/* Active Workspace Indicator */
 #workspaces button.active {
     color: @foreground;
-    background: @select-alpha;
-    border-color: @accent-alpha;
+    background: @item-bg-active;
+    border-color: @accent-strong;
     font-weight: 700;
+    box-shadow: 0 0 6px @accent-soft;
 }
 
-/* Urgent Workspace Indicator */
 #workspaces button.urgent {
-    color: @foreground;
-    background: alpha(@red, 0.18);
+    color: @red;
+    background: alpha(@red, 0.12);
     border-color: alpha(@red, 0.45);
 }
 
-/* Clock - Center Module */
+/* Center - Clock */
 #custom-clock {
-    color: @foreground;
-    margin: 5px 3px;
-    padding: 0 14px;
-    min-height: 30px;
+    padding: 0 16px;
+    min-height: 34px;
     font-weight: 700;
-    border: 1px solid transparent;
-    border-radius: 10px;
 }
 
-/* Right Side Modules - Purely Icon-Based Buttons */
-#custom-screenshot,
-#custom-notifications,
-#custom-control,
-#custom-background-apps,
-#network,
-#bluetooth,
-#custom-power {
-    color: alpha(@foreground, 0.85);
-    margin: 5px 4px;
-    padding: 0;
-    min-width: 30px;
-    min-height: 30px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-}
-
-/* Right Side Modules - Text + Icon Buttons */
-#pulseaudio,
-#battery,
-#custom-keyboard {
-    color: alpha(@foreground, 0.85);
-    margin: 5px 4px;
+/* Right - Background Apps */
+#custom-background-apps {
     padding: 0 10px;
-    min-height: 30px;
-    border: 1px solid transparent;
-    border-radius: 10px;
-}
-
-/* Subtle, clean hover effect for status modules */
-#custom-screenshot:hover,
-#custom-notifications:hover,
-#custom-control:hover,
-#custom-background-apps:hover,
-#network:hover,
-#bluetooth:hover,
-#pulseaudio:hover,
-#battery:hover,
-#custom-keyboard:hover,
-#custom-clock:hover {
-    background: @select-alpha;
-    border-color: @accent-alpha;
-    color: @foreground;
-}
-
-/* Soft Accent overrides on Hover for critical actions */
-#custom-screenshot:hover {
-    color: @green;
-    border-color: @accent-alpha;
-}
-
-#custom-notifications:hover {
-    color: @accent;
-    border-color: @accent-alpha;
-}
-
-#custom-control:hover {
-    color: @yellow;
-    border-color: @accent-alpha;
+    min-height: 34px;
 }
 
 #custom-background-apps.active {
     color: @accent;
+    border-color: @accent-strong;
 }
 
 #custom-background-apps.empty {
-    color: alpha(@foreground, 0.45);
+    color: alpha(@foreground, 0.4);
+}
+
+/* Right - Status & Tools Groups */
+#status,
+#tools {
+    padding: 0 6px;
+}
+
+/* Remove default individual margins and borders for grouped children */
+#status #network,
+#status #bluetooth,
+#status #pulseaudio,
+#status #battery,
+#tools #custom-keyboard,
+#tools #custom-notifications,
+#tools #custom-screenshot,
+#tools #custom-control {
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    margin: 3px 2px;
+    min-height: 28px;
+}
+
+#status #network,
+#status #bluetooth,
+#tools #custom-screenshot,
+#tools #custom-notifications,
+#tools #custom-control {
+    min-width: 28px;
+    padding: 0;
+}
+
+#status #pulseaudio,
+#status #battery,
+#tools #custom-keyboard {
+    padding: 0 8px;
+}
+
+/* Individual Module Hover highlight inside the capsules */
+#status > widget > *:hover,
+#tools > widget > *:hover {
+    background: @item-bg-hover;
+    border-color: @accent-strong;
+    color: @foreground;
+    box-shadow: 0 0 6px @accent-soft;
+}
+
+/* Soft Accent overrides on Hover for critical actions */
+#tools #custom-screenshot:hover {
+    color: @green;
+}
+
+#tools #custom-notifications:hover {
+    color: @accent;
+}
+
+#tools #custom-control:hover {
+    color: @yellow;
 }
 
 /* Integrated Status States */
@@ -178,14 +204,17 @@ tooltip label {
     color: @red;
 }
 
-#custom-keyboard {
+#tools #custom-keyboard {
     color: @accent;
 }
 
-/* Power Session Module - Subtle Red Accent */
+/* Right - Power Module - Subtle Red Accent */
 #custom-power {
-    margin-right: 8px;
-    color: alpha(@foreground, 0.8);
+    margin: 5px 12px 5px 4px;
+    padding: 0;
+    min-width: 34px;
+    min-height: 34px;
+    color: alpha(@foreground, 0.75);
     font-size: 14px;
 }
 
@@ -193,70 +222,5 @@ tooltip label {
     color: @red;
     background: alpha(@red, 0.08);
     border-color: alpha(@red, 0.35);
+    box-shadow: 0 4px 12px alpha(@red, 0.15);
 }
-
-/* =============================================================================
-   Premium Capsule/Pill Grouping for Status and Tools
-   ============================================================================= */
-
-#status,
-#tools,
-.status,
-.tools {
-    background: @background-alpha;
-    border: 1px solid alpha(@border, 0.16);
-    border-radius: 12px;
-    margin: 5px 6px;
-    padding: 0 6px;
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Hover over entire capsule subtle background shift */
-#status:hover,
-#tools:hover {
-    border-color: @accent-alpha;
-    background: alpha(@background, 0.76);
-    box-shadow: 0 4px 12px alpha(@background, 0.15);
-}
-
-/* Remove default individual margins and borders for grouped children */
-#status #network,
-#status #bluetooth,
-#status #pulseaudio,
-#status #battery,
-#tools #custom-keyboard,
-#tools #custom-notifications,
-#tools #custom-screenshot,
-#tools #custom-control {
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 8px;
-    margin: 2px 2px;
-    min-height: 26px;
-    transition: all 0.2s ease-in-out;
-}
-
-/* Specific text/percentage module padding adjustments */
-#status #pulseaudio,
-#status #battery,
-#tools #custom-keyboard {
-    padding: 0 8px;
-}
-
-#status #network,
-#status #bluetooth,
-#tools #custom-screenshot,
-#tools #custom-notifications,
-#tools #custom-control {
-    min-width: 26px;
-    padding: 0;
-}
-
-/* Beautiful hover highlight for individual modules inside the capsule */
-#status > widget > *:hover,
-#tools > widget > *:hover {
-    background: @select-alpha;
-    border-color: @accent-alpha;
-    color: @foreground;
-}
-

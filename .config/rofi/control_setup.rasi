@@ -7,17 +7,17 @@
 
 #window {
     width:            720px;
-    padding:          22px;
+    padding:          20px;
     border-radius:    24px;
 }
 
 #mainbox {
-    spacing:          16px;
+    spacing:          14px;
 }
 
 #message {
-    padding:          16px 18px;
-    border-radius:    16px;
+    padding:          14px 16px;
+    border-radius:    14px;
 }
 
 #textbox {
@@ -26,15 +26,15 @@
 
 #listview {
     lines:            7;
-    spacing:          9px;
+    spacing:          7px;
 }
 
 #element {
-    padding:          11px 16px;
+    padding:          10px 13px;
 }
 
 #inputbar {
-    padding:          12px 16px;
+    padding:          10px 12px;
     spacing:          10px;
 }
 

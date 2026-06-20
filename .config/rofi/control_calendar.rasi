@@ -6,10 +6,19 @@
 @import "~/.config/rofi/control_menu.rasi"
 
 window {
-    width:            440px;
+    width:            500px;
 }
 
 #textbox {
     font:             "JetBrainsMono Nerd Font Mono Medium 10.5";
     horizontal-align: 0.5;
+}
+
+#message {
+    padding:          14px 16px;
+}
+
+#listview {
+    lines:            8;
+    spacing:          7px;
 }
