@@ -2,7 +2,7 @@
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-OSD_PY="$SCRIPT_DIR/osd/osd.py"
+OSD_BIN="$SCRIPT_DIR/osd/osd"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"
 PID_FILE="$RUNTIME_DIR/anto426-osd.pid"
 STATE_FILE="$RUNTIME_DIR/anto426-osd.state"
@@ -27,11 +27,10 @@ write_state() {
 }
 
 start_daemon() {
-    [[ -f "$OSD_PY" ]] || return 1
-    command -v python3 >/dev/null 2>&1 || return 1
+    [[ -x "$OSD_BIN" ]] || return 1
 
     ANTO426_OSD_STATE="$STATE_FILE" ANTO426_OSD_PID="$PID_FILE" \
-        python3 "$OSD_PY" daemon >/dev/null 2>&1 &
+        "$OSD_BIN" daemon >/dev/null 2>&1 &
     printf '%s\n' "$!" >"$PID_FILE"
 }
 
@@ -67,7 +66,7 @@ osd_pid_running() {
     kill -0 "$pid" 2>/dev/null || return 1
     [[ -r "/proc/$pid/cmdline" ]] || return 1
     cmdline="$(tr '\0' ' ' <"/proc/$pid/cmdline" 2>/dev/null || true)"
-    [[ "$cmdline" == *"$OSD_PY"* ]]
+    [[ "$cmdline" == *"$OSD_BIN"* ]]
 }
 
 show_osd() {

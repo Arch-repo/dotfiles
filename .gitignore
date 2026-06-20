@@ -4,3 +4,4 @@ __pycache__/
 *.save
 .config/anto426/wallpaper_daemon
 .config/anto426/widgets_core
+.config/anto426/osd/osd
