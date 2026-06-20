@@ -958,9 +958,14 @@ write_zen_theme() {
 #TabsToolbar {
   background-color: $(hex_to_css_rgba "$background" 0.62) !important;
 }
-
 .urlbar-background {
   background-color: $(hex_to_css_rgba "$base" 0.62) !important;
+}
+
+#urlbar[open] .urlbar-background,
+#urlbar[breakout-extend] .urlbar-background,
+.urlbarView {
+  background-color: $(hex_to_css_rgba "$base" 0.95) !important;
 }
 
 .content-shortcuts {
