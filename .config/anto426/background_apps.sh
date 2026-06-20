@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+export PATH="$HOME/.config/anto426/bin:$PATH"
 
 THEME="${ROFI_BACKGROUND_APPS_THEME:-$HOME/.config/rofi/control_menu.rasi}"
 RUNTIME_DIR="${XDG_RUNTIME_DIR:-/tmp}"

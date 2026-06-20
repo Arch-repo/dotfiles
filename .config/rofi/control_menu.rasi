@@ -4,7 +4,7 @@
    ============================================================================= */
 
 configuration {
-    show-icons:     true;
+    show-icons:     false;
     scroll-method:  1;
     scrollbar:      false;
 }

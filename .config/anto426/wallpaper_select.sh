@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+export PATH="$HOME/.config/anto426/bin:$PATH"
 
 wallpapers_dir="${ANTO426_WALLPAPERS_DIR:-$HOME/Pictures/Wallpapers}"
 theme="$HOME/.config/rofi/control_menu.rasi"

@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+export PATH="$HOME/.config/anto426/bin:$PATH"
 
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/anto426"
 CONFIG_FILE="$DATA_DIR/sync.env"

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 [[ -n "${ANTO426_ROFI_LIB_LOADED:-}" ]] && return 0
 ANTO426_ROFI_LIB_LOADED=1
+export PATH="$HOME/.config/anto426/bin:$PATH"
 
 ANTO426_THEME_CONTROL="${ANTO426_THEME_CONTROL:-$HOME/.config/rofi/control_menu.rasi}"
 ANTO426_THEME_LAUNCHER="${ANTO426_THEME_LAUNCHER:-$HOME/.config/rofi/config.rasi}"

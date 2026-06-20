@@ -47,10 +47,10 @@ pacman_packages=(
 
     # System services and controls
     brightnessctl iwd network-manager-applet bluez bluez-utils blueman
-    pipewire pipewire-pulse wireplumber pavucontrol
+    pipewire pipewire-pulse wireplumber pavucontrol openbsd-netcat
 
     # Apps used by the dotfiles
-    ghostty nemo gvfs curl jq nodejs npm yarn python htop loupe celluloid gnome-text-editor evince
+    ghostty nemo gvfs curl jq nodejs npm yarn python htop loupe celluloid mpv gnome-text-editor evince
     ffmpeg cava cliphist gnome-characters keepass playerctl wev
 
     # Qt, display manager, and theming
@@ -188,25 +188,132 @@ build_anto426_rofi() {
     fi
 }
 
+build_mpvpaper_from_git() {
+    local mpvpaper_src="${ANTO426_MPVPAPER_SRC:-$HOME/Git/arch/mpvpaper}"
+    local mpvpaper_repo="${ANTO426_MPVPAPER_REPO:-https://github.com/GhostNaN/mpvpaper.git}"
+    local build_dir="${ANTO426_MPVPAPER_BUILD_DIR:-$mpvpaper_src/build-anto426}"
+    local prefix="${ANTO426_MPVPAPER_PREFIX:-/usr/local}"
+
+    if [[ ! -d "$mpvpaper_src/.git" ]]; then
+        ui_note "Cloning mpvpaper into $mpvpaper_src"
+        mkdir -p "$(dirname "$mpvpaper_src")"
+        git clone "$mpvpaper_repo" "$mpvpaper_src"
+    else
+        ui_note "Using existing mpvpaper checkout: $mpvpaper_src"
+        (
+            cd "$mpvpaper_src"
+            git pull --ff-only || ui_note "Could not fast-forward mpvpaper; building the current checkout."
+        )
+    fi
+
+    if [[ ! -f "$build_dir/build.ninja" ]]; then
+        meson setup "$build_dir" "$mpvpaper_src" --prefix "$prefix"
+    else
+        meson setup --reconfigure "$build_dir" "$mpvpaper_src" --prefix "$prefix"
+    fi
+
+    meson compile -C "$build_dir"
+    sudo meson install -C "$build_dir"
+
+    if command -v mpvpaper >/dev/null 2>&1; then
+        ui_ok "mpvpaper installed from git: $(command -v mpvpaper)"
+    else
+        ui_note "mpvpaper installed into $prefix/bin; ensure that directory is in PATH."
+    fi
+}
+
+install_mpvpaper() {
+    case "${ANTO426_MPVPAPER_SOURCE:-aur}" in
+        git)
+            build_mpvpaper_from_git
+            return 0
+            ;;
+        aur | "")
+            ;;
+        *)
+            ui_note "Unknown ANTO426_MPVPAPER_SOURCE=${ANTO426_MPVPAPER_SOURCE}; using AUR."
+            ;;
+    esac
+
+    if command -v mpvpaper >/dev/null 2>&1; then
+        ui_note "mpvpaper already installed: $(command -v mpvpaper)"
+        return 0
+    fi
+
+    if yay -S --needed --noconfirm mpvpaper; then
+        ui_ok "mpvpaper installed from AUR."
+        return 0
+    fi
+
+    ui_note "AUR install for mpvpaper failed; falling back to git build."
+    build_mpvpaper_from_git
+}
+
+build_anto426_helper() {
+    local source_file="$1"
+    local output_file="$2"
+    local label="$3"
+    local cc_bin="${CC:-cc}"
+
+    if [[ ! -f "$source_file" ]]; then
+        ui_note "Skipping $label build; missing source: $source_file"
+        return 0
+    fi
+
+    if [[ -x "$output_file" && "$output_file" -nt "$source_file" ]]; then
+        ui_note "$label already built: $output_file"
+        return 0
+    fi
+
+    "$cc_bin" -O2 -Wall -Wextra "$source_file" -o "$output_file"
+    chmod 755 "$output_file"
+    ui_ok "$label built: $output_file"
+}
+
+build_anto426_helpers() {
+    if [[ "${ANTO426_SKIP_HELPER_BUILD:-0}" == "1" ]]; then
+        ui_note "Skipping Anto426 helper builds."
+        return 0
+    fi
+
+    local script_dir
+    local cc_bin="${CC:-cc}"
+
+    script_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+    if ! command -v "$cc_bin" >/dev/null 2>&1; then
+        ui_note "C compiler not found; install base-devel or set CC before building helpers."
+        return 1
+    fi
+
+    build_anto426_helper "$script_dir/wallpaper_daemon.c" "$script_dir/wallpaper_daemon" "Wallpaper daemon"
+    build_anto426_helper "$script_dir/widgets_core.c" "$script_dir/widgets_core" "Widgets core"
+}
+
 ui_banner
 
-ui_step 1 6 "Installing base build tools"
+ui_step 1 8 "Installing base build tools"
 sudo pacman -S --needed --noconfirm base-devel git
 
-ui_step 2 6 "Checking AUR helper"
+ui_step 2 8 "Checking AUR helper"
 ensure_yay
 
-ui_step 3 6 "Installing official packages"
+ui_step 3 8 "Installing official packages"
 sudo pacman -S --needed --noconfirm "${pacman_packages[@]}"
 
-ui_step 4 6 "Installing AUR packages"
+ui_step 4 8 "Installing AUR packages"
 yay -S --needed --noconfirm "${aur_packages[@]}"
 
-ui_step 5 6 "Building Anto426 rofi"
+ui_step 5 8 "Installing wallpaper apps"
+install_mpvpaper
+
+ui_step 6 8 "Building local Anto426 apps"
+build_anto426_helpers
+
+ui_step 7 8 "Building Anto426 rofi"
 build_anto426_rofi
 
-ui_step 6 6 "Configuring NetworkManager iwd backend"
+ui_step 8 8 "Configuring NetworkManager iwd backend"
 configure_networkmanager_iwd
 
 ui_ok "Package install complete."
-

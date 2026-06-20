@@ -8,6 +8,11 @@ effects_script="$HOME/.config/anto426/wallpaper_effects.sh"
 state_dir="${XDG_STATE_HOME:-$HOME/.local/state}/anto426"
 log_file="$state_dir/wallpaper_apply.log"
 destination_wallpaper_dir="${XDG_CACHE_HOME:-$HOME/.cache}/awww"
+live_options_version="5"
+short_loop_threshold="${ANTO426_WALLPAPER_SHORT_LOOP_THRESHOLD:-0}"
+short_loop_target="${ANTO426_WALLPAPER_SHORT_LOOP_TARGET:-180}"
+short_loop_max_repeats="${ANTO426_WALLPAPER_SHORT_LOOP_MAX_REPEATS:-180}"
+short_loop_max_bytes="${ANTO426_WALLPAPER_SHORT_LOOP_MAX_BYTES:-1073741824}"
 
 mkdir -p "$state_dir" "$destination_wallpaper_dir"
 
@@ -54,8 +59,88 @@ current_live_wallpaper() {
     done < <(pgrep -x mpvpaper 2>/dev/null || true)
 }
 
+prepared_live_wallpaper() {
+    local source="$1"
+    local duration source_size repeats hash cache_dir cache_file tmp_file loop_count
+
+    if [[ "$short_loop_threshold" -eq 0 ]]; then
+        printf '%s' "$source"
+        return 0
+    fi
+
+    command -v ffprobe >/dev/null 2>&1 || {
+        printf '%s' "$source"
+        return 0
+    }
+    command -v ffmpeg >/dev/null 2>&1 || {
+        printf '%s' "$source"
+        return 0
+    }
+
+    duration="$(ffprobe -v error -show_entries format=duration -of default=nk=1:nw=1 "$source" 2>/dev/null || true)"
+    source_size="$(stat -c %s "$source" 2>/dev/null || printf '0')"
+    repeats="$(awk \
+        -v d="$duration" \
+        -v s="$source_size" \
+        -v threshold="$short_loop_threshold" \
+        -v target="$short_loop_target" \
+        -v max_repeats="$short_loop_max_repeats" \
+        -v max_bytes="$short_loop_max_bytes" \
+        'BEGIN {
+        if (threshold <= 0) threshold = 15
+        if (target <= 0) target = 180
+        if (max_repeats <= 0) max_repeats = 180
+        if (max_bytes <= 0) max_bytes = 1073741824
+
+        if (d > 0 && d <= threshold) {
+            r = int(target / d)
+            if ((target / d) > r) r++
+            if (r < 2) r = 2
+            if (r > max_repeats) r = max_repeats
+            if (s > 0 && (s * r) > max_bytes) {
+                by_size = int(max_bytes / s)
+                if (by_size < 2) by_size = 2
+                if (by_size < r) r = by_size
+            }
+            print r
+        } else {
+            print 1
+        }
+    }')"
+
+    if [[ ! "$repeats" =~ ^[0-9]+$ || "$repeats" -le 1 ]]; then
+        printf '%s' "$source"
+        return 0
+    fi
+
+    cache_dir="$destination_wallpaper_dir/live-loop-cache"
+    mkdir -p "$cache_dir"
+    hash="$(printf '%s:%s:%s:%s:%s' "$source" "$source_size" "$(stat -c %Y "$source" 2>/dev/null || true)" "$repeats" "$live_options_version" | sha1sum | awk '{print $1}')"
+    cache_file="$cache_dir/$hash.mkv"
+    if [[ -s "$cache_file" ]]; then
+        printf '%s' "$cache_file"
+        return 0
+    fi
+
+    tmp_file="$cache_dir/$hash.tmp.mkv"
+    loop_count=$((repeats - 1))
+
+    if ffmpeg -hide_banner -loglevel error -y \
+        -stream_loop "$loop_count" -i "$source" \
+        -map 0:v:0 -an -sn -dn -c:v copy -avoid_negative_ts make_zero \
+        "$tmp_file" >/dev/null 2>&1; then
+        mv "$tmp_file" "$cache_file"
+        log "prepared lossless short live wallpaper loop cache: $cache_file (${repeats}x, copy)"
+        printf '%s' "$cache_file"
+        return 0
+    fi
+
+    rm -f "$tmp_file"
+    printf '%s' "$source"
+}
+
 start_wallpaper_daemon() {
-    if ! pgrep -f "wallpaper_daemon.sh" >/dev/null 2>&1; then
+    if ! pgrep -af "[/]wallpaper_daemon([[:space:]]|$)" >/dev/null 2>&1 && ! pgrep -af "[/]wallpaper_daemon.sh" >/dev/null 2>&1; then
         "$HOME/.config/anto426/wallpaper_daemon.sh" &
     fi
 }
@@ -102,21 +187,31 @@ if [[ "$mime_type" =~ ^video/ ]]; then
         exit 1
     fi
 
+    saved_live_options_version="$(cat "$destination_wallpaper_dir/current-live-options.version" 2>/dev/null || true)"
+    playback_wallpaper="$(prepared_live_wallpaper "$wallpaper")"
     running_live="$(current_live_wallpaper)"
-    if [[ -n "$running_live" && "$running_live" == "$wallpaper" ]]; then
+    if [[ "$saved_live_options_version" == "$live_options_version" ]] &&
+        pgrep -x mpvpaper >/dev/null 2>&1 &&
+        { [[ -n "$running_live" && "$running_live" == "$playback_wallpaper" ]] || [[ -n "$running_live" && "$running_live" == "$wallpaper" ]]; }; then
         log "live wallpaper already active, skipping mpvpaper restart: $wallpaper"
         printf '%s\n' "$wallpaper" >"$destination_wallpaper_dir/current-wallpaper.path"
+        printf '%s\n' "$playback_wallpaper" >"$destination_wallpaper_dir/current-live-playback.path"
         start_wallpaper_daemon
         exit 0
     fi
 
-    # Kill any existing mpvpaper
+    # Kill any existing mpvpaper and conflicting daemons
     pkill mpvpaper || true
+    pkill awww-daemon || true
+    pkill swww-daemon || true
 
     log "Applying live wallpaper: $wallpaper"
     ipc_sock="${XDG_RUNTIME_DIR:-/tmp}/mpvpaper-ipc"
-    if mpvpaper -p -f -o "no-audio loop --panscan=1.0 --osd-level=0 --input-ipc-server=$ipc_sock" '*' "$wallpaper" >/dev/null 2>&1; then
+    if mpvpaper -f -o "no-audio loop-file=inf keep-open=yes --panscan=1.0 --hidpi-window-scale=yes --hwdec=no --osd-level=0 --input-ipc-server=$ipc_sock" '*' "$playback_wallpaper" >"$state_dir/mpvpaper.log" 2>&1; then
         log "live wallpaper applied: $wallpaper"
+        printf '%s\n' "$wallpaper" >"$destination_wallpaper_dir/current-wallpaper.path"
+        printf '%s\n' "$playback_wallpaper" >"$destination_wallpaper_dir/current-live-playback.path"
+        printf '%s\n' "$live_options_version" >"$destination_wallpaper_dir/current-live-options.version"
         start_wallpaper_daemon
     else
         notify "Errore nell'avvio di mpvpaper"
@@ -138,7 +233,7 @@ else
 fi
 
 if [[ -x "$effects_script" ]]; then
-    "$effects_script" "$wallpaper" || log "wallpaper_effects failed: $wallpaper"
+    ANTO426_WALLPAPER_EFFECTS_EXPECTED="$wallpaper" "$effects_script" "$wallpaper" || log "wallpaper_effects failed: $wallpaper"
 else
     log "wallpaper_effects not executable: $effects_script"
 fi

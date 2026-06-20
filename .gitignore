@@ -2,3 +2,5 @@ __pycache__/
 *.py[cod]
 *.bak
 *.save
+.config/anto426/wallpaper_daemon
+.config/anto426/widgets_core

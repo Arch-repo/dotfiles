@@ -5,6 +5,8 @@ if pgrep -x rofi >/dev/null; then
     pkill -x rofi
 fi
 
+export PATH="$HOME/.config/anto426/bin:$PATH"
+
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 export ANTO426_MENU_DIR="$SCRIPT_DIR/control_menu.d"
 

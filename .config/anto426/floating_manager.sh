@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -uo pipefail
+export PATH="$HOME/.config/anto426/bin:$PATH"
 
 THEME="$HOME/.config/rofi/control_menu.rasi"
 padding="${ANTO426_FLOATING_PADDING:-32}"

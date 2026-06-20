@@ -38,68 +38,52 @@ tooltip label {
 }
 
 /* =============================================================================
-   Floating Capsule System
+   Minimalist Transparent Layout
    ============================================================================= */
 
 #workspaces,
 #custom-clock,
 #custom-background-apps,
+#hardware,
 #status,
 #tools,
 #custom-power {
-    background: @panel-bg;
-    border: 1px solid @border-soft;
-    border-radius: 14px;
+    background: transparent;
+    border: none;
     margin: 5px 4px;
-    box-shadow: 0 3px 10px @shadow-soft;
-}
-
-/* Global Hover glow for all capsules */
-#workspaces:hover,
-#custom-clock:hover,
-#custom-background-apps:hover,
-#status:hover,
-#tools:hover {
-    border-color: @accent-strong;
-    background: @panel-bg-hover;
-    box-shadow: 0 6px 16px @accent-soft, 0 4px 12px @shadow-medium;
+    box-shadow: none;
 }
 
 /* Left - Workspaces */
 #workspaces {
     margin-left: 12px;
-    padding: 0 4px;
+    padding: 0;
 }
 
 #workspaces button {
-    color: alpha(@foreground, 0.55);
+    color: alpha(@foreground, 0.45);
     background: transparent;
-    border: 1px solid transparent;
-    margin: 3px 2px;
+    border: none;
+    margin: 3px 3px;
     padding: 0;
-    min-width: 28px;
+    min-width: 24px;
     min-height: 28px;
-    border-radius: 10px;
 }
 
 #workspaces button:hover {
     color: @foreground;
-    background: @item-bg-hover;
-    border-color: @accent-strong;
+    background: transparent;
 }
 
 #workspaces button.active {
-    color: @foreground;
-    background: @item-bg-active;
-    border-color: @accent-strong;
+    color: @accent;
+    background: transparent;
     font-weight: 700;
-    box-shadow: 0 0 6px @accent-soft;
 }
 
 #workspaces button.urgent {
     color: @red;
-    background: alpha(@red, 0.12);
-    border-color: alpha(@red, 0.45);
+    background: transparent;
 }
 
 /* Center - Clock */
@@ -117,15 +101,15 @@ tooltip label {
 
 #custom-background-apps.active {
     color: @accent;
-    border-color: @accent-strong;
 }
 
 #custom-background-apps.empty {
     color: alpha(@foreground, 0.4);
 }
 
-/* Right - Status & Tools Groups */
+/* Right - Status, Hardware & Tools Groups */
 #status,
+#hardware,
 #tools {
     padding: 0 6px;
 }
@@ -135,15 +119,18 @@ tooltip label {
 #status #bluetooth,
 #status #pulseaudio,
 #status #battery,
+#hardware #cpu,
+#hardware #memory,
+#hardware #temperature,
 #tools #custom-keyboard,
 #tools #custom-notifications,
 #tools #custom-screenshot,
 #tools #custom-control {
     background: transparent;
-    border: 1px solid transparent;
-    border-radius: 10px;
-    margin: 3px 2px;
+    border: none;
+    margin: 3px 6px;
     min-height: 28px;
+    color: alpha(@foreground, 0.75);
 }
 
 #status #network,
@@ -157,17 +144,18 @@ tooltip label {
 
 #status #pulseaudio,
 #status #battery,
+#hardware #cpu,
+#hardware #memory,
+#hardware #temperature,
 #tools #custom-keyboard {
-    padding: 0 8px;
+    padding: 0 4px;
 }
 
-/* Individual Module Hover highlight inside the capsules */
+/* Individual Module Hover highlight (no glow, no background) */
 #status > widget > *:hover,
+#hardware > widget > *:hover,
 #tools > widget > *:hover {
-    background: @item-bg-hover;
-    border-color: @accent-strong;
-    color: @foreground;
-    box-shadow: 0 0 6px @accent-soft;
+    color: @accent;
 }
 
 /* Soft Accent overrides on Hover for critical actions */
@@ -220,7 +208,65 @@ tooltip label {
 
 #custom-power:hover {
     color: @red;
-    background: alpha(@red, 0.08);
-    border-color: alpha(@red, 0.35);
-    box-shadow: 0 4px 12px alpha(@red, 0.15);
+}
+
+/* =============================================================================
+   Premium Desktop Animations (Keyframes & Effects)
+   ============================================================================= */
+
+
+
+/* Pulsing Active Workspace */
+@keyframes workspace-glow {
+    0% {
+        color: alpha(@accent, 0.65);
+    }
+    50% {
+        color: @accent;
+    }
+    100% {
+        color: alpha(@accent, 0.65);
+    }
+}
+
+#workspaces button.active {
+    animation: workspace-glow 2.5s infinite ease-in-out;
+}
+
+/* Pulsing Background Apps */
+@keyframes apps-glow {
+    0% {
+        opacity: 0.65;
+    }
+    50% {
+        opacity: 1.0;
+    }
+    100% {
+        opacity: 0.65;
+    }
+}
+
+#custom-background-apps.active {
+    animation: apps-glow 3s infinite ease-in-out;
+}
+
+
+/* Critical Battery Heartbeat Pulse */
+@keyframes battery-heartbeat {
+    0% {
+        color: @red;
+        opacity: 0.6;
+    }
+    50% {
+        color: @red;
+        opacity: 1.0;
+    }
+    100% {
+        color: @red;
+        opacity: 0.6;
+    }
+}
+
+#status #battery.critical {
+    animation: battery-heartbeat 1.4s infinite ease-in-out;
 }

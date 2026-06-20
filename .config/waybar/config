@@ -3,7 +3,8 @@
   "height": 42,
   "spacing": 4,
   "modules-left": [
-    "hyprland/workspaces"
+    "hyprland/workspaces",
+    "group/hardware"
   ],
   "modules-center": [
     "custom/clock"
@@ -146,6 +147,31 @@
       "custom/notifications",
       "custom/screenshot",
       "custom/control"
+    ]
+  },
+  "cpu": {
+    "format": "󰻠 {usage}%",
+    "interval": 2,
+    "tooltip": true
+  },
+  "memory": {
+    "format": "󰍛 {percentage}%",
+    "interval": 2,
+    "tooltip": true,
+    "tooltip-format": "Memoria: {used:0.1f}GiB / {total:0.1f}GiB ({percentage}%)"
+  },
+  "temperature": {
+    "critical-threshold": 80,
+    "format": " {temperatureC}°C",
+    "format-critical": " {temperatureC}°C",
+    "tooltip": false
+  },
+  "group/hardware": {
+    "orientation": "horizontal",
+    "modules": [
+      "cpu",
+      "memory",
+      "temperature"
     ]
   }
 }

@@ -132,6 +132,35 @@ if [[ -z "$source_wallpaper_path" || ! -f "$source_wallpaper_path" ]]; then
     exit 0
 fi
 
+normalize_path() {
+    readlink -f "$1" 2>/dev/null || printf '%s' "$1"
+}
+
+source_wallpaper_path="$(normalize_path "$source_wallpaper_path")"
+effects_expected="${ANTO426_WALLPAPER_EFFECTS_EXPECTED:-}"
+if [[ -n "$effects_expected" ]]; then
+    effects_expected="$(normalize_path "$effects_expected")"
+fi
+
+effects_job_is_stale() {
+    local active_wallpaper
+
+    [[ -n "$effects_expected" ]] || return 1
+    active_wallpaper="$(cat "$destination_wallpaper_dir/current-wallpaper.path" 2>/dev/null || true)"
+    [[ -n "$active_wallpaper" ]] || return 1
+    active_wallpaper="$(normalize_path "$active_wallpaper")"
+    [[ "$active_wallpaper" != "$effects_expected" ]]
+}
+
+exit_if_stale_effects_job() {
+    if effects_job_is_stale; then
+        log "Skipping stale wallpaper effects: expected=$effects_expected active=$(cat "$destination_wallpaper_dir/current-wallpaper.path" 2>/dev/null || true)"
+        exit 0
+    fi
+}
+
+exit_if_stale_effects_job
+
 # Rileva se il file è un video
 is_video=false
 mime_type="$(file --mime-type -b "$source_wallpaper_path" 2>/dev/null || true)"
@@ -490,6 +519,7 @@ trap 'rm -rf "$tmp_dir"' EXIT
 
 log "Updating theme from: $current_wallpaper_path ($canvas_size)"
 
+exit_if_stale_effects_job
 make_cover_image "$current_wallpaper_path" "$canvas_size" "$destination_wallpaper_dir/normal.png"
 printf '%s\n' "$source_wallpaper_path" >"$destination_wallpaper_dir/current-wallpaper.path"
 
@@ -508,6 +538,7 @@ pid_boot=$!
 
 wait $pid_session $pid_app $pid_boot
 
+exit_if_stale_effects_job
 
 pkill -SIGUSR2 waybar 2>/dev/null || true
 swaync-client -rs >/dev/null 2>&1 || true
