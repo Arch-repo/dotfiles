@@ -1,6 +1,6 @@
 /* =============================================================================
    ANTO426 ROFI CONTROL SURFACE
-   Compact glass theme shared by control menus, tools and utility dialogs.
+   Sleek, transparent, minimalist vertical list theme.
    ============================================================================= */
 
 configuration {
@@ -22,31 +22,30 @@ configuration {
     anchor:           center;
     x-offset:         0px;
     y-offset:         0px;
-    width:            500px;
-    padding:          18px;
+    width:            420px;
+    padding:          16px;
     border:           1px;
     border-color:     @border-medium;
-    border-radius:    24px;
+    border-radius:    18px;
     background-color: @panel-bg;
 }
 
 #mainbox {
-    spacing:          14px;
+    spacing:          12px;
     background-color: transparent;
 }
 
 #inputbar {
     children:         [ prompt, entry ];
-    spacing:          12px;
-    padding:          8px 14px;
+    spacing:          10px;
+    padding:          6px 12px;
     border:           0px 0px 1px 0px;
     border-color:     @border-soft;
-    border-radius:    0px;
     background-color: transparent;
 }
 
 #prompt {
-    padding:          5px 0px;
+    padding:          2px 0px;
     background-color: transparent;
     text-color:       @accent;
     font:             "JetBrainsMono Nerd Font Bold 11";
@@ -68,7 +67,8 @@ configuration {
 #message {
     enabled:          true;
     padding:          10px 12px;
-    border:           0px;
+    border:           1px;
+    border-color:     @border-soft;
     border-radius:    10px;
     background-color: @item-bg;
 }
@@ -79,27 +79,24 @@ configuration {
     background-color: transparent;
     text-color:       @foreground;
     font:             "JetBrainsMono Nerd Font Medium 10";
-    line-spacing:     4px;
+    line-spacing:     3px;
 }
 
 #listview {
     columns:          1;
-    lines:            10;
+    lines:            8;
     fixed-height:     false;
     border:           0px;
-    spacing:          7px;
-    padding:          1px;
+    spacing:          5px;
+    padding:          0px;
     scrollbar:        false;
     background-color: transparent;
 }
 
 #element {
-    children:         [ element-icon, element-text ];
     orientation:      horizontal;
-    border:           1px;
-    border-color:     transparent;
-    border-radius:    14px;
-    padding:          10px 13px;
+    border-radius:    10px;
+    padding:          8px 12px;
     background-color: transparent;
     text-color:       @foreground;
 }
@@ -115,64 +112,30 @@ configuration {
 }
 
 #element.normal.active {
-    background-color: @item-bg-hover;
-    text-color:       @foreground;
-    border-color:     @border-medium;
+    background-color: transparent;
+    text-color:       @accent;
 }
 
 #element.alternate.active {
-    background-color: @item-bg-hover;
-    text-color:       @foreground;
-    border-color:     @border-medium;
-}
-
-#element.normal.urgent {
-    background-color: @urgent-background;
-    text-color:       @urgent-foreground;
-}
-
-#element.alternate.urgent {
-    background-color: @urgent-background;
-    text-color:       @urgent-foreground;
+    background-color: transparent;
+    text-color:       @accent;
 }
 
 #element.selected.normal {
-    background-color: @item-bg-active;
-    text-color:       @foreground;
-    border-color:     @accent-strong;
+    background-color: @item-bg-hover;
+    text-color:       @accent;
 }
 
 #element.selected.active {
-    background-color: @accent-strong;
-    text-color:       @foreground;
-    border-color:     @accent-strong;
-}
-
-#element.selected.urgent {
-    background-color: @selected-urgent-background;
-    text-color:       @foreground;
-    border-color:     @selected-urgent-background;
-}
-
-#element-icon {
-    size:             25px;
-    margin:           0px 11px 0px 0px;
-    background-color: transparent;
+    background-color: @item-bg-active;
+    text-color:       @accent;
 }
 
 #element-text {
     expand:           true;
     background-color: transparent;
     text-color:       inherit;
-    font:             "JetBrainsMono Nerd Font SemiBold 11";
+    font:             "JetBrainsMono Nerd Font Medium 11";
     horizontal-align: 0.0;
     vertical-align:   0.5;
-}
-
-#scrollbar {
-    width:            4px;
-    border:           0px;
-    handle-width:     4px;
-    padding:          0px 0px 0px 4px;
-    handle-color:     @accent-strong;
 }
