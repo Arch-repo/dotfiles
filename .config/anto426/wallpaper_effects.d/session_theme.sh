@@ -1287,7 +1287,7 @@ write_vscode_theme_json() {
     "enumMember": "$accent",
     "function": "$accent",
     "interface": "$green",
-    "keyword": "$accent",
+    "keyword": "$purple",
     "macro": "$orange",
     "method": "$accent",
     "namespace": "$muted",
@@ -1303,14 +1303,14 @@ write_vscode_theme_json() {
     {
       "scope": ["comment", "punctuation.definition.comment"],
       "settings": {
-        "foreground": "$muted",
+        "foreground": "$gray",
         "fontStyle": "italic"
       }
     },
     {
       "scope": ["keyword", "storage", "storage.type", "keyword.operator.expression"],
       "settings": {
-        "foreground": "$accent"
+        "foreground": "$purple"
       }
     },
     {
@@ -1477,6 +1477,8 @@ write_vscode_user_settings() {
                 ANTO426_YELLOW="$yellow" \
                 ANTO426_GREEN="$green" \
                 ANTO426_PINK="$pink" \
+                ANTO426_PURPLE="$purple" \
+                ANTO426_GRAY="$gray" \
                 node - "$settings_file" "$vscode_theme_name" "$generated_theme" <<'NODE'
 const fs = require('fs')
 const [settingsPath, themeName, themePath] = process.argv.slice(2)
@@ -1632,13 +1634,13 @@ tokenColorCustomizations[scopedTheme] = {
     {
       scope: ['comment', 'punctuation.definition.comment'],
       settings: {
-        foreground: process.env.ANTO426_MUTED,
+        foreground: process.env.ANTO426_GRAY,
         fontStyle: 'italic'
       }
     },
     {
       scope: ['keyword', 'storage', 'storage.type', 'keyword.operator.expression'],
-      settings: { foreground: process.env.ANTO426_ACCENT }
+      settings: { foreground: process.env.ANTO426_PURPLE }
     },
     {
       scope: ['entity.name.function', 'support.function', 'variable.function'],
@@ -1698,7 +1700,7 @@ semanticTokenColorCustomizations[scopedTheme] = {
     enumMember: process.env.ANTO426_ACCENT,
     function: process.env.ANTO426_ACCENT,
     interface: process.env.ANTO426_GREEN,
-    keyword: process.env.ANTO426_ACCENT,
+    keyword: process.env.ANTO426_PURPLE,
     macro: process.env.ANTO426_ORANGE,
     method: process.env.ANTO426_ACCENT,
     namespace: process.env.ANTO426_MUTED,
