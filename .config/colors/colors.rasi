@@ -30,15 +30,15 @@
     accent-alpha: rgba ( 113, 130, 191, 42 % );
     border: #797b9d;
     border-alpha: rgba ( 121, 123, 157, 34 % );
-    pink: #9586b7;
-    purple: #7b7bb6;
-    red: #bf7a97;
-    orange: #a88a8b;
-    yellow: #a89eb7;
-    green: #8e9aac;
+    pink: #d8b0dd;
+    purple: #b49beb;
+    red: #d682a7;
+    orange: #e2a78a;
+    yellow: #e9d6ae;
+    green: #98cda1;
     blue: @accent;
     cyan: @muted;
-    gray: #4e4d62;
+    gray: #6b6c83;
 
     active-background: @select;
     urgent-background: @red;

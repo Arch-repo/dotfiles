@@ -31,12 +31,12 @@
 @define-color accent-alpha     @accent-strong;
 @define-color border-alpha     @border-medium;
 
-@define-color pink       #9586b7;
-@define-color purple     #7b7bb6;
-@define-color red        #bf7a97;
-@define-color orange     #a88a8b;
-@define-color yellow     #a89eb7;
-@define-color green      #8e9aac;
+@define-color pink       #d8b0dd;
+@define-color purple     #b49beb;
+@define-color red        #d682a7;
+@define-color orange     #e2a78a;
+@define-color yellow     #e9d6ae;
+@define-color green      #98cda1;
 @define-color blue       @accent;
 @define-color cyan       @muted;
-@define-color gray       #4e4d62;
+@define-color gray       #6b6c83;
