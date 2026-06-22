@@ -2,12 +2,14 @@
 set -uo pipefail
 export PATH="$HOME/.config/anto426/bin:$PATH"
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 DATA_DIR="${XDG_DATA_HOME:-$HOME/.local/share}/anto426"
 CONFIG_FILE="$DATA_DIR/sync.env"
 CALENDAR_DIR="$DATA_DIR/calendar"
 GCAL_ICS_FILE="$CALENDAR_DIR/google.ics"
 GCAL_EVENTS_FILE="$CALENDAR_DIR/google_events.json"
 GCAL_REMINDER_STATE_FILE="$CALENDAR_DIR/google_reminders.sent"
+REMOTE_SYNC_CORE="$SCRIPT_DIR/remote_sync_core"
 THEME_SETUP="$HOME/.config/rofi/control_setup.rasi"
 DAEMON_LOCK_DIR="${XDG_RUNTIME_DIR:-/tmp}/anto426-remote-sync.lock"
 
@@ -42,6 +44,26 @@ shell_quote() {
     printf '%s' "$quoted"
 }
 
+ensure_neofetch_config() {
+    if ! grep -q '^export ANTO426_NEOFETCH_IMAGES=' "$CONFIG_FILE" 2>/dev/null; then
+        cat >> "$CONFIG_FILE" <<'EOF'
+
+# Fastfetch/neofetch terminal logo behavior.
+# 1 = enable images from ~/Pictures/neofetch.
+export ANTO426_NEOFETCH_IMAGES=1
+EOF
+    fi
+
+    if grep -q '^export ANTO426_NEOFETCH_AUTO_SYNC=' "$CONFIG_FILE" 2>/dev/null; then
+        sed -i 's/^export ANTO426_NEOFETCH_AUTO_SYNC=.*/export ANTO426_NEOFETCH_AUTO_SYNC=0/' "$CONFIG_FILE"
+    else
+        cat >> "$CONFIG_FILE" <<'EOF'
+# 0 = never repopulate ~/Pictures/neofetch from sync scripts.
+export ANTO426_NEOFETCH_AUTO_SYNC=0
+EOF
+    fi
+}
+
 ensure_config() {
     mkdir -p "$DATA_DIR" "$CALENDAR_DIR"
 
@@ -61,6 +83,8 @@ ensure_config() {
 # export ANTO426_SYNC_INTERVAL=900
 EOF
     fi
+
+    ensure_neofetch_config
 }
 
 load_config() {
@@ -71,7 +95,7 @@ load_config() {
 
 notify_calendar_due() {
     [[ -s "$GCAL_EVENTS_FILE" ]] || return 0
-    command -v python3 >/dev/null 2>&1 || return 0
+    [[ -x "$REMOTE_SYNC_CORE" ]] || return 0
     command -v notify-send >/dev/null 2>&1 || return 0
 
     local lookback timezone
@@ -79,97 +103,7 @@ notify_calendar_due() {
     [[ "$lookback" =~ ^[0-9]+$ ]] || lookback=900
     timezone="${TZ:-Europe/Rome}"
 
-    python3 - "$GCAL_EVENTS_FILE" "$GCAL_REMINDER_STATE_FILE" "$lookback" "$timezone" <<'PY' |
-import json
-import sys
-from datetime import datetime, time, timedelta
-from pathlib import Path
-from zoneinfo import ZoneInfo
-
-events_path, state_path, lookback_seconds, tz_name = sys.argv[1:5]
-try:
-    lookback_seconds = int(lookback_seconds)
-except ValueError:
-    lookback_seconds = 900
-lookback_seconds = min(max(lookback_seconds, 60), 7200)
-
-try:
-    local_tz = ZoneInfo(tz_name)
-except Exception:
-    local_tz = ZoneInfo("Europe/Rome")
-
-def clean(value, limit=180):
-    text = str(value or "").replace("\t", " ").replace("\r", " ").replace("\n", " ")
-    text = " ".join(text.split())
-    if len(text) > limit:
-        return text[: limit - 3].rstrip() + "..."
-    return text
-
-try:
-    with open(events_path, "r", encoding="utf-8") as fh:
-        events = json.load(fh)
-except Exception:
-    sys.exit(0)
-
-state = Path(state_path)
-try:
-    sent = {line.strip() for line in state.read_text(encoding="utf-8").splitlines() if line.strip()}
-except Exception:
-    sent = set()
-
-now = datetime.now(local_tz)
-recent_keys = set()
-new_keys = set()
-notifications = []
-
-for event in events if isinstance(events, list) else []:
-    if not isinstance(event, dict):
-        continue
-
-    date_text = clean(event.get("date"), 20)
-    start_text = clean(event.get("start"), 12)
-    title = clean(event.get("title") or "Event", 120)
-    is_all_day = bool(event.get("all_day"))
-
-    try:
-        event_date = datetime.strptime(date_text, "%Y-%m-%d").date()
-        if is_all_day:
-            start_dt = datetime.combine(event_date, time(hour=9), local_tz)
-            start_label = "All day"
-        else:
-            if not start_text:
-                continue
-            start_dt = datetime.strptime(f"{date_text} {start_text}", "%Y-%m-%d %H:%M").replace(tzinfo=local_tz)
-            end_text = clean(event.get("end"), 12)
-            start_label = f"{start_text}-{end_text}" if end_text else start_text
-    except Exception:
-        continue
-
-    key = f"{event.get('id') or title}|{date_text}|{start_text or 'all-day'}"
-    if start_dt >= now - timedelta(days=3):
-        recent_keys.add(key)
-
-    elapsed = (now - start_dt).total_seconds()
-    if key in sent or elapsed < 0 or elapsed > lookback_seconds:
-        continue
-
-    description = clean(event.get("description"), 160)
-    body = f"{start_label} - {title}"
-    if description:
-        body = f"{body} - {description}"
-    notifications.append(("Calendar", body[:500], key))
-    new_keys.add(key)
-
-try:
-    state.parent.mkdir(parents=True, exist_ok=True)
-    kept = (sent & recent_keys) | new_keys
-    state.write_text("\n".join(sorted(kept)) + ("\n" if kept else ""), encoding="utf-8")
-except Exception:
-    pass
-
-for title, body, _key in notifications:
-    print(f"{title}\t{body}")
-PY
+    "$REMOTE_SYNC_CORE" due "$GCAL_EVENTS_FILE" "$GCAL_REMINDER_STATE_FILE" "$lookback" "$timezone" |
     while IFS=$'\t' read -r title body; do
         [[ -n "$title" ]] || continue
         notify-send -a "anto426 Calendar" -i "x-office-calendar" "$title" "$body" 2>/dev/null || true
@@ -201,263 +135,17 @@ sync_calendar() {
         return 1
     fi
 
-    python3 - "$tmp" "$GCAL_EVENTS_FILE" "$past_days" "$future_days" "$timezone" <<'PY'
-import json
-import re
-import sys
-from datetime import date, datetime, time, timedelta, timezone
-from zoneinfo import ZoneInfo
+    if [[ ! -x "$REMOTE_SYNC_CORE" ]]; then
+        notify "remote_sync_core non compilato. Esegui ~/.config/anto426/install_archpkg.sh"
+        rm -f "$tmp"
+        return 1
+    fi
 
-ics_path, out_path, past_days, future_days, local_tz_name = sys.argv[1:6]
-past_days = int(past_days)
-future_days = int(future_days)
-local_tz = ZoneInfo(local_tz_name)
-window_start = datetime.combine(date.today() - timedelta(days=past_days), time.min, local_tz)
-window_end = datetime.combine(date.today() + timedelta(days=future_days), time.max, local_tz)
-
-def unfold(lines):
-    out = []
-    for line in lines:
-        line = line.rstrip("\r\n")
-        if line.startswith((" ", "\t")) and out:
-            out[-1] += line[1:]
-        else:
-            out.append(line)
-    return out
-
-def split_prop(line):
-    if ":" not in line:
-        return None, {}, ""
-    left, value = line.split(":", 1)
-    parts = left.split(";")
-    name = parts[0].upper()
-    params = {}
-    for part in parts[1:]:
-        if "=" in part:
-            key, val = part.split("=", 1)
-            params[key.upper()] = val.strip('"')
-    return name, params, value
-
-def unescape_text(value):
-    return (
-        value.replace("\\n", " ")
-        .replace("\\N", " ")
-        .replace("\\,", ",")
-        .replace("\\;", ";")
-        .replace("\\\\", "\\")
-        .strip()
-    )
-
-def parse_dt(value, params):
-    if params.get("VALUE") == "DATE" or re.fullmatch(r"\d{8}", value):
-        return datetime.strptime(value[:8], "%Y%m%d").date(), True
-
-    raw = value
-    tz = local_tz
-    if raw.endswith("Z"):
-        tz = timezone.utc
-        raw = raw[:-1]
-    elif "TZID" in params:
-        try:
-            tz = ZoneInfo(params["TZID"])
-        except Exception:
-            tz = local_tz
-
-    fmt = "%Y%m%dT%H%M%S" if len(raw) >= 15 else "%Y%m%dT%H%M"
-    dt = datetime.strptime(raw[:15] if len(raw) >= 15 else raw, fmt).replace(tzinfo=tz)
-    return dt.astimezone(local_tz), False
-
-def parse_until(value):
-    if not value:
-        return None
-    try:
-        parsed, all_day = parse_dt(value, {})
-        if all_day:
-            return datetime.combine(parsed, time.max, local_tz)
-        return parsed
-    except Exception:
-        return None
-
-def parse_rrule(value):
-    rule = {}
-    for part in value.split(";"):
-        if "=" in part:
-            key, val = part.split("=", 1)
-            rule[key.upper()] = val
-    return rule
-
-def add_months(dt, months):
-    month = dt.month - 1 + months
-    year = dt.year + month // 12
-    month = month % 12 + 1
-    day = min(dt.day, [31, 29 if year % 4 == 0 and (year % 100 != 0 or year % 400 == 0) else 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
-    return dt.replace(year=year, month=month, day=day)
-
-def expand_starts(start, rule):
-    if not rule:
-        return [start]
-
-    freq = rule.get("FREQ", "").upper()
-    interval = max(int(rule.get("INTERVAL", "1")), 1)
-    count_limit = int(rule.get("COUNT", "1000"))
-    until = parse_until(rule.get("UNTIL", ""))
-    starts = []
-    seen = 0
-    current = start
-    max_seen = min(count_limit, 1500)
-
-    def allowed(dt):
-        if until and dt > until:
-            return False
-        return True
-
-    if freq == "DAILY":
-        while seen < max_seen and current <= window_end:
-            if allowed(current):
-                starts.append(current)
-            current += timedelta(days=interval)
-            seen += 1
-    elif freq == "WEEKLY":
-        day_map = {"MO": 0, "TU": 1, "WE": 2, "TH": 3, "FR": 4, "SA": 5, "SU": 6}
-        bydays = [day_map[d] for d in rule.get("BYDAY", "").split(",") if d in day_map]
-        if not bydays:
-            bydays = [start.weekday()]
-        week_start = start - timedelta(days=start.weekday())
-        while seen < max_seen and week_start <= window_end:
-            for day_num in bydays:
-                candidate = (week_start + timedelta(days=day_num)).replace(
-                    hour=start.hour, minute=start.minute, second=start.second, microsecond=start.microsecond
-                )
-                if candidate >= start and allowed(candidate):
-                    starts.append(candidate)
-            week_start += timedelta(weeks=interval)
-            seen += len(bydays)
-    elif freq == "MONTHLY":
-        bymonthdays = [int(x) for x in rule.get("BYMONTHDAY", "").split(",") if x.lstrip("-").isdigit()]
-        while seen < max_seen and current <= window_end:
-            candidates = [current]
-            if bymonthdays:
-                candidates = []
-                for monthday in bymonthdays:
-                    try:
-                        candidates.append(current.replace(day=monthday))
-                    except ValueError:
-                        pass
-            for candidate in candidates:
-                if candidate >= start and allowed(candidate):
-                    starts.append(candidate)
-            current = add_months(current, interval)
-            seen += max(len(candidates), 1)
-    elif freq == "YEARLY":
-        current_year = start.year
-        while seen < max_seen and current_year <= window_end.year:
-            try:
-                candidate = start.replace(year=current_year)
-            except ValueError:
-                current_year += interval
-                seen += 1
-                continue
-            if candidate >= start and allowed(candidate):
-                starts.append(candidate)
-            current_year += interval
-            seen += 1
-    else:
-        starts.append(start)
-
-    return starts
-
-with open(ics_path, "r", encoding="utf-8", errors="replace") as fh:
-    lines = unfold(fh.readlines())
-
-events = []
-current = None
-for line in lines:
-    name, params, value = split_prop(line)
-    if name == "BEGIN" and value == "VEVENT":
-        current = {}
-    elif name == "END" and value == "VEVENT" and current is not None:
-        events.append(current)
-        current = None
-    elif current is not None and name:
-        if name in ("DTSTART", "DTEND"):
-            current[name] = (value, params)
-        elif name in ("UID", "SUMMARY", "DESCRIPTION", "LOCATION", "URL", "RRULE"):
-            current[name] = value
-
-out = []
-for event in events:
-    if "DTSTART" not in event:
-        continue
-
-    try:
-        start, all_day = parse_dt(*event["DTSTART"])
-    except Exception:
-        continue
-
-    end = None
-    if "DTEND" in event:
-        try:
-            end, _ = parse_dt(*event["DTEND"])
-        except Exception:
-            end = None
-
-    if all_day:
-        start_dt = datetime.combine(start, time.min, local_tz)
-        end_dt = datetime.combine(end if isinstance(end, date) else start + timedelta(days=1), time.min, local_tz)
-    else:
-        start_dt = start
-        end_dt = end if isinstance(end, datetime) else start_dt + timedelta(hours=1)
-
-    duration = max(end_dt - start_dt, timedelta(minutes=1))
-    rule = parse_rrule(event.get("RRULE", ""))
-    title = unescape_text(event.get("SUMMARY", "Event"))
-    description = unescape_text(event.get("DESCRIPTION", ""))
-    location = unescape_text(event.get("LOCATION", ""))
-    if location and location not in description:
-        description = (description + "  " if description else "") + f"Location: {location}"
-    uid = unescape_text(event.get("UID", title))
-    url = unescape_text(event.get("URL", ""))
-
-    for occ_start in expand_starts(start_dt, rule):
-        occ_end = occ_start + duration
-        if occ_end < window_start or occ_start > window_end:
-            continue
-
-        if all_day:
-            current_day = occ_start.date()
-            last_day = max(current_day, (occ_end - timedelta(seconds=1)).date())
-            while current_day <= last_day:
-                if window_start.date() <= current_day <= window_end.date():
-                    out.append({
-                        "id": f"gcal-{uid}-{current_day.isoformat()}",
-                        "source": "google",
-                        "date": current_day.isoformat(),
-                        "start": "",
-                        "end": "",
-                        "title": title,
-                        "description": description,
-                        "url": url,
-                        "all_day": True,
-                    })
-                current_day += timedelta(days=1)
-        else:
-            out.append({
-                "id": f"gcal-{uid}-{occ_start.isoformat()}",
-                "source": "google",
-                "date": occ_start.date().isoformat(),
-                "start": occ_start.strftime("%H:%M"),
-                "end": occ_end.strftime("%H:%M"),
-                "title": title,
-                "description": description,
-                "url": url,
-                "all_day": False,
-            })
-
-out.sort(key=lambda item: (item["date"], item["start"] or "00:00", item["title"]))
-with open(out_path, "w", encoding="utf-8") as fh:
-    json.dump(out, fh, ensure_ascii=False, indent=2)
-    fh.write("\n")
-PY
+    if ! "$REMOTE_SYNC_CORE" sync-calendar "$tmp" "$GCAL_EVENTS_FILE" "$past_days" "$future_days" "$timezone"; then
+        notify "Google Calendar sync failed"
+        rm -f "$tmp"
+        return 1
+    fi
 
     mv "$tmp" "$GCAL_ICS_FILE"
     count="$(jq 'length' "$GCAL_EVENTS_FILE" 2>/dev/null || printf '0')"
@@ -475,6 +163,9 @@ save_config() {
     local past_days="$2"
     local future_days="$3"
     local interval="$4"
+    local neofetch_images="${ANTO426_NEOFETCH_IMAGES:-1}"
+    local neofetch_auto_sync="0"
+    local neofetch_dir="${ANTO426_NEOFETCH_DIR:-}"
 
     mkdir -p "$DATA_DIR" "$CALENDAR_DIR"
     cat > "$CONFIG_FILE" <<EOF
@@ -489,7 +180,17 @@ export ANTO426_GCAL_SYNC_FUTURE_DAYS=$(shell_quote "$future_days")
 
 # Daemon execution interval in seconds.
 export ANTO426_SYNC_INTERVAL=$(shell_quote "$interval")
+
+# Fastfetch/neofetch terminal logo behavior.
+# 1 = enable images from ~/Pictures/neofetch.
+export ANTO426_NEOFETCH_IMAGES=$(shell_quote "$neofetch_images")
+# 0 = never repopulate ~/Pictures/neofetch from sync scripts.
+export ANTO426_NEOFETCH_AUTO_SYNC=$(shell_quote "$neofetch_auto_sync")
 EOF
+
+    if [[ -n "$neofetch_dir" ]]; then
+        printf 'export ANTO426_NEOFETCH_DIR=%s\n' "$(shell_quote "$neofetch_dir")" >> "$CONFIG_FILE"
+    fi
 }
 
 config_status_message() {

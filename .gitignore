@@ -4,4 +4,6 @@ __pycache__/
 *.save
 .config/anto426/wallpaper_daemon
 .config/anto426/widgets_core
+.config/anto426/keyboard_status_json
+.config/anto426/remote_sync_core
 .config/anto426/osd/osd

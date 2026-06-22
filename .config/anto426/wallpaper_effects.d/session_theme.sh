@@ -637,10 +637,10 @@ const expandedColors = {
   'menubar.selectionBorder': glass.borderMedium,
   'menu.selectionBorder': c.accent,
   'commandCenter.activeForeground': c.foreground,
-  'commandCenter.activeBackground': glass.surfaceHover,
+  'commandCenter.activeBackground': glass.surfaceSoft,
   'commandCenter.inactiveForeground': c.muted,
-  'commandCenter.inactiveBorder': glass.borderMedium,
-  'commandCenter.activeBorder': c.accent,
+  'commandCenter.inactiveBorder': glass.borderSoft,
+  'commandCenter.activeBorder': glass.borderMedium,
   'commandCenter.debuggingBackground': c.orange,
 
   'notificationCenterHeader.foreground': c.foreground,
@@ -1039,14 +1039,14 @@ EOF
 
 write_vscode_theme_json() {
     local output="$1"
-    local vscode_bg="${background}9e"
-    local vscode_bg_soft="${background}47"
-    local vscode_editor_bg="${background}9e"
+    local vscode_bg="${background}77"
+    local vscode_bg_soft="${background}55"
+    local vscode_editor_bg="${background}77"
     local vscode_bg_clear="${background}00"
     local vscode_base="${base}4d"
-    local vscode_base_strong="${base}9e"
-    local vscode_base_alt="${base_alt}6b"
-    local vscode_surface="${surface}9e"
+    local vscode_base_strong="${base}77"
+    local vscode_base_alt="${base_alt}55"
+    local vscode_surface="${surface}77"
 
     cat >"$output" <<EOF
 {
@@ -1078,7 +1078,7 @@ write_vscode_theme_json() {
     "checkbox.background": "$base",
     "checkbox.border": "${border}8c",
     "commandCenter.background": "$vscode_base",
-    "commandCenter.border": "${border}8c",
+    "commandCenter.border": "${border}33",
     "commandCenter.foreground": "$foreground",
     "debugToolBar.background": "$vscode_base_strong",
     "dropdown.background": "$vscode_base",
@@ -1243,7 +1243,7 @@ write_vscode_theme_json() {
     "tab.hoverBackground": "${surface}78",
     "tab.inactiveBackground": "$vscode_bg_soft",
     "tab.inactiveForeground": "$muted",
-    "terminal.ansiBlack": "$background",
+    "terminal.ansiBlack": "#00000000",
     "terminal.ansiBlue": "$accent",
     "terminal.ansiBrightBlack": "$gray",
     "terminal.ansiBrightBlue": "$accent",
@@ -1259,10 +1259,11 @@ write_vscode_theme_json() {
     "terminal.ansiRed": "$red",
     "terminal.ansiWhite": "$foreground",
     "terminal.ansiYellow": "$yellow",
-    "terminal.background": "$vscode_editor_bg",
+    "terminal.background": "#00000000",
     "terminal.border": "${border}55",
     "terminal.foreground": "$foreground",
     "terminal.selectionBackground": "${select}99",
+    "terminal.integrated.enableImages": true,
     "textBlockQuote.background": "$vscode_base",
     "textBlockQuote.border": "${border}8c",
     "textCodeBlock.background": "$vscode_base",
@@ -1590,15 +1591,15 @@ colorCustomizations[scopedTheme] =
   Object.keys(generatedColors).length > 0
     ? generatedColors
     : {
-        'activityBar.background': `${process.env.ANTO426_BACKGROUND}9e`,
-        'breadcrumb.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'activityBar.background': `${process.env.ANTO426_BACKGROUND}77`,
+        'breadcrumb.background': `${process.env.ANTO426_BACKGROUND}77`,
         'commandCenter.background': `${process.env.ANTO426_BASE}4d`,
         'dropdown.background': `${process.env.ANTO426_BASE}4d`,
-        'dropdown.listBackground': `${process.env.ANTO426_BACKGROUND}9e`,
-        'editor.background': `${process.env.ANTO426_BACKGROUND}9e`,
-        'editorGroup.background': `${process.env.ANTO426_BACKGROUND}9e`,
-        'editorGroup.emptyBackground': `${process.env.ANTO426_BACKGROUND}9e`,
-        'editorGroupHeader.tabsBackground': `${process.env.ANTO426_BACKGROUND}9e`,
+        'dropdown.listBackground': `${process.env.ANTO426_BACKGROUND}77`,
+        'editor.background': `${process.env.ANTO426_BACKGROUND}77`,
+        'editorGroup.background': `${process.env.ANTO426_BACKGROUND}77`,
+        'editorGroup.emptyBackground': `${process.env.ANTO426_BACKGROUND}77`,
+        'editorGroupHeader.tabsBackground': `${process.env.ANTO426_BACKGROUND}77`,
         'editorGutter.background': `${process.env.ANTO426_BACKGROUND}00`,
         'editor.foreground': process.env.ANTO426_FOREGROUND,
         'editor.selectionBackground': `${process.env.ANTO426_SELECT}6b`,
@@ -1606,19 +1607,20 @@ colorCustomizations[scopedTheme] =
         'input.background': `${process.env.ANTO426_BASE}4d`,
         'list.activeSelectionBackground': process.env.ANTO426_ACCENT,
         'list.hoverBackground': `${process.env.ANTO426_SURFACE}4d`,
-        'menu.background': `${process.env.ANTO426_BASE}9e`,
+        'menu.background': `${process.env.ANTO426_BASE}77`,
         'minimap.background': `${process.env.ANTO426_BACKGROUND}00`,
-        'panel.background': `${process.env.ANTO426_BACKGROUND}9e`,
-        'quickInput.background': `${process.env.ANTO426_BASE}9e`,
-        'sideBar.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'panel.background': `${process.env.ANTO426_BACKGROUND}77`,
+        'quickInput.background': `${process.env.ANTO426_BASE}77`,
+        'sideBar.background': `${process.env.ANTO426_BACKGROUND}77`,
         'sideBarSectionHeader.background': `${process.env.ANTO426_BASE}4d`,
-        'statusBar.background': `${process.env.ANTO426_SURFACE}9e`,
+        'statusBar.background': `${process.env.ANTO426_SURFACE}77`,
         'tab.activeBackground': `${process.env.ANTO426_BASE}4d`,
-        'tab.inactiveBackground': `${process.env.ANTO426_BACKGROUND}47`,
-        'terminal.background': `${process.env.ANTO426_BACKGROUND}9e`,
+        'tab.inactiveBackground': `${process.env.ANTO426_BACKGROUND}55`,
+        'terminal.background': '#00000000',
+        'terminal.ansiBlack': '#00000000',
         'terminal.foreground': process.env.ANTO426_FOREGROUND,
-        'titleBar.activeBackground': `${process.env.ANTO426_BACKGROUND}9e`,
-        'titleBar.inactiveBackground': `${process.env.ANTO426_BACKGROUND}47`,
+        'titleBar.activeBackground': `${process.env.ANTO426_BACKGROUND}77`,
+        'titleBar.inactiveBackground': `${process.env.ANTO426_BACKGROUND}55`,
         'widget.border': `${process.env.ANTO426_BORDER}57`
       }
 

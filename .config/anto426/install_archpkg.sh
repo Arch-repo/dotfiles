@@ -50,12 +50,12 @@ pacman_packages=(
     pipewire pipewire-pulse wireplumber pavucontrol openbsd-netcat
 
     # Apps used by the dotfiles
-    ghostty nemo gvfs curl jq nodejs npm yarn python htop btop loupe celluloid mpv gnome-text-editor evince
+    ghostty nemo gvfs curl jq nodejs npm yarn htop btop loupe celluloid mpv gnome-text-editor evince
     ffmpeg cava cliphist gnome-characters keepass playerctl wev
 
     # Qt, display manager, and theming
     sddm qt5ct qt6ct qt5-wayland qt6-wayland nwg-look adw-gtk-theme kvantum-qt5
-    sassc gnome-themes-extra
+    sassc gnome-themes-extra gtk3 gtk-layer-shell json-c
 
     # Input method
     fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
@@ -276,7 +276,10 @@ build_anto426_helper() {
     local source_file="$1"
     local output_file="$2"
     local label="$3"
+    local pkg_config_packages="${4:-}"
     local cc_bin="${CC:-cc}"
+    local cflags=""
+    local libs=""
 
     if [[ ! -f "$source_file" ]]; then
         ui_note "Skipping $label build; missing source: $source_file"
@@ -288,7 +291,21 @@ build_anto426_helper() {
         return 0
     fi
 
-    "$cc_bin" -O2 -Wall -Wextra "$source_file" -o "$output_file"
+    if [[ -n "$pkg_config_packages" ]]; then
+        if ! command -v pkg-config >/dev/null 2>&1; then
+            ui_note "Skipping $label build; pkg-config not found."
+            return 1
+        fi
+        if ! pkg-config --exists $pkg_config_packages; then
+            ui_note "Skipping $label build; missing pkg-config packages: $pkg_config_packages"
+            return 1
+        fi
+        cflags="$(pkg-config --cflags $pkg_config_packages)"
+        libs="$(pkg-config --libs $pkg_config_packages)"
+    fi
+
+    # shellcheck disable=SC2086
+    "$cc_bin" -O2 -Wall -Wextra $cflags "$source_file" -o "$output_file" $libs
     chmod 755 "$output_file"
     ui_ok "$label built: $output_file"
 }
@@ -311,6 +328,8 @@ build_anto426_helpers() {
 
     build_anto426_helper "$script_dir/wallpaper_daemon.c" "$script_dir/wallpaper_daemon" "Wallpaper daemon"
     build_anto426_helper "$script_dir/widgets_core.c" "$script_dir/widgets_core" "Widgets core"
+    build_anto426_helper "$script_dir/keyboard_status_json.c" "$script_dir/keyboard_status_json" "Keyboard status JSON helper"
+    build_anto426_helper "$script_dir/remote_sync_core.c" "$script_dir/remote_sync_core" "Remote sync core" "glib-2.0 json-c"
 }
 
 ui_banner

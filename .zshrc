@@ -133,7 +133,10 @@ setopt interactivecomments
 
 # Pokemon startup
 #pokemon-colorscripts --no-title -s -r
-[[ -x "$HOME/neofetch-random.sh" ]] && "$HOME/neofetch-random.sh"
+if [[ -x "$HOME/neofetch-random.sh" ]]; then
+    echo ""
+    "$HOME/neofetch-random.sh"
+fi
 # Initialize Oh-My-Posh
 if command -v oh-my-posh >/dev/null 2>&1; then
     eval "$(oh-my-posh init zsh --config ~/.config/ohmyposh/anto426.omp.json)"

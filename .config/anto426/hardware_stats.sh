@@ -274,6 +274,23 @@ set_fan_pwm() {
     local pwm_path enable_path requested applied rpm source mode pwm
 
     requested="$(clamp_pwm "$value")"
+
+    # Se supportiamo i platform_profile, preferiamoli per i portatili moderni dove il controllo diretto PWM fallisce
+    if [[ -f /sys/firmware/acpi/platform_profile ]] && command -v powerprofilesctl >/dev/null 2>&1; then
+        local profile="balanced"
+        if (( requested < 85 )); then
+            profile="power-saver"
+        elif (( requested >= 170 )); then
+            profile="performance"
+        fi
+        if powerprofilesctl set "$profile"; then
+            local rpm
+            IFS=$'\t' read -r rpm _ < <(fan_stats)
+            notify-send "Ventola" "Profilo $profile applicato. RPM: ${rpm}" 2>/dev/null || true
+            return 0
+        fi
+    fi
+
     if ! IFS=$'\t' read -r pwm_path enable_path < <(fan_control_paths); then
         notify-send "Ventola" "Controllo PWM non disponibile" 2>/dev/null || true
         return 1
@@ -298,6 +315,7 @@ set_fan_pwm() {
         notify-send "Ventola" "Richiesto ${requested}/255, letto ${applied}/255. Firmware o permessi lo stanno limitando." 2>/dev/null || true
     fi
 }
+
 
 fan_slider() {
     local fan_rpm fan_source fan_mode fan_pwm fan_min fan_max fan_target fan_note value
@@ -331,6 +349,20 @@ fan_slider() {
 set_fan_profile() {
     local profile="$1"
     local pwm_path enable_path pwm_value label
+
+    # Se supportiamo i platform_profile, usiamoli direttamente
+    if [[ -f /sys/firmware/acpi/platform_profile ]] && command -v powerprofilesctl >/dev/null 2>&1; then
+        local target_profile="balanced"
+        case "$profile" in
+            quiet|power-saver) target_profile="power-saver" ;;
+            balanced|auto) target_profile="balanced" ;;
+            performance|max) target_profile="performance" ;;
+        esac
+        if powerprofilesctl set "$target_profile"; then
+            notify-send "Ventola" "Profilo termico $target_profile attivato" 2>/dev/null || true
+            return 0
+        fi
+    fi
 
     if ! IFS=$'\t' read -r pwm_path enable_path < <(fan_control_paths); then
         notify-send "Ventola" "Controllo PWM non disponibile" 2>/dev/null || true
@@ -418,12 +450,18 @@ summary_message() {
     uptime="$(uptime -p 2>/dev/null | sed 's/^up //' || printf 'N/A')"
     battery="$(battery_summary)"
 
-    fan_line="Fan raw: ${fan_rpm} RPM (${fan_source}, ${fan_mode}, pwm ${fan_pwm}/255"
-    [[ "$fan_min" != "?" || "$fan_max" != "?" ]] && fan_line+=", min ${fan_min}, max ${fan_max}"
-    [[ "$fan_target" != "?" ]] && fan_line+=", target ${fan_target}"
-    fan_line+=")"
-    if [[ "$fan_note" == "raw-over-max" ]]; then
-        fan_line+=$'\n'"Fan note: firmware reports RPM above its own max, so this is shown as raw sensor data."
+    if [[ -f /sys/firmware/acpi/platform_profile ]]; then
+        local current_prof
+        current_prof="$(cat /sys/firmware/acpi/platform_profile 2>/dev/null || printf 'unknown')"
+        fan_line="Ventola: ${fan_rpm} RPM (Profilo ACPI: $current_prof)"
+    else
+        fan_line="Fan raw: ${fan_rpm} RPM (${fan_source}, ${fan_mode}, pwm ${fan_pwm}/255"
+        [[ "$fan_min" != "?" || "$fan_max" != "?" ]] && fan_line+=", min ${fan_min}, max ${fan_max}"
+        [[ "$fan_target" != "?" ]] && fan_line+=", target ${fan_target}"
+        fan_line+=")"
+        if [[ "$fan_note" == "raw-over-max" ]]; then
+            fan_line+=$'\n'"Fan note: firmware reports RPM above its own max, so this is shown as raw sensor data."
+        fi
     fi
 
     printf 'CPU: %s%%\nRAM: %s GiB / %s GiB (%s%%)\nTemp: %s°C (%s)\n%s\nLoad: %s\nUptime: %s\nBattery: %s' \
@@ -448,7 +486,15 @@ show_menu() {
     choice="$(
         {
             printf '%s\n' "󰈐  Slider ventola"
-            printf '%s\n' "󰈐  Ventola auto"
+            if [[ -f /sys/firmware/acpi/platform_profile ]]; then
+                local current_prof
+                current_prof="$(cat /sys/firmware/acpi/platform_profile 2>/dev/null || printf 'unknown')"
+                printf '%s\n' "󰈐  Profilo: Silenzioso$([[ "$current_prof" == "quiet" || "$current_prof" == "power-saver" ]] && printf " (attivo)")"
+                printf '%s\n' "󰈐  Profilo: Bilanciato$([[ "$current_prof" == "balanced" ]] && printf " (attivo)")"
+                printf '%s\n' "󰈐  Profilo: Prestazioni$([[ "$current_prof" == "performance" ]] && printf " (attivo)")"
+            else
+                printf '%s\n' "󰈐  Ventola auto"
+            fi
             printf '%s\n' "$process_label"
             printf '%s\n' "  Apri sensors"
             printf '%s\n' "󰌢  Apri fastfetch"
@@ -459,6 +505,9 @@ show_menu() {
     case "$choice" in
         *"Slider ventola"*) fan_slider ;;
         *"Ventola auto"*) set_fan_profile auto ;;
+        *"Profilo: Silenzioso"*) set_fan_profile quiet ;;
+        *"Profilo: Bilanciato"*) set_fan_profile balanced ;;
+        *"Profilo: Prestazioni"*) set_fan_profile performance ;;
         *"btop"*) terminal_command "btop" "btop" ;;
         *"htop"*) terminal_command "htop" "htop" ;;
         *"sensors"*) terminal_command "sensors" "watch -n 1 sensors" ;;
@@ -486,12 +535,18 @@ waybar_json() {
         class="warning"
     fi
 
-    fan_tip="Fan raw: ${fan_rpm} RPM (${fan_source}, ${fan_mode}, pwm ${fan_pwm}/255"
-    [[ "$fan_min" != "?" || "$fan_max" != "?" ]] && fan_tip+=", min ${fan_min}, max ${fan_max}"
-    [[ "$fan_target" != "?" ]] && fan_tip+=", target ${fan_target}"
-    fan_tip+=")"
-    if [[ "$fan_note" == "raw-over-max" ]]; then
-        fan_tip+="\\nFan note: raw sensor is above firmware max"
+    if [[ -f /sys/firmware/acpi/platform_profile ]]; then
+        local current_prof
+        current_prof="$(cat /sys/firmware/acpi/platform_profile 2>/dev/null || printf 'unknown')"
+        fan_tip="Ventola: ${fan_rpm} RPM (Profilo ACPI: $current_prof)"
+    else
+        fan_tip="Fan raw: ${fan_rpm} RPM (${fan_source}, ${fan_mode}, pwm ${fan_pwm}/255"
+        [[ "$fan_min" != "?" || "$fan_max" != "?" ]] && fan_tip+=", min ${fan_min}, max ${fan_max}"
+        [[ "$fan_target" != "?" ]] && fan_tip+=", target ${fan_target}"
+        fan_tip+=")"
+        if [[ "$fan_note" == "raw-over-max" ]]; then
+            fan_tip+="\\nFan note: raw sensor is above firmware max"
+        fi
     fi
 
     printf '{"text":"󰻠 %s%%  󰍛 %s%%  %s %s°C  󰈐 %s","tooltip":"CPU: %s%%\\nRAM: %s GiB / %s GiB (%s%%)\\nTemp: %s°C (%s)\\n%s","class":"%s"}\n' \

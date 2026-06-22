@@ -118,16 +118,13 @@ active_code() {
 }
 
 json_output() {
-    python3 - "$1" "$2" "$3" <<'PY'
-import json
-import sys
+    local helper="$HOME/.config/anto426/keyboard_status_json"
 
-print(json.dumps({
-    "text": sys.argv[1],
-    "tooltip": sys.argv[2],
-    "class": sys.argv[3],
-}, ensure_ascii=False))
-PY
+    if [[ -x "$helper" ]]; then
+        "$helper" "$1" "$2" "$3"
+    else
+        printf '{"text":"%s","tooltip":"%s","class":"%s"}\n' "$1" "$2" "$3"
+    fi
 }
 
 active="$(active_keymap)"
