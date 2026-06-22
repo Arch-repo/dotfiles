@@ -46,7 +46,8 @@ pacman_packages=(
     xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-wlr xdg-desktop-portal-gtk
 
     # System services and controls
-    brightnessctl iwd network-manager-applet bluez bluez-utils blueman lm_sensors polkit-gnome
+    brightnessctl networkmanager iwd network-manager-applet wireless-regdb iw
+    bluez bluez-utils blueman lm_sensors polkit-gnome
     pipewire pipewire-pulse wireplumber pavucontrol openbsd-netcat
 
     # Apps used by the dotfiles
@@ -104,10 +105,19 @@ configure_networkmanager_iwd() {
     local tmp
 
     tmp="$(mktemp)"
-    printf '%s\n' \
-        '[device]' \
-        'wifi.backend=iwd' \
-        'wifi.iwd.autoconnect=false' > "$tmp"
+    {
+        printf '%s\n' \
+            '[device]' \
+            'wifi.backend=iwd' \
+            'wifi.iwd.autoconnect=false'
+
+        if [[ "${ANTO426_WIFI_DISABLE_POWERSAVE:-0}" == "1" ]]; then
+            printf '%s\n' \
+                '' \
+                '[connection]' \
+                'wifi.powersave=2'
+        fi
+    } > "$tmp"
     sudo install -Dm644 "$tmp" "$nm_conf"
     rm -f "$tmp"
 
