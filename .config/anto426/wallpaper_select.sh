@@ -294,7 +294,7 @@ PanelWindow {
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: 0
+        anchors.verticalCenterOffset: Math.round(main.reservedTop * 0.5)
         anchors.leftMargin: 0
         anchors.rightMargin: 0
         height: main.stripHeight + 160
@@ -378,8 +378,12 @@ PanelWindow {
                 return lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".mov")
             }
 
+            function previewKey(name) {
+                return String(name) + ".png"
+            }
+
             function cachedPreview(name) {
-                return "file://" + configs.cache_path + name + ".png"
+                return "file://" + configs.cache_path + encodeURIComponent(previewKey(name))
             }
 
             function previewSource(name) {
@@ -467,7 +471,7 @@ PanelWindow {
                     property bool triedOriginalFallback: false
                     property bool hadPreview: false
                     property int previewRetries: 0
-                    property color activeColor: main.colorsMap[fileName] ? main.colorsMap[fileName] : configs.border_color
+                    property color activeColor: main.colorsMap[list.previewKey(fileName)] ? main.colorsMap[list.previewKey(fileName)] : configs.border_color
 
                     Behavior on scale {
                         NumberAnimation {
