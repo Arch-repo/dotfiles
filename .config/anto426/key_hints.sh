@@ -24,7 +24,7 @@ menu_rows() {
     row "Alt Space" "Application Launcher"
     row "SUPER ." "Emoji Picker"
     row "SUPER V" "Clipboard History"
-    row "XF86Assistant / F23" "Quick Notes"
+    row "SUPER N" "Quick Notes"
     printf '\n'
 
     header "WINDOWS"
@@ -101,7 +101,6 @@ menu_rows() {
     row "Power Key" "Shutdown / Power Menu"
     row "SUPER Shift P" "Project Screen (Display Mode)"
     row "SUPER Shift Ctrl Esc" "Exit Hyprland Session"
-    row "SUPER Shift N" "Identify Copilot Key"
     printf 'Open Floating Manager\0icon\x1fwindow-restore\n'
     printf 'Open Brightness Menu\0icon\x1fdisplay-brightness\n'
     printf 'Open Project Screen\0icon\x1fvideo-display\n'
@@ -114,7 +113,7 @@ menu_rows() {
 while true; do
     choice="$(
         menu_rows |
-            rofi -dmenu -i -matching fuzzy \
+            rofi -dmenu -i -matching fuzzy -show-icons \
                 -p "Hyprland Keybindings" \
                 -mesg "Sections: Applications, Windows, Workspaces, Screenshots, Audio, Brightness, Wallpaper, Widgets, Floating, System" \
                 -theme "$THEME"

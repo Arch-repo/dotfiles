@@ -1,6 +1,11 @@
 #!/usr/bin/env bash
 set -uo pipefail
 
+script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ "${ANTO426_WALLPAPER_APPLY_IMPL:-c}" != "sh" && -x "$script_dir/wallpaper_core" ]]; then
+    exec "$script_dir/wallpaper_core" apply "$@"
+fi
+
 wallpaper="${1:-}"
 transition="${ANTO426_WALLPAPER_TRANSITION:-any}"
 duration="${ANTO426_WALLPAPER_DURATION:-2}"
@@ -207,7 +212,7 @@ if [[ "$mime_type" =~ ^video/ ]]; then
 
     log "Applying live wallpaper: $wallpaper"
     ipc_sock="${XDG_RUNTIME_DIR:-/tmp}/mpvpaper-ipc"
-    if mpvpaper -f -o "no-audio loop-file=inf keep-open=yes --panscan=1.0 --hidpi-window-scale=yes --hwdec=no --osd-level=0 --input-ipc-server=$ipc_sock" '*' "$playback_wallpaper" >"$state_dir/mpvpaper.log" 2>&1; then
+    if mpvpaper -f -o "no-audio loop-file=inf keep-open=yes --panscan=1.0 --hidpi-window-scale=yes --hwdec=auto --osd-level=0 --input-ipc-server=$ipc_sock" '*' "$playback_wallpaper" >"$state_dir/mpvpaper.log" 2>&1; then
         log "live wallpaper applied: $wallpaper"
         printf '%s\n' "$wallpaper" >"$destination_wallpaper_dir/current-wallpaper.path"
         printf '%s\n' "$playback_wallpaper" >"$destination_wallpaper_dir/current-live-playback.path"

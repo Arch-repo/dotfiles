@@ -2,7 +2,7 @@
 
 SCHEME="prefer-dark"
 THEME="${ANTO426_GTK_THEME:-anto426}"
-ICONS="WhiteSur-dark"
+ICONS="${ANTO426_ICON_THEME:-Anto426-Material}"
 CURSOR="macOS"
 UI_FONT="Segoe UI Variable Static Text 12"
 MONO_FONT="JetBrainsMono Nerd Font 12"

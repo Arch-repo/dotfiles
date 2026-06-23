@@ -10,7 +10,6 @@ power_confirm() {
     local prompt="$1"
     local message="$2"
     local choice
-    local confirm="Confirm"
     local theme_str
 
     theme_str="
@@ -22,12 +21,12 @@ power_confirm() {
 
     choice="$(
         {
-            printf 'Confirm\0icon\x1fbutton-ok\n'
-            printf 'Cancel\0icon\x1fbutton-cancel\n'
+            printf '%s\0icon\x1fbutton-ok\n' "$(menu_item "󰄬" "Confirm")"
+            printf '%s\0icon\x1fbutton-cancel\n' "$(menu_item "󰅖" "Cancel")"
         } | rofi_pick_msg "$prompt" "$message" "$theme_str"
     )"
 
-    [[ "$choice" == "$confirm" ]]
+    [[ "$choice" == "$(system_text "Confirm")" ]]
 }
 
 power_menu() {
@@ -40,43 +39,40 @@ power_menu() {
 
         choice="$(
             {
-                printf 'Lock\0icon\x1fsystem-lock-screen\n'
-                printf 'Log Out\0icon\x1fsystem-log-out\n'
-                printf 'Suspend\0icon\x1fsystem-suspend\n'
-                printf 'Restart\0icon\x1fsystem-reboot\n'
-                printf 'Power Off\0icon\x1fsystem-shutdown\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fsystem-lock-screen\n' "$(menu_item "󰌾" "Lock")"
+                printf '%s\0icon\x1fsystem-log-out\n' "$(menu_item "󰍃" "Log Out")"
+                printf '%s\0icon\x1fsystem-suspend\n' "$(menu_item "󰤄" "Suspend")"
+                printf '%s\0icon\x1fsystem-reboot\n' "$(menu_item "󰑓" "Restart")"
+                printf '%s\0icon\x1fsystem-shutdown\n' "$(menu_item "󰐥" "Power Off")"
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "$title" "Session: ${session_text}\nUptime: ${uptime_text:-unknown}"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "Lock")
+            "$(system_text "Lock")")
                 hyprlock
                 return 0
                 ;;
-            "Log Out")
+            "$(system_text "Log Out")")
                 power_confirm "Log Out" "$(system_text "Log out?")" && hyprctl dispatch exit 0
                 return 0
                 ;;
-            "Suspend")
+            "$(system_text "Suspend")")
                 systemctl suspend
                 return 0
                 ;;
-            "Restart")
+            "$(system_text "Restart")")
                 power_confirm "Restart" "$(system_text "Restart?")" && systemctl reboot
                 return 0
                 ;;
-            "Power Off")
+            "$(system_text "Power Off")")
                 power_confirm "Power Off" "$(system_text "Power off?")" && systemctl poweroff
                 return 0
                 ;;
-            "Back")
+            "$(system_text "Back")")
                 back_or_main
-                return 0
-                ;;
-            *)
                 return 0
                 ;;
         esac

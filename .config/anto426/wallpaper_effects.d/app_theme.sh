@@ -10,6 +10,7 @@ gtk_theme_exists() {
 
 gtk_reload_theme() {
     local target_theme="${gtk_theme_name:-anto426}"
+    local target_icons="${icon_theme_name:-${ANTO426_ICON_THEME:-Anto426-Material}}"
 
     # --- gsettings (works even under Hyprland for GTK's internal theme tracking) ---
     if command -v gsettings >/dev/null 2>&1; then
@@ -18,7 +19,7 @@ gtk_reload_theme() {
         sleep 0.15
         gsettings set org.gnome.desktop.interface gtk-theme "$target_theme" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface color-scheme "prefer-dark" 2>/dev/null || true
-        gsettings set org.gnome.desktop.interface icon-theme "WhiteSur-dark" 2>/dev/null || true
+        gsettings set org.gnome.desktop.interface icon-theme "$target_icons" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface cursor-theme "macOS" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface font-name "Segoe UI Variable Static Text 12" 2>/dev/null || true
         gsettings set org.gnome.desktop.interface monospace-font-name "JetBrainsMono Nerd Font 12" 2>/dev/null || true
@@ -517,6 +518,7 @@ write_gtk_theme() {
     local theme_root
     local theme_share_root
     local target
+    local target_icons="${icon_theme_name:-${ANTO426_ICON_THEME:-Anto426-Material}}"
 
     gtk_theme_name="anto426"
     theme_root="$HOME/.themes/$gtk_theme_name"
@@ -549,7 +551,7 @@ EOF
         cat >"$gtk_settings_dir/settings.ini" <<EOF
 [Settings]
 gtk-theme-name=$gtk_theme_name
-gtk-icon-theme-name=WhiteSur-dark
+gtk-icon-theme-name=$target_icons
 gtk-cursor-theme-name=macOS
 gtk-font-name=Segoe UI Variable Static Text 12
 gtk-application-prefer-dark-theme=true
@@ -560,6 +562,7 @@ EOF
 write_qt_theme() {
     local qt_fg qt_bg qt_base qt_base_alt qt_surface qt_select qt_accent qt_selected_fg qt_border qt_muted qt_red qt_purple qt_shadow
     local qt_active_colors qt_disabled_colors qt_inactive_colors qt_dir
+    local target_icons="${icon_theme_name:-${ANTO426_ICON_THEME:-Anto426-Material}}"
 
     ensure_gtk_palette_roles
 
@@ -613,7 +616,7 @@ EOF
 [Appearance]
 color_scheme_path=$qt5ct_dir/colors/anto426.conf
 custom_palette=true
-icon_theme=WhiteSur-dark
+icon_theme=$target_icons
 standard_dialogs=default
 style=kvantum
 
@@ -638,7 +641,7 @@ EOF
 [Appearance]
 color_scheme_path=$qt6ct_dir/colors/anto426.conf
 custom_palette=true
-icon_theme=WhiteSur-dark
+icon_theme=$target_icons
 standard_dialogs=default
 style=kvantum
 
@@ -1234,6 +1237,8 @@ EOF
 
 write_app_theme() {
     # Scrittura dei temi per le app in parallelo
+    write_icon_theme &
+    pid_icons=$!
     write_gtk_theme &
     pid_gtk=$!
     write_qt_theme &
@@ -1243,7 +1248,7 @@ write_app_theme() {
     write_zen_theme &
     pid_zen=$!
 
-    wait $pid_gtk $pid_qt $pid_kvantum $pid_zen
+    wait $pid_icons $pid_gtk $pid_qt $pid_kvantum $pid_zen
 
     # Ricarica dei temi in parallelo
     gtk_reload_theme &

@@ -17,6 +17,7 @@ root@anto426: ~/dotfiles (main⚡)$ neofetch --view features
 - 🖼️ Boot Theme Sync: Generates custom GRUB and SDDM setups matching the wallpaper colors automatically.
 - ⚡ Wayland Native: Tuned strictly around modern, high-performance Wayland compositor tools.
 - 🧩 Rofi Control Panels: Sliding interactive menus for calendar, audio controls, live brightness, and power.
+- ✨ Material Symbols Icons: Dynamic icon overlay synced from the separate `Anto426-material-icons` repo.
 ```
 
 <p align="center">
@@ -55,9 +56,14 @@ Managed seamlessly using [GNU Stow](https://www.gnu.org/software/stow/):
 │   ├── swaync/         # Notifications center layouts
 │   ├── waybar/         # Status bar CSS styling
 │   └── wlogout/        # Action menu buttons
+├── docs/               # Maintenance notes for repo upkeep
 ├── .tmux.conf          # Window multiplexer rules
 └── .zshrc              # Interactive shell configuration
 ```
+
+### Maintenance
+
+Project maintenance notes live in [`docs/maintenance.md`](docs/maintenance.md), including generated files, source files, and theme regeneration checks.
 
 <p align="center">
   <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
@@ -125,4 +131,3 @@ Initialize palettes and wallpaper configuration:
 <div align="center">
   <i>Configured by anto426</i>
 </div>
-

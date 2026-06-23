@@ -111,9 +111,8 @@ audio_choose_sink() {
             }
             /^[[:space:]]Description: / {
                 sub(/^[[:space:]]Description: /, "")
-                marker = (name == def) ? "󰄬  " : "    "
-                icon = (name == def) ? "emblem-default" : "audio-card"
-                printf "%s%s\t%s\0icon\x1f%s\n", marker, $0, name, icon
+                active_suffix = (name == def) ? " (Default)" : ""
+                printf "%s%s\t%s\0icon\x1faudio-card\n", $0, active_suffix, name
             }
         ' | rofi_pick "Output audio"
     )"
@@ -132,9 +131,8 @@ audio_choose_source() {
             }
             /^[[:space:]]Description: / && name !~ /\.monitor$/ {
                 sub(/^[[:space:]]Description: /, "")
-                marker = (name == def) ? "󰄬  " : "    "
-                icon = (name == def) ? "emblem-default" : "audio-input-microphone"
-                printf "%s%s\t%s\0icon\x1f%s\n", marker, $0, name, icon
+                active_suffix = (name == def) ? " (Default)" : ""
+                printf "%s%s\t%s\0icon\x1faudio-input-microphone\n", $0, active_suffix, name
             }
         ' | rofi_pick "Input audio"
     )"
@@ -160,19 +158,19 @@ audio_menu() {
         mixer_command="$(audio_mixer_command)"
 
         local message_card
-        message_card="󰓃 <b><span foreground='${c_accent}'>OUTPUT</span></b>: ${sink_desc}\nVolume: <b><span foreground='${c_yellow}'>${sink_vol}</span></b>\n\n󰍬 <b><span foreground='${c_accent}'>INPUT</span></b>:  ${source_desc}\nVolume: <b><span foreground='${c_yellow}'>${source_vol}</span></b>"
+        message_card="<b>OUTPUT</b>: ${sink_desc}\nVolume: <b><span foreground='${c_yellow}'>${sink_vol}</span></b>\n\n<b>INPUT</b>:  ${source_desc}\nVolume: <b><span foreground='${c_yellow}'>${source_vol}</span></b>"
 
         choice="$(
             {
-                printf 'Mute/Unmute Output\0icon\x1faudio-volume-muted\n'
-                printf 'Output Volume (%d%%)\0icon\x1faudio-volume-high\n' "$(audio_volume_percent "@DEFAULT_AUDIO_SINK@")"
-                printf 'Select Output Device\0icon\x1faudio-card\n'
-                printf 'Mute/Unmute Microphone\0icon\x1fmicrophone-sensitivity-muted\n'
-                printf 'Microphone Volume (%d%%)\0icon\x1fmicrophone-sensitivity-high\n' "$(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")"
-                printf 'Select Input Device\0icon\x1faudio-input-microphone\n'
-                [[ -n "$mixer_command" ]] && printf 'Open Volume Mixer\0icon\x1fmultimedia-volume-control\n'
-                printf 'Audio Diagnostics\0icon\x1fdialog-information\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1faudio-volume-muted\n' "$(menu_item "󰓃" "Mute/Unmute Output")"
+                printf '%s (%d%%)\0icon\x1faudio-volume-high\n' "$(menu_item "󰓃" "Output Volume")" "$(audio_volume_percent "@DEFAULT_AUDIO_SINK@")"
+                printf '%s\0icon\x1faudio-card\n' "$(menu_item "󰓃" "Select Output Device")"
+                printf '%s\0icon\x1fmicrophone-sensitivity-muted\n' "$(menu_item "󰍬" "Mute/Unmute Microphone")"
+                printf '%s (%d%%)\0icon\x1fmicrophone-sensitivity-high\n' "$(menu_item "󰍬" "Microphone Volume")" "$(audio_volume_percent "@DEFAULT_AUDIO_SOURCE@")"
+                printf '%s\0icon\x1faudio-input-microphone\n' "$(menu_item "󰍬" "Select Input Device")"
+                [[ -n "$mixer_command" ]] && printf '%s\0icon\x1fmultimedia-volume-control\n' "$(menu_item "󰓃" "Open Volume Mixer")"
+                printf '%s\0icon\x1fdialog-information\n' "$(menu_item "󰄧" "Audio Diagnostics")"
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "Audio" "$message_card"
         )"
 
@@ -180,36 +178,34 @@ audio_menu() {
         local clean_choice="$choice"
 
         case "$clean_choice" in
-            "Mute/Unmute Output") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
-            "Output Volume"*)
+            "$(system_text "Mute/Unmute Output")") wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle ;;
+            "$(system_text "Output Volume")"*)
                 audio_volume_slider "@DEFAULT_AUDIO_SINK@" "Output Volume" \
                     "Output: $sink_desc" "slider-volume" "output-volume"
                 ;;
-            "Mute/Unmute Microphone") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
-            "Microphone Volume"*)
+            "$(system_text "Mute/Unmute Microphone")") wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle ;;
+            "$(system_text "Microphone Volume")"*)
                 audio_volume_slider "@DEFAULT_AUDIO_SOURCE@" "Microphone Volume" \
                     "Input: $source_desc" "slider-mic" "input-volume"
                 ;;
-            "Select Output Device") audio_choose_sink ;;
-            "Select Input Device") audio_choose_source ;;
-            "Open Volume Mixer")
+            "$(system_text "Select Output Device")") audio_choose_sink ;;
+            "$(system_text "Select Input Device")") audio_choose_source ;;
+            "$(system_text "Open Volume Mixer")")
                 [[ -n "$mixer_command" ]] && open_or_notify "Mixer audio" "$mixer_command"
                 return 0
                 ;;
-            "Audio Diagnostics")
+            "$(system_text "Audio Diagnostics")")
                 rofi_pick_msg "Audio Diagnostics" "$(pactl info 2>/dev/null)\n\nOutput: $sink_desc\nInput: $source_desc" >/dev/null
                 ;;
-            "Back")
+            "$(system_text "Back")")
                 back_or_main
                 return 0
                 ;;
             *)
-                return 0
                 ;;
         esac
     done
 }
 
-
-
 audio_menu
+

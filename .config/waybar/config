@@ -1,20 +1,100 @@
 {
   "position": "top",
-  "height": 42,
+  "height": 54,
   "spacing": 4,
   "modules-left": [
-    "hyprland/workspaces",
-    "custom/hardware"
+    "custom/workspaces",
+    "hyprland/window"
   ],
   "modules-center": [
-    "custom/clock"
+    "group/center-group"
   ],
   "modules-right": [
+    "custom/screenshot",
     "custom/background-apps",
-    "group/status",
-    "group/tools",
+    "custom/sys-status",
     "custom/power"
   ],
+  "custom/workspaces": {
+    "exec": "$HOME/.config/anto426/custom_workspaces.sh",
+    "return-type": "json",
+    "interval": 1,
+    "format": "{}",
+    "on-click": "hyprctl dispatch workspace $(hyprctl workspaces -j | jq 'map(.id) | min')",
+    "on-click-right": "hyprctl dispatch workspace $(hyprctl workspaces -j | jq 'map(.id) | max')",
+    "on-scroll-up": "hyprctl dispatch workspace e-1",
+    "on-scroll-down": "hyprctl dispatch workspace e+1"
+  },
+  "custom/sys-status": {
+    "exec": "$HOME/.config/anto426/sys_status.sh",
+    "return-type": "json",
+    "format": "{}",
+    "on-click": "$HOME/.config/anto426/control_menu.sh main",
+    "on-click-right": "$HOME/.config/anto426/control_menu.sh notifications",
+    "on-click-middle": "$HOME/.config/anto426/hardware_stats.sh menu"
+  },
+  "hyprland/window": {
+    "format": "{}",
+    "max-length": 40,
+    "separate-outputs": true,
+    "rewrite": {
+      "": "Desktop",
+      "Ghostty": "  Ghostty",
+      "bash": "  Terminal",
+      "zsh": "  Terminal",
+      "(.*) — Mozilla Firefox": "󰈹  $1",
+      "(.*) - Google Chrome": "  $1",
+      "(.*) - Visual Studio Code": "󰨞  $1",
+      "(.*) - Code - OSS": "󰨞  $1",
+      "Spotify Free": "  Spotify",
+      "Spotify Premium": "  Spotify",
+      "Spotify": "  Spotify",
+      "(.*) - Discord": "󰙯  $1",
+      "Discord": "󰙯  Discord",
+      "(.*) - Obsidian(.*)": "󰠮  Obsidian",
+      "Thunar": "󰉋  Thunar",
+      "nemo": "󰉋  Nemo"
+    }
+  },
+  "group/center-group": {
+    "orientation": "horizontal",
+    "modules": [
+      "custom/media-prev",
+      "mpris",
+      "custom/media-next",
+      "custom/clock"
+    ]
+  },
+  "custom/media-prev": {
+    "format": "{}",
+    "return-type": "json",
+    "exec": "playerctl status >/dev/null 2>&1 && echo '{\"text\": \"󰒮\", \"tooltip\": \"Traccia precedente\"}' || echo ''",
+    "interval": 2,
+    "on-click": "playerctl previous"
+  },
+  "custom/media-next": {
+    "format": "{}",
+    "return-type": "json",
+    "exec": "playerctl status >/dev/null 2>&1 && echo '{\"text\": \"󰒭\", \"tooltip\": \"Traccia successiva\"}' || echo ''",
+    "interval": 2,
+    "on-click": "playerctl next"
+  },
+  "mpris": {
+    "format": "{player_icon} {title} - {artist}",
+    "format-paused": "{status_icon} <i>{title} - {artist}</i>",
+    "max-length": 35,
+    "player-icons": {
+      "default": " ",
+      "spotify": " ",
+      "firefox": "󰈹 ",
+      "chrome": " ",
+      "mpv": " "
+    },
+    "status-icons": {
+      "paused": " "
+    },
+    "on-click": "playerctl play-pause"
+  },
   "custom/background-apps": {
     "exec": "$HOME/.config/anto426/background_apps.sh status",
     "return-type": "json",
@@ -30,11 +110,12 @@
     "on-click-right": "hyprlock"
   },
   "custom/screenshot": {
-    "exec": "bash -lc 'pidfile=${XDG_RUNTIME_DIR:-/tmp}/anto426-screen-recording.pid; if [ -s \"$pidfile\" ] && kill -0 \"$(cat \"$pidfile\")\" 2>/dev/null; then printf \"󰑊\\n\"; else printf \"󰹑\\n\"; fi'",
+    "exec": "$HOME/.config/anto426/screenshot_menu.sh record-status-json",
+    "return-type": "json",
     "interval": 1,
     "format": "{}",
-    "tooltip-format": "Cattura\nClick: menu\nTasto destro: screenshot area\nTasto centrale: recorder",
-    "on-click": "$HOME/.config/anto426/screenshot_menu.sh",
+    "tooltip-format": "Cattura\nClick: stop/menu\nTasto destro: screenshot area\nTasto centrale: recorder",
+    "on-click": "$HOME/.config/anto426/screenshot_menu.sh waybar-click",
     "on-click-right": "$HOME/.config/anto426/screenshot_menu.sh quick-area",
     "on-click-middle": "$HOME/.config/anto426/screenshot_menu.sh record-menu"
   },

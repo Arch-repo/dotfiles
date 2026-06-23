@@ -18,9 +18,12 @@ pick_widget_monitor() {
 
     choice="$(
         {
-            printf '%s\n' "Schermo attivo"
-            hyprctl monitors -j 2>/dev/null | jq -r '.[] | "\(.name)  \(.width)x\(.height)  @ \(.x),\(.y)"'
-        } | rofi -dmenu -i -matching fuzzy -p "Schermo widget" -theme "$theme"
+            printf 'Schermo attivo\0icon\x1fvideo-display\n'
+            hyprctl monitors -j 2>/dev/null | jq -r '.[] | "\(.name)  \(.width)x\(.height)  @ \(.x),\(.y)"' |
+                while IFS= read -r monitor_line; do
+                    [[ -n "$monitor_line" ]] && printf '%s\0icon\x1fvideo-display\n' "$monitor_line"
+                done
+        } | rofi -dmenu -i -matching fuzzy -show-icons -p "Schermo widget" -theme "$theme"
     )"
     [[ -n "$choice" ]] || return 1
 
@@ -60,43 +63,43 @@ custom_widget_unique_id() {
 preset_widget_rows() {
     command -v cava >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰎈 Spettro audio" \
+            "Spettro audio" \
             "spettro_audio" \
             'cava -p "$HOME/.config/anto426/cava_widget.conf"' \
             620 220
     command -v btop >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰍛 Dashboard sistema" \
+            "Dashboard sistema" \
             "dashboard_sistema" \
             "btop" \
             760 520
     command -v fastfetch >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰌢 Scheda macchina" \
+            "Scheda macchina" \
             "scheda_macchina" \
             'exec bash "$HOME/.config/anto426/widgets.d/scheda_macchina.sh"' \
             620 320
     command -v asciiquarium >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰈺 Acquario ASCII" \
+            "Acquario ASCII" \
             "acquario_ascii" \
             "asciiquarium -t" \
             620 420
     command -v pipes.sh >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰕮 Tubi animati" \
+            "Tubi animati" \
             "tubi_animati" \
             "pipes.sh -t 2 -r 0 -R" \
             700 360
     command -v cbonsai >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰔱 Bonsai Zen" \
+            "Bonsai Zen" \
             "bonsai_zen" \
             "cbonsai -l -i -w 12 -L 38 -M 5" \
             540 380
     command -v cmatrix >/dev/null 2>&1 &&
         printf '%s\t%s\t%s\t%s\t%s\n' \
-            "󰫐 Pioggia Matrix" \
+            "Pioggia Matrix" \
             "pioggia_matrix" \
             "cmatrix -a -b -u 2" \
             620 360
@@ -107,8 +110,17 @@ pick_preset_widget() {
     local choice id_base command width height monitor id class
 
     choice="$(
-        preset_widget_rows | cut -f1 |
-            rofi -dmenu -i -matching fuzzy -p "Widget visuale" \
+        while IFS=$'\t' read -r label id_base command width height; do
+            case "$id_base" in
+                spettro_audio) icon="audio-x-generic" ;;
+                dashboard_sistema) icon="utilities-system-monitor" ;;
+                scheda_macchina) icon="text-x-generic" ;;
+                acquario_ascii | tubi_animati | bonsai_zen | pioggia_matrix) icon="utilities-terminal" ;;
+                *) icon="applications-other" ;;
+            esac
+            printf '%s\0icon\x1f%s\n' "$label" "$icon"
+        done < <(preset_widget_rows) |
+            rofi -dmenu -i -matching fuzzy -show-icons -p "Widget visuale" \
                 -mesg "Preset controllati: belli da vedere e gia dimensionati" \
                 -theme "$theme"
     )"
@@ -184,6 +196,7 @@ widget_label() {
     local id="$1"
     local label
     label="$("$CORE_BIN" list-widgets | grep -E "^${id}\|" | cut -d'|' -f2)"
+    label="$(printf '%s' "${label:-$id}" | perl -CS -pe 's/^\s*[\x{E000}-\x{F8FF}\x{F0000}-\x{FFFFD}]+\s+//')"
     printf '%s' "${label:-$id}"
 }
 
@@ -244,8 +257,14 @@ enable_builtin_widget_from_menu() {
             case " $current " in
                 *" $name "*) continue ;;
             esac
-            printf '%s\n' "$(widget_label "$name")"
-        done | rofi -dmenu -i -p "Add base widget" -theme "$theme"
+            case "$name" in
+                clock) icon="office-calendar" ;;
+                cava) icon="audio-x-generic" ;;
+                system) icon="utilities-system-monitor" ;;
+                *) icon="preferences-desktop-theme" ;;
+            esac
+            printf '%s\0icon\x1f%s\n' "$(widget_label "$name")" "$icon"
+        done | rofi -dmenu -i -show-icons -p "Add base widget" -theme "$theme"
     )"
     [[ -n "$choice" ]] || return 1
 
@@ -328,14 +347,14 @@ widget_submenu() {
     choice="$(
         {
             if "$CORE_BIN" is-running "$name" >/dev/null; then
-                printf '  󰖭  Hide temporarily\n'
+                printf 'Hide temporarily\0icon\x1fgo-down\n'
             else
-                printf '  󰖯  Show widget\n'
+                printf 'Show widget\0icon\x1fgo-up\n'
             fi
-            printf '  󰏬  Move Up (Change order)\n'
-            printf '  󰏏  Move Down (Change order)\n'
-            printf '  󰆴  Remove permanently\n'
-        } | rofi -dmenu -i -p "$label" -theme "$theme"
+            printf 'Move Up (Change order)\0icon\x1fgo-up\n'
+            printf 'Move Down (Change order)\0icon\x1fgo-down\n'
+            printf 'Remove permanently\0icon\x1fedit-delete\n'
+        } | rofi -dmenu -i -show-icons -p "$label" -theme "$theme"
     )"
 
     [[ -z "$choice" ]] && { arrange_widgets; return 0; }
@@ -419,6 +438,7 @@ arrange_widgets() {
                 done
             fi
         } | rofi -dmenu -i -p "Widget Dashboard" \
+            -show-icons \
             -mesg "Premium interface to manage desktop widgets and system layouts" -theme "$theme"
     )"
 
@@ -467,7 +487,7 @@ arrange_widgets() {
             arrange_widgets
             ;;
         *"Select Widget to Remove"*)
-            choice_widgets="$(for name in $order; do printf '%s\n' "$(widget_label "$name")"; done | rofi -dmenu -i -p "Remove Widget" -theme "$theme")"
+            choice_widgets="$(for name in $order; do printf '%s\0icon\x1fedit-delete\n' "$(widget_label "$name")"; done | rofi -dmenu -i -show-icons -p "Remove Widget" -theme "$theme")"
             if [[ -n "$choice_widgets" ]]; then
                 for name in $order; do
                     if [[ "$(widget_label "$name")" == "$choice_widgets" ]]; then

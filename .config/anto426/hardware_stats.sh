@@ -478,28 +478,28 @@ show_menu() {
     }
 
     if command -v btop >/dev/null 2>&1; then
-        process_label="󰨇  Apri btop"
+        process_label="Apri btop"
     else
-        process_label="󰨇  Apri htop"
+        process_label="Apri htop"
     fi
 
     choice="$(
         {
-            printf '%s\n' "󰈐  Slider ventola"
+            printf 'Slider ventola\0icon\x1fdisplay-brightness\n'
             if [[ -f /sys/firmware/acpi/platform_profile ]]; then
                 local current_prof
                 current_prof="$(cat /sys/firmware/acpi/platform_profile 2>/dev/null || printf 'unknown')"
-                printf '%s\n' "󰈐  Profilo: Silenzioso$([[ "$current_prof" == "quiet" || "$current_prof" == "power-saver" ]] && printf " (attivo)")"
-                printf '%s\n' "󰈐  Profilo: Bilanciato$([[ "$current_prof" == "balanced" ]] && printf " (attivo)")"
-                printf '%s\n' "󰈐  Profilo: Prestazioni$([[ "$current_prof" == "performance" ]] && printf " (attivo)")"
+                printf 'Profilo: Silenzioso%s\0icon\x1fbattery-low\n' "$([[ "$current_prof" == "quiet" || "$current_prof" == "power-saver" ]] && printf " (attivo)")"
+                printf 'Profilo: Bilanciato%s\0icon\x1fbattery-good\n' "$([[ "$current_prof" == "balanced" ]] && printf " (attivo)")"
+                printf 'Profilo: Prestazioni%s\0icon\x1fbattery-full\n' "$([[ "$current_prof" == "performance" ]] && printf " (attivo)")"
             else
-                printf '%s\n' "󰈐  Ventola auto"
+                printf 'Ventola auto\0icon\x1fview-refresh\n'
             fi
-            printf '%s\n' "$process_label"
-            printf '%s\n' "  Apri sensors"
-            printf '%s\n' "󰌢  Apri fastfetch"
-            printf '%s\n' "󰁹  Menu batteria"
-        } | rofi -dmenu -i -matching fuzzy -p "Hardware" -mesg "$(summary_message)" -theme "$theme_menu"
+            printf '%s\0icon\x1futilities-system-monitor\n' "$process_label"
+            printf 'Apri sensors\0icon\x1futilities-system-monitor\n'
+            printf 'Apri fastfetch\0icon\x1ftext-x-generic\n'
+            printf 'Menu batteria\0icon\x1fbattery\n'
+        } | rofi -dmenu -i -matching fuzzy -show-icons -p "Hardware" -mesg "$(summary_message)" -theme "$theme_menu"
     )" || return 0
 
     case "$choice" in

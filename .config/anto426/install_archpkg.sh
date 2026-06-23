@@ -62,7 +62,7 @@ pacman_packages=(
     fcitx5 fcitx5-gtk fcitx5-qt fcitx5-configtool fcitx5-bamboo
 
     # Fonts and image libraries
-    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji
+    ttf-jetbrains-mono-nerd noto-fonts noto-fonts-emoji ttf-material-symbols-variable ttf-material-icons
     libvips libheif openslide poppler-glib imagemagick grub
 
     # Build dependencies for Anto426 rofi with slider support
@@ -74,7 +74,7 @@ pacman_packages=(
 
 aur_packages=(
     # Desktop shell extras
-    wlogout sddm-sugar-candy-git apple_cursor whitesur-icon-theme tint
+    wlogout sddm-sugar-candy-git apple_cursor tint
 
     # Browsers and editors
     brave-bin zen-browser-bin visual-studio-code-bin sublime-text-4

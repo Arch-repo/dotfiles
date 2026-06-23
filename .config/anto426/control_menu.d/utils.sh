@@ -105,7 +105,7 @@ system_text() {
 menu_item() {
     local icon="$1"
     local msgid="$2"
-    printf '%s  %s' "$icon" "$(system_text "$msgid")"
+    printf '%s' "$(system_text "$msgid")"
 }
 
 rofi_pick() {
@@ -123,9 +123,9 @@ rofi_pick() {
     fi
 
     if [[ -n "$theme_str" ]]; then
-        rofi -dmenu -i -matching fuzzy -p "$prompt" -theme-str "$theme_str" -theme "$theme"
+        rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -theme-str "$theme_str" -theme "$theme"
     else
-        rofi -dmenu -i -matching fuzzy -p "$prompt" -theme "$theme"
+        rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -theme "$theme"
     fi
 }
 
@@ -149,16 +149,16 @@ rofi_pick_msg() {
     message="$(printf '%b' "$message")"
 
     if [[ -n "$theme_str" ]]; then
-        rofi -dmenu -i -matching fuzzy -p "$prompt" -mesg "$message" -theme-str "$theme_str" -theme "$theme"
+        rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -mesg "$message" -theme-str "$theme_str" -theme "$theme"
     else
-        rofi -dmenu -i -matching fuzzy -p "$prompt" -mesg "$message" -theme "$theme"
+        rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -mesg "$message" -theme "$theme"
     fi
 }
 
 rofi_input() {
     local prompt="$1"
     local value="${2:-}"
-    printf '%s' "$value" | rofi -dmenu -p "$prompt" -theme "$THEME_MENU"
+    printf '%s' "$value" | rofi -dmenu -show-icons -p "$prompt" -theme "$THEME_MENU"
 }
 
 rofi_password() {
@@ -166,9 +166,9 @@ rofi_password() {
     local message="${2:-}"
 
     if [[ -n "$message" ]]; then
-        rofi -dmenu -password -p "$prompt" -mesg "$message" -theme "$THEME_MENU"
+        rofi -dmenu -password -show-icons -p "$prompt" -mesg "$message" -theme "$THEME_MENU"
     else
-        rofi -dmenu -password -p "$prompt" -theme "$THEME_MENU"
+        rofi -dmenu -password -show-icons -p "$prompt" -theme "$THEME_MENU"
     fi
 }
 
@@ -191,7 +191,7 @@ menu_is_back() {
 }
 
 menu_back_line() {
-    printf '󰌍  Back\n'
+    printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
 }
 
 open_or_notify() {

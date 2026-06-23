@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+: "${vscode_theme_repo:=${ANTO426_VSCODE_THEME_REPO:-$HOME/Git/arch/vscodetheme}}"
+
 write_color_files() {
     cat >"$colors_dir/colors.css" <<EOF
 @define-color background $background;
@@ -1427,6 +1429,60 @@ copy_if_changed() {
     cp "$src" "$dst"
 }
 
+write_vscode_theme_repo_copy() {
+    local generated_theme="$1"
+    local repo="${vscode_theme_repo:-${ANTO426_VSCODE_THEME_REPO:-$HOME/Git/arch/vscodetheme}}"
+    local package_file="$repo/package.json"
+    local theme_target="$repo/themes/$vscode_theme_file"
+    local data_target="$repo/src/themes/data/anto426RofiDynamic.ts"
+    local tmp_data
+
+    [[ "${ANTO426_VSCODE_THEME_REPO_SYNC:-1}" != "0" ]] || return 0
+    [[ -d "$repo" && -f "$package_file" ]] || return 0
+
+    if ! grep -Eq '"name"[[:space:]]*:[[:space:]]*"anto426-vscode-theme"' "$package_file"; then
+        log "VSCode theme repo saltata: package non riconosciuto: $repo"
+        return 0
+    fi
+
+    if copy_if_changed "$generated_theme" "$theme_target"; then
+        log "VSCode theme repo JSON aggiornato: $theme_target"
+    else
+        log "VSCode theme repo JSON invariato: $theme_target"
+    fi
+
+    command -v node >/dev/null 2>&1 || return 0
+    [[ -d "$(dirname "$data_target")" ]] || return 0
+
+    tmp_data="$(mktemp)"
+    if node - "$generated_theme" "$tmp_data" <<'NODE'
+const fs = require('fs')
+const [themePath, outputPath] = process.argv.slice(2)
+const theme = JSON.parse(fs.readFileSync(themePath, 'utf8'))
+const colors =
+  theme.colors && typeof theme.colors === 'object' && !Array.isArray(theme.colors)
+    ? theme.colors
+    : {}
+
+const lines = ['const colors = {']
+for (const key of Object.keys(colors).sort()) {
+  lines.push(`  ${JSON.stringify(key)}: ${JSON.stringify(colors[key])},`)
+}
+lines.push('}', '', 'export default colors', '')
+fs.writeFileSync(outputPath, lines.join('\n'))
+NODE
+    then
+        if copy_if_changed "$tmp_data" "$data_target"; then
+            log "VSCode theme repo sorgente aggiornato: $data_target"
+        else
+            log "VSCode theme repo sorgente invariato: $data_target"
+        fi
+    else
+        log "VSCode theme repo sorgente non aggiornato: $data_target"
+    fi
+    rm -f "$tmp_data"
+}
+
 vscode_is_running() {
     if command -v hyprctl >/dev/null 2>&1 &&
         hyprctl clients -j 2>/dev/null |
@@ -1767,6 +1823,7 @@ write_vscode_theme() {
     local updated=0
 
     write_vscode_theme_json "$generated_theme"
+    write_vscode_theme_repo_copy "$generated_theme"
 
     if vscode_is_running; then
         log "VSCode in esecuzione: salto aggiornamento file estensione per evitare reload."

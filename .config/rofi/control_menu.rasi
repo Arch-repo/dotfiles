@@ -4,7 +4,9 @@
    ============================================================================= */
 
 configuration {
-    show-icons:     false;
+    show-icons:     true;
+    icon-theme:     "Anto426-Material";
+    application-fallback-icon: "application-default-icon";
     scroll-method:  1;
     scrollbar:      false;
 }
@@ -129,6 +131,13 @@ configuration {
 #element.selected.active {
     background-color: @item-bg-active;
     text-color:       @accent;
+}
+
+#element-icon {
+    size:             28px;
+    margin:           0px 12px 0px 0px;
+    vertical-align:   0.5;
+    background-color: transparent;
 }
 
 #element-text {

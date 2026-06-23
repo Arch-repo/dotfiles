@@ -2,6 +2,10 @@
 set -euo pipefail
 
 script_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+if [[ "${1:-}" != "--setup-admin" && "${ANTO426_WALLPAPER_EFFECTS_IMPL:-c}" != "sh" && -x "$script_dir/wallpaper_core" ]]; then
+    exec "$script_dir/wallpaper_core" effects "$@"
+fi
+
 effects_lib_dir="$script_dir/wallpaper_effects.d"
 widgets_script="$script_dir/widgets.sh"
 
@@ -373,6 +377,10 @@ extract_average_rgb() {
 
     magick "$src" \
         -auto-orient \
+        -alpha off \
+        -colorspace sRGB \
+        -resize 96x96\! \
+        -filter triangle \
         -resize 1x1\! \
         -format '%[fx:int(255*r)] %[fx:int(255*g)] %[fx:int(255*b)]\n' \
         info:
@@ -385,21 +393,54 @@ extract_vibrant_rgb() {
     rgb="$(
         magick "$src" \
             -auto-orient \
-            -resize 180x180^ \
+            -alpha off \
+            -resize 320x320^ \
             -gravity center \
-            -extent 180x180 \
-            -crop 72%x84%+0+0 +repage \
+            -extent 320x320 \
             -colorspace sRGB \
-            -modulate 108,155,100 \
-            -colors 14 \
+            +dither \
+            -colors 32 \
             -depth 8 \
             -format %c histogram:info:- |
             awk '
                 function abs(x) { return x < 0 ? -x : x }
                 function max3(a, b, c) { m = a > b ? a : b; return m > c ? m : c }
                 function min3(a, b, c) { m = a < b ? a : b; return m < c ? m : c }
+                function hexval(h,    i, c, v, n) {
+                    n = 0
+                    for (i = 1; i <= length(h); i++) {
+                        c = tolower(substr(h, i, 1))
+                        if (c >= "0" && c <= "9")
+                            v = c + 0
+                        else
+                            v = index("abcdef", c) + 9
+                        n = n * 16 + v
+                    }
+                    return n
+                }
+                function parse_rgb(line, out,    hex, rgb, channel) {
+                    if (match(line, /#[0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f][0-9A-Fa-f]/)) {
+                        hex = substr(line, RSTART + 1, 6)
+                        out[1] = hexval(substr(hex, 1, 2))
+                        out[2] = hexval(substr(hex, 3, 2))
+                        out[3] = hexval(substr(hex, 5, 2))
+                        return 1
+                    }
+
+                    if (match(line, /\([0-9.]+,[0-9.]+,[0-9.]+/)) {
+                        rgb = substr(line, RSTART + 1, RLENGTH - 1)
+                        split(rgb, channel, ",")
+                        out[1] = int(channel[1] + 0.5)
+                        out[2] = int(channel[2] + 0.5)
+                        out[3] = int(channel[3] + 0.5)
+                        return 1
+                    }
+
+                    return 0
+                }
                 BEGIN {
                     found = 0
+                    fallback_found = 0
                 }
                 {
                     line = $0
@@ -408,23 +449,39 @@ extract_vibrant_rgb() {
                     count = line
                     sub(/:.*/, "", count)
 
-                    rgb = line
-                    sub(/^[^(]*\(/, "", rgb)
-                    sub(/\).*/, "", rgb)
-                    split(rgb, channel, ",")
+                    count = count + 0
+                    if (!parse_rgb(line, channel))
+                        next
 
                     r = channel[1] + 0
                     g = channel[2] + 0
                     b = channel[3] + 0
 
-                    count = count + 0
-                    sat = max3(r, g, b) - min3(r, g, b)
+                    maxc = max3(r, g, b)
+                    minc = min3(r, g, b)
+                    chroma = maxc - minc
+                    sat = maxc > 0 ? chroma / maxc : 0
                     bright = (299 * r + 587 * g + 114 * b) / 1000
+                    balance = 1 - abs(bright - 145) / 145
+                    if (balance < 0)
+                        balance = 0
 
-                    if (bright < 48 || bright > 224 || sat < 34)
+                    fallback_score = log(count + 1) * (0.5 + balance)
+                    if (bright >= 34 && bright <= 236 && fallback_score > best_fallback_score) {
+                        best_fallback_score = fallback_score
+                        fallback_r = r
+                        fallback_g = g
+                        fallback_b = b
+                        fallback_found = 1
+                    }
+
+                    if (bright < 42 || bright > 226 || sat < 0.13)
                         next
 
-                    score = sqrt(count) * (sat * sat) * (1 - abs(bright - 145) / 180)
+                    score = log(count + 1) * (0.35 + sat * 2.9) * (0.55 + balance) * (1 + chroma / 255)
+                    if (sat < 0.20)
+                        score *= 0.45
+
                     if (score > best_score) {
                         best_score = score
                         best_r = r
@@ -436,6 +493,8 @@ extract_vibrant_rgb() {
                 END {
                     if (found)
                         printf "%d %d %d\n", best_r, best_g, best_b
+                    else if (fallback_found)
+                        printf "%d %d %d\n", fallback_r, fallback_g, fallback_b
                 }
             '
     )"
@@ -522,11 +581,12 @@ trap 'rm -rf "$tmp_dir"' EXIT
 log "Updating theme from: $current_wallpaper_path ($canvas_size)"
 
 exit_if_stale_effects_job
-make_cover_image "$current_wallpaper_path" "$canvas_size" "$destination_wallpaper_dir/normal.png"
+sample_wallpaper_path="$destination_wallpaper_dir/normal.png"
+make_cover_image "$current_wallpaper_path" "$canvas_size" "$sample_wallpaper_path"
 printf '%s\n' "$source_wallpaper_path" >"$destination_wallpaper_dir/current-wallpaper.path"
 
-read -r r g b < <(extract_average_rgb "$current_wallpaper_path")
-read -r ar ag ab < <(extract_vibrant_rgb "$current_wallpaper_path")
+read -r r g b < <(extract_average_rgb "$sample_wallpaper_path")
+read -r ar ag ab < <(extract_vibrant_rgb "$sample_wallpaper_path")
 
 generate_palette_from_samples "$r" "$g" "$b" "$ar" "$ag" "$ab"
 

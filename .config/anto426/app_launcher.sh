@@ -9,7 +9,7 @@ anto426_close_rofi
 
 rofi -show drun \
     -show-icons \
-    -icon-theme "WhiteSur-dark" \
+    -icon-theme "${ANTO426_ICON_THEME:-Anto426-Material}" \
     -application-fallback-icon "application-default-icon" \
     -p "Apps" \
     -matching fuzzy \

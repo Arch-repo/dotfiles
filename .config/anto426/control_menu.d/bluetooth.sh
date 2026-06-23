@@ -51,37 +51,33 @@ bluetooth_device_rows() {
             }
         }
     ' | while IFS=$'\t' read -r mac name; do
-        local info connected paired trusted marker status
+        local info connected paired trusted status
         info="$(bluetoothctl info "$mac" 2>/dev/null || true)"
         connected="$(printf '%s\n' "$info" | awk -F': ' '/Connected:/ {print $2; exit}')"
         paired="$(printf '%s\n' "$info" | awk -F': ' '/Paired:/ {print $2; exit}')"
         trusted="$(printf '%s\n' "$info" | awk -F': ' '/Trusted:/ {print $2; exit}')"
 
-        marker="󰂲"
         status="disponibile"
         if [[ "$paired" == "yes" ]]; then
-            marker="󰂯"
             status="associato"
         fi
         [[ "$trusted" == "yes" ]] && status="$status, attendibile"
         if [[ "$connected" == "yes" ]]; then
-            marker="󰂱"
             status="connesso ($status)"
         fi
 
-        printf '%s  %s\t%s\t%s\t%s\t%s\n' "$marker" "$name" "$mac" "$status" "$connected" "$name"
+        printf '%s\t%s\t%s\t%s\n' "$name" "$mac" "$status" "$connected"
     done
 }
 
 bluetooth_device_menu() {
     local item="$1"
-    local label mac status choice connected name
+    local name mac status choice connected
 
-    label="$(printf '%s' "$item" | awk -F'\t' '{print $1}')"
+    name="$(printf '%s' "$item" | awk -F'\t' '{print $1}')"
     mac="$(printf '%s' "$item" | awk -F'\t' '{print $2}')"
     status="$(printf '%s' "$item" | awk -F'\t' '{print $3}')"
     connected="$(printf '%s' "$item" | awk -F'\t' '{print $4}')"
-    name="$(printf '%s' "$item" | awk -F'\t' '{print $5}')"
 
     while true; do
         local conn_label pair_label trust_label info trusted paired status_line
@@ -90,12 +86,24 @@ bluetooth_device_menu() {
         paired="$(printf '%s\n' "$info" | awk -F': ' '/Paired:/ {print $2; exit}')"
         trusted="$(printf '%s\n' "$info" | awk -F': ' '/Trusted:/ {print $2; exit}')"
 
-        conn_label="Connect"
-        [[ "$connected" == "yes" ]] && conn_label="Disconnect"
-        pair_label="Pair"
-        [[ "$paired" == "yes" ]] && pair_label="Unpair"
-        trust_label="Trust"
-        [[ "$trusted" == "yes" ]] && trust_label="Untrust"
+        if [[ "$connected" == "yes" ]]; then
+            conn_label="$(system_text "Disconnect")"
+        else
+            conn_label="$(system_text "Connect")"
+        fi
+
+        if [[ "$paired" == "yes" ]]; then
+            pair_label="$(system_text "Unpair")"
+        else
+            pair_label="$(system_text "Pair")"
+        fi
+
+        if [[ "$trusted" == "yes" ]]; then
+            trust_label="$(system_text "Untrust")"
+        else
+            trust_label="$(system_text "Trust")"
+        fi
+
         status_line="Connected: ${connected:-no}\nPaired: ${paired:-no}\nTrusted: ${trusted:-no}"
 
         choice="$(
@@ -103,46 +111,48 @@ bluetooth_device_menu() {
                 printf '%s\0icon\x1fnetwork-wireless\n' "$conn_label"
                 printf '%s\0icon\x1fpreferences-system-bluetooth\n' "$pair_label"
                 printf '%s\0icon\x1fsecurity-high\n' "$trust_label"
-                printf 'Copy MAC\0icon\x1fedit-copy\n'
-                printf 'Remove device\0icon\x1fuser-trash\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fedit-copy\n' "$(system_text "Copy MAC")"
+                printf '%s\0icon\x1fuser-trash\n' "$(system_text "Remove device")"
+                printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
             } | rofi_pick_msg "Device: $name" "MAC: $mac\n${status_line}"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            *Connect*)
-                run_or_notify "Connesso a $name" bluetoothctl connect "$mac"
-                ;;
-            *Disconnect*)
+            "$(system_text "Disconnect")")
                 run_or_notify "Disconnesso da $name" bluetoothctl disconnect "$mac"
                 ;;
-            *Pair*)
-                run_or_notify "Associato a $name" bluetoothctl pair "$mac"
+            "$(system_text "Connect")")
+                run_or_notify "Connesso a $name" bluetoothctl connect "$mac"
                 ;;
-            *Unpair*)
+            "$(system_text "Unpair")")
                 run_or_notify "Associazione rimossa per $name" bluetoothctl remove "$mac"
                 ;;
-            *Trust*)
-                run_or_notify "$name contrassegnato attendibile" bluetoothctl trust "$mac"
+            "$(system_text "Pair")")
+                run_or_notify "Associato a $name" bluetoothctl pair "$mac"
                 ;;
-            *Untrust*)
+            "$(system_text "Untrust")")
                 run_or_notify "$name rimosso da attendibili" bluetoothctl untrust "$mac"
                 ;;
-            "Copy MAC"*)
+            "$(system_text "Trust")")
+                run_or_notify "$name contrassegnato attendibile" bluetoothctl trust "$mac"
+                ;;
+            "$(system_text "Copy MAC")")
                 if command -v wl-copy >/dev/null 2>&1; then
                     printf '%s' "$mac" | wl-copy && notify "MAC copiato"
                 else
                     notify "wl-copy non disponibile"
                 fi
                 ;;
-            "Remove device"*)
+            "$(system_text "Remove device")")
                 run_or_notify "Dispositivo $name rimosso" bluetoothctl remove "$mac"
                 return 0
                 ;;
-            "Back"*)
-                return 0
+            *)
+                if [[ "$choice" == "$(system_text "Back")" ]]; then
+                    return 0
+                fi
                 ;;
         esac
     done
@@ -157,7 +167,7 @@ bluetooth_menu() {
         [[ -z "$powered" ]] && state="not available"
 
         device_rows="$(bluetooth_device_rows)"
-        connected_bt="$(printf '%s\n' "$device_rows" | awk -F'\t' '$4 == "yes" {print $5; exit}')"
+        connected_bt="$(printf '%s\n' "$device_rows" | awk -F'\t' '$4 == "yes" {print $1; exit}')"
         [[ -z "$connected_bt" ]] && connected_bt="none"
 
         local state_color="$c_red"
@@ -169,53 +179,53 @@ bluetooth_menu() {
 
         choice="$(
             {
-                printf 'Enable/Disable\0icon\x1fpreferences-system-bluetooth\n'
-                printf 'Scan devices\0icon\x1fsystem-search\n'
+                printf '%s\0icon\x1fpreferences-system-bluetooth\n' "$(menu_item "󰂯" "Enable/Disable")"
+                printf '%s\0icon\x1fsystem-search\n' "$(menu_item "󰑐" "Scan devices")"
                 if command -v blueman-manager >/dev/null 2>&1; then
-                    printf 'Bluetooth settings\0icon\x1fpreferences-system\n'
+                    printf '%s\0icon\x1fpreferences-system\n' "$(menu_item "󰂯" "Bluetooth settings")"
                 fi
                 if [[ -n "$device_rows" ]]; then
                     local dev_line
                     while IFS= read -r dev_line; do
                         [[ -z "$dev_line" ]] && continue
-                        local marker name mac status connected
-                        marker="$(printf '%s' "$dev_line" | awk -F'\t' '{print $1}')"
-                        name="$(printf '%s' "$dev_line" | awk -F'\t' '{print $6}')"
+                        local name mac status connected
+                        name="$(printf '%s' "$dev_line" | awk -F'\t' '{print $1}')"
                         mac="$(printf '%s' "$dev_line" | awk -F'\t' '{print $2}')"
                         status="$(printf '%s' "$dev_line" | awk -F'\t' '{print $3}')"
+                        connected="$(printf '%s' "$dev_line" | awk -F'\t' '{print $4}')"
                         local icon="bluetooth"
-                        if [[ "$marker" == "󰂱" ]]; then
+                        if [[ "$connected" == "yes" ]]; then
                             icon="bluetooth-active"
                         fi
-                        printf '%s\t(%s)\0icon\x1f%s\n' "$name" "$status" "$icon"
+                        printf '%s  (%s)\0icon\x1f%s\n' "$name" "$status" "$icon"
                     done <<< "$device_rows"
                 fi
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "Bluetooth" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "Enable/Disable"*)
+            "$(system_text "Enable/Disable")")
                 bluetooth_toggle
                 ;;
-            "Scan devices"*)
+            "$(system_text "Scan devices")")
                 bluetooth_scan
                 ;;
-            "Bluetooth settings"*)
+            "$(system_text "Bluetooth settings")")
                 open_or_notify "Bluetooth settings" blueman-manager
                 return 0
                 ;;
-            "Back"*)
+            "$(system_text "Back")")
                 back_or_main
                 return 0
                 ;;
             *)
                 local chosen_name
-                chosen_name="$(printf '%s' "$choice" | awk -F'\t' '{print $1}')"
+                chosen_name="$(printf '%s' "$choice" | sed -E 's/[[:space:]]+\([^)]+\)$//')"
                 local dev_item
-                dev_item="$(printf '%s\n' "$device_rows" | awk -F'\t' -v name="$chosen_name" '$6 == name {printf "%s\t%s\t%s\t%s\t%s", $1, $2, $3, $4, $5; exit}')"
+                dev_item="$(printf '%s\n' "$device_rows" | awk -F'\t' -v name="$chosen_name" '$1 == name {printf "%s\t%s\t%s\t%s", $1, $2, $3, $4; exit}')"
                 [[ -n "$dev_item" ]] && bluetooth_device_menu "$dev_item"
                 ;;
         esac
@@ -223,3 +233,4 @@ bluetooth_menu() {
 }
 
 bluetooth_menu
+

@@ -20,5 +20,5 @@ anto426_rofi_dmenu() {
         shift
     fi
 
-    rofi -dmenu -i -matching fuzzy -p "$prompt" -theme "$theme" "$@"
+    rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -theme "$theme" "$@"
 }

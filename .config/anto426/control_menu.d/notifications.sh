@@ -93,12 +93,6 @@ notifications_history_rows() {
                 if (cat == "system") return "preferences-system"
                 return "preferences-desktop-notification"
             }
-            function badge(prio) {
-                if (prio >= 3) return "!!"
-                if (prio == 2) return "*"
-                if (prio == 1) return "+"
-                return "-"
-            }
             BEGIN {
                 query = ""
                 app_filter = ""
@@ -121,7 +115,7 @@ notifications_history_rows() {
 
                 preview = summary
                 if (body != "") preview = preview " - " body
-                label = sprintf("%s %s  %s · %s", badge(prio), strftime("%H:%M", ts), app, preview)
+                label = sprintf("%s  %s · %s", strftime("%H:%M", ts), app, preview)
                 if (length(label) > 118) label = substr(label, 1, 115) "..."
                 rows[++n] = label "\t" ts "\t" app "\t" summary "\t" body "\t" icon(cat) "\t" cat "\t" prio
             }
@@ -363,26 +357,34 @@ notifications_menu() {
         history_rows="$(notifications_history_rows "$NOTIFICATIONS_VIEW_MODE")"
         message_card="$(notifications_smart_message "$count" "$dnd" "$NOTIFICATIONS_VIEW_MODE")"
 
-        dnd_action="Enable Do Not Disturb"
-        dnd_icon="notifications-disabled"
+        local dnd_label dnd_icon
         if [[ "$dnd" == "true" ]]; then
-            dnd_action="Disable Do Not Disturb"
-            dnd_icon="notifications-active"
+            dnd_label="$(menu_item "󰂚" "Disable Do Not Disturb")"
+            dnd_icon="notifications-disabled"
+        else
+            dnd_label="$(menu_item "󰂛" "Enable Do Not Disturb")"
+            dnd_icon="preferences-system-notifications"
         fi
 
-        view_action="Important only"
-        [[ "$NOTIFICATIONS_VIEW_MODE" == "important" ]] && view_action="Smart inbox"
+        local view_label view_icon
+        if [[ "$NOTIFICATIONS_VIEW_MODE" == "important" ]]; then
+            view_label="$(menu_item "󰂚" "Smart inbox")"
+            view_icon="mail-inbox"
+        else
+            view_label="$(menu_item "󰂛" "Important only")"
+            view_icon="emblem-important"
+        fi
 
         choice="$(
             {
-                printf '%s\0icon\x1f%s\n' "$dnd_action" "$dnd_icon"
-                printf '%s\0icon\x1femblem-important\n' "$view_action"
-                printf 'Filter by app\0icon\x1fview-list-symbolic\n'
-                printf 'Search history\0icon\x1fsystem-search\n'
-                printf 'Open notification center\0icon\x1fpreferences-desktop-notification\n'
-                printf 'Close last notification\0icon\x1fwindow-close\n'
-                printf 'Clear all notifications\0icon\x1fedit-clear-all\n'
-                printf 'Refresh\0icon\x1fview-refresh\n'
+                printf '%s\0icon\x1f%s\n' "$dnd_label" "$dnd_icon"
+                printf '%s\0icon\x1f%s\n' "$view_label" "$view_icon"
+                printf '%s\0icon\x1fview-list\n' "$(menu_item "󰈺" "Filter by app")"
+                printf '%s\0icon\x1fsystem-search\n' "$(menu_item "󰍉" "Search history")"
+                printf '%s\0icon\x1fpreferences-desktop-notification\n' "$(menu_item "󰂚" "Open notification center")"
+                printf '%s\0icon\x1fwindow-close\n' "$(menu_item "󰅖" "Close last notification")"
+                printf '%s\0icon\x1fedit-clear\n' "$(menu_item "󰅖" "Clear all notifications")"
+                printf '%s\0icon\x1fview-refresh\n' "$(menu_item "󰑐" "Refresh")"
 
                 if [[ -n "$history_rows" ]]; then
                     while IFS=$'\t' read -r label _timestamp _app _summary _body icon _category _priority; do
@@ -390,38 +392,38 @@ notifications_menu() {
                         printf '%s\0icon\x1f%s\n' "$label" "${icon:-preferences-desktop-notification}"
                     done <<< "$history_rows"
                 else
-                    printf 'No notifications in this view\0icon\x1finfo\n'
+                    printf '%s\0icon\x1finfo\n' "$(menu_item "󰄧" "No notifications in this view")"
                 fi
 
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "Notifications" "$message_card"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "Disable Do Not Disturb") notifications_swaync -df >/dev/null || true ;;
-            "Enable Do Not Disturb") notifications_swaync -dn >/dev/null || true ;;
-            "Important only") NOTIFICATIONS_VIEW_MODE="important" ;;
-            "Smart inbox") NOTIFICATIONS_VIEW_MODE="all" ;;
-            "Filter by app") notifications_choose_app ;;
-            "Search history") notifications_search ;;
-            "Open notification center")
+            "$(system_text "Disable Do Not Disturb")") notifications_swaync -df >/dev/null || true ;;
+            "$(system_text "Enable Do Not Disturb")") notifications_swaync -dn >/dev/null || true ;;
+            "$(system_text "Important only")") NOTIFICATIONS_VIEW_MODE="important" ;;
+            "$(system_text "Smart inbox")") NOTIFICATIONS_VIEW_MODE="all" ;;
+            "$(system_text "Filter by app")") notifications_choose_app ;;
+            "$(system_text "Search history")") notifications_search ;;
+            "$(system_text "Open notification center")")
                 notifications_swaync -t -sw >/dev/null || notifications_swaync -t >/dev/null || true
                 return 0
                 ;;
-            "Close last notification")
+            "$(system_text "Close last notification")")
                 notifications_swaync --close-latest >/dev/null || true
                 [[ -s "$NOTIFICATIONS_FILE" ]] && sed -i '$d' "$NOTIFICATIONS_FILE"
                 ;;
-            "Clear all notifications")
+            "$(system_text "Clear all notifications")")
                 notifications_swaync -C >/dev/null || true
                 : > "$NOTIFICATIONS_FILE"
                 NOTIFICATIONS_VIEW_MODE="all"
                 ;;
-            "Refresh") continue ;;
-            "No notifications in this view") continue ;;
-            "Back")
+            "$(system_text "Refresh")") continue ;;
+            "$(system_text "No notifications in this view")") continue ;;
+            "$(system_text "Back")")
                 back_or_main
                 return 0
                 ;;

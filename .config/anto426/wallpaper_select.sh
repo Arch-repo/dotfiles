@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 set -uo pipefail
 export PATH="$HOME/.config/anto426/bin:$PATH"
+export QML_XHR_ALLOW_FILE_READ=1
 
 wallpapers_dir="${ANTO426_WALLPAPERS_DIR:-$HOME/Pictures/Wallpapers}"
 theme="$HOME/.config/rofi/control_menu.rasi"
@@ -199,7 +200,7 @@ PanelWindow {
     implicitWidth: Screen.width
     color: "transparent"
     property int speed: 180
-    property int stripHeight: Math.min(500, Math.max(320, Math.round(Screen.height * 0.52)))
+    property int stripHeight: Math.min(700, Math.max(300, Math.round(Screen.height * 0.38)))
     property int reservedTop: Math.max(0, configs.top_margin)
 
     anchors {
@@ -217,8 +218,32 @@ PanelWindow {
     WlrLayershell.keyboardFocus: WlrKeyboardFocus.Exclusive
     WlrLayershell.namespace: "hyprquickpaper"
 
+    property var colorsMap: ({})
+
+    function loadColorsMap() {
+        if (!configs.cache_path || configs.cache_path.length === 0)
+            return;
+            
+        var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+            if (xhr.readyState === XMLHttpRequest.DONE) {
+                if (xhr.status === 200 || xhr.status === 0) {
+                    try {
+                        const parsed = JSON.parse(xhr.responseText)
+                        if (parsed && typeof parsed === "object")
+                            colorsMap = parsed
+                    } catch (e) {
+                        return
+                    }
+                }
+            }
+        }
+        xhr.open("GET", "file://" + configs.cache_path + "colors.json", true);
+        xhr.send();
+    }
+
     Component.onCompleted: {
-        Quickshell.execDetached(["bash", Quickshell.shellPath("cache.sh"), Quickshell.shellDir])
+        list.requestInitialCenter()
         list.forceActiveFocus()
     }
 
@@ -235,6 +260,18 @@ PanelWindow {
             property int top_margin
             property string border_color
             property string background_color
+
+            onCache_pathChanged: {
+                loadColorsMap();
+            }
+        }
+    }
+
+    FileView {
+        path: configs.cache_path ? configs.cache_path + "colors.json" : ""
+        watchChanges: true
+        onFileChanged: {
+            loadColorsMap();
         }
     }
 
@@ -246,227 +283,455 @@ PanelWindow {
         sortField: FolderListModel.Name
     }
 
+    // Full screen overlay background
     Rectangle {
         anchors.fill: parent
-        anchors.topMargin: main.reservedTop
         color: configs.background_color && configs.background_color.length > 0 ? configs.background_color : "#471e1e2e"
     }
 
-    ListView {
-        id: list
+    Rectangle {
+        id: dock
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.verticalCenter: parent.verticalCenter
-        anchors.verticalCenterOffset: Math.round(main.reservedTop / 2)
-        anchors.leftMargin: Math.max(0, Screen.width * 0.07)
-        anchors.rightMargin: Math.max(0, Screen.width * 0.07)
-        height: main.stripHeight
-        focus: true
+        anchors.verticalCenterOffset: 0
+        anchors.leftMargin: 0
+        anchors.rightMargin: 0
+        height: main.stripHeight + 160
+        color: "transparent"
 
-        model: folderModel
-        orientation: ListView.Horizontal
-        spacing: 8
-        clip: true
-        interactive: false
-        boundsBehavior: Flickable.StopAtBounds
-        flickDeceleration: 3500
-        maximumFlickVelocity: 6000
-        cacheBuffer: Math.max(0, width * 2)
-        currentIndex: selectedIndex
-        highlightRangeMode: ListView.ApplyRange
-        preferredHighlightBegin: width * 0.5 - tileWidth * 0.5
-        preferredHighlightEnd: width * 0.5 + tileWidth * 0.5
+        ListView {
+            id: list
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: parent.bottom
+            anchors.leftMargin: 0
+            anchors.rightMargin: 0
+            anchors.topMargin: 20
+            anchors.bottomMargin: 20
+            focus: true
 
-        property int selectedIndex: 0
-        property real tileWidth: Math.max(130, width / Math.max(1, configs.number_of_pictures) - spacing)
+            model: folderModel
+            orientation: ListView.Horizontal
+            spacing: -Math.round(cardHeight * 0.07)
+            clip: false
+            interactive: false
+            boundsBehavior: Flickable.StopAtBounds
+            flickDeceleration: 3500
+            maximumFlickVelocity: 6000
+            cacheBuffer: Math.max(0, width * 2)
+            currentIndex: selectedIndex
+            highlightRangeMode: ListView.ApplyRange
+            preferredHighlightBegin: width * 0.5 - tileWidth * 0.5
+            preferredHighlightEnd: width * 0.5 + tileWidth * 0.5
 
-        function clampIndex(i) {
-            return Math.max(0, Math.min(i, count - 1))
-        }
+            property int selectedIndex: 0
+            property real cardHeight: Math.max(260, height - 80)
+            property real activeWidth: Math.round(cardHeight * 16 / 9)
+            property real inactiveWidth: Math.round(cardHeight * 0.6)
+            property real tileWidth: activeWidth
+            property real sideInset: Math.max(0, width * 0.5 - activeWidth * 0.5)
 
-        function centerIndex(i) {
-            selectedIndex = clampIndex(i)
-            positionViewAtIndex(selectedIndex, ListView.Center)
-        }
-
-        function activateCurrent() {
-            if (count <= 0)
-                return
-            const path = folderModel.get(selectedIndex, "filePath")
-            Quickshell.execDetached(["bash", Quickshell.shellPath("commands.sh"), path])
-            Qt.quit()
-        }
-
-        function indexNearCenter() {
-            if (count <= 0)
-                return 0
-            const step = tileWidth + spacing
-            return clampIndex(Math.round((contentX + width * 0.5 - tileWidth * 0.5) / step))
-        }
-
-        function isLiveFile(name) {
-            const lower = String(name).toLowerCase()
-            return lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".mov")
-        }
-
-        function cachedPreview(name) {
-            return "file://" + configs.cache_path + name + ".png"
-        }
-
-        function previewSource(name) {
-            return cachedPreview(name)
-        }
-
-        Behavior on contentX {
-            NumberAnimation {
-                duration: main.speed
-                easing.type: Easing.OutCubic
+            header: Item {
+                width: list.sideInset
+                height: list.height
             }
-        }
 
-        onMovementEnded: selectedIndex = indexNearCenter()
-        onFlickEnded: selectedIndex = indexNearCenter()
+            footer: Item {
+                width: list.sideInset
+                height: list.height
+            }
 
-        delegate: Item {
-            id: card
-            property bool active: index === list.selectedIndex
-            property bool triedOriginalFallback: false
-            property bool hadPreview: false
-            property int previewRetries: 0
-            width: list.tileWidth
-            height: list.height
-            z: active ? 10 : 0
-            scale: active ? 1.12 : 0.98
-            transformOrigin: Item.Center
+            function wrapIndex(i) {
+                if (count <= 0) return 0
+                return (i + count) % count
+            }
 
-            Behavior on scale {
+            // Smoother center placement with layout verification
+            function centerIndex(i) {
+                selectedIndex = wrapIndex(i)
+                currentIndex = selectedIndex
+                positionViewAtIndex(selectedIndex, ListView.Center)
+                Qt.callLater(function() {
+                    positionViewAtIndex(selectedIndex, ListView.Center)
+                })
+            }
+
+            function activateCurrent() {
+                if (count <= 0)
+                    return
+                const path = folderModel.get(selectedIndex, "filePath")
+                Quickshell.execDetached(["bash", Quickshell.shellPath("commands.sh"), path])
+                Qt.quit()
+            }
+
+            function indexNearCenter() {
+                if (count <= 0)
+                    return 0
+                const i = indexAt(contentX + width * 0.5, height * 0.5)
+                return i >= 0 ? i : selectedIndex
+            }
+
+            function isLiveFile(name) {
+                const lower = String(name).toLowerCase()
+                return lower.endsWith(".mp4") || lower.endsWith(".webm") || lower.endsWith(".mkv") || lower.endsWith(".mov")
+            }
+
+            function cachedPreview(name) {
+                return "file://" + configs.cache_path + name + ".png"
+            }
+
+            function previewSource(name) {
+                return cachedPreview(name)
+            }
+
+            Behavior on contentX {
                 NumberAnimation {
-                    duration: 140
+                    duration: main.speed
                     easing.type: Easing.OutCubic
                 }
             }
 
-            Image {
-                id: img
-                z: 1
-                anchors.fill: parent
-                fillMode: Image.PreserveAspectCrop
-                asynchronous: true
-                cache: true
-                smooth: true
-                source: list.previewSource(fileName)
-                transform: Shear { xFactor: -0.25 }
+            property bool initialPositioned: false
+            property int initialCenterPasses: 0
 
-                Timer {
-                    id: retryTimer
-                    interval: 180
-                    repeat: false
-                    onTriggered: {
-                        if (card.previewRetries >= 10)
-                            return
-                        card.previewRetries += 1
-                        const oldSource = img.source
-                        img.source = ""
-                        img.source = oldSource
+            Timer {
+                id: initialCenterTimer
+                interval: 60
+                repeat: true
+                onTriggered: list.ensureInitialCenter()
+            }
+
+            function requestInitialCenter() {
+                initialCenterPasses = 0
+                if (!initialCenterTimer.running)
+                    initialCenterTimer.start()
+            }
+
+            function ensureInitialCenter() {
+                if (count <= 0 || width <= 0 || activeWidth <= 0) {
+                    return
+                }
+                selectedIndex = 0
+                currentIndex = 0
+                positionViewAtIndex(0, ListView.Center)
+                initialPositioned = true
+                initialCenterPasses += 1
+                if (initialCenterPasses >= 12)
+                    initialCenterTimer.stop()
+            }
+
+            onCountChanged: {
+                requestInitialCenter()
+            }
+
+            onWidthChanged: {
+                if (initialPositioned)
+                    Qt.callLater(function() { centerIndex(selectedIndex) })
+                else
+                    requestInitialCenter()
+            }
+
+            onHeightChanged: {
+                if (initialPositioned)
+                    Qt.callLater(function() { centerIndex(selectedIndex) })
+                else
+                    requestInitialCenter()
+            }
+
+            delegate: Item {
+                id: delegateContainer
+                property bool active: index === list.selectedIndex
+                
+                width: active ? list.activeWidth : list.inactiveWidth
+                height: list.height
+                z: active ? 10 : 0
+
+                Behavior on width {
+                    NumberAnimation {
+                        duration: 250
+                        easing.type: Easing.OutCubic
                     }
                 }
 
-                onSourceChanged: {
-                    if (source == list.previewSource(fileName)) {
-                        card.hadPreview = false
-                        card.triedOriginalFallback = false
-                        card.previewRetries = 0
+                Item {
+                    id: card
+                    anchors.centerIn: parent
+                    width: parent.width
+                    height: list.cardHeight
+                    scale: active ? 1.05 : 0.95
+                    transformOrigin: Item.Center
+
+                    property bool active: delegateContainer.active
+                    property bool triedOriginalFallback: false
+                    property bool hadPreview: false
+                    property int previewRetries: 0
+                    property color activeColor: main.colorsMap[fileName] ? main.colorsMap[fileName] : configs.border_color
+
+                    Behavior on scale {
+                        NumberAnimation {
+                            duration: 250
+                            easing.type: Easing.OutCubic
+                        }
+                    }
+
+                    // Glow Aura behind the card
+                    Rectangle {
+                        id: glowAura
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 36
+                        anchors.margins: -12
+                        color: card.activeColor
+                        opacity: card.active ? 0.28 : 0.0
+                        radius: 26
+                        z: -1
+                        transform: Shear { xFactor: -0.25 }
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 250
+                                easing.type: Easing.OutCubic
+                            }
+                        }
+                    }
+
+                    // Rounded image container
+                    Rectangle {
+                        id: imgContainer
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 36
+                        radius: 20
+                        clip: true
+                        color: "transparent"
+                        transform: Shear { xFactor: -0.25 }
+
+                        Image {
+                            id: img
+                            anchors.fill: parent
+                            anchors.margins: card.active ? 3 : 2
+                            fillMode: Image.PreserveAspectCrop
+                            asynchronous: true
+                            cache: true
+                            smooth: true
+                            source: list.previewSource(fileName)
+                            visible: true
+
+                            Timer {
+                                id: retryTimer
+                                interval: 180
+                                repeat: false
+                                onTriggered: {
+                                    if (card.previewRetries >= 10)
+                                        return
+                                    card.previewRetries += 1
+                                    const oldSource = img.source
+                                    img.source = ""
+                                    img.source = oldSource
+                                }
+                            }
+
+                            onSourceChanged: {
+                                if (source == list.previewSource(fileName)) {
+                                    card.hadPreview = false
+                                    card.triedOriginalFallback = false
+                                    card.previewRetries = 0
+                                }
+                            }
+
+                            onStatusChanged: {
+                                if (status === Image.Ready)
+                                    card.hadPreview = true
+
+                                if (status !== Image.Error)
+                                    return
+
+                                if (card.previewRetries < 2) {
+                                    retryTimer.start()
+                                    return
+                                }
+
+                                if (!list.isLiveFile(fileName) && !card.triedOriginalFallback) {
+                                    card.triedOriginalFallback = true
+                                    source = fileUrl
+                                    return
+                                }
+
+                                if (card.previewRetries < 10)
+                                    retryTimer.start()
+                            }
+                        }
+                    }
+
+                    // Text placeholder if preview fails
+                    Text {
+                        id: alt
+                        z: 2
+                        visible: !card.hadPreview && img.status !== Image.Ready
+                        text: img.status === Image.Error && card.previewRetries >= 10 ? "No preview" : "Caricamento..."
+                        color: configs.border_color
+                        anchors.centerIn: parent
+                        font.pixelSize: 13
+                        font.bold: true
+                        font.family: "JetBrainsMono Nerd Font"
+                    }
+
+                    // Premium active glow border
+                    Rectangle {
+                        z: 10
+                        anchors.left: parent.left
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.bottom: parent.bottom
+                        anchors.bottomMargin: 36
+                        color: "transparent"
+                        visible: card.active
+                        border.width: 3
+                        border.color: card.activeColor
+                        radius: 20
+                        transform: Shear { xFactor: -0.25 }
+                    }
+
+                    // Elegant indicator badge for live video wallpapers
+                    Rectangle {
+                        z: 11
+                        visible: list.isLiveFile(fileName)
+                        anchors.right: parent.right
+                        anchors.top: parent.top
+                        anchors.margins: 12
+                        width: 58
+                        height: 22
+                        radius: 11
+                        color: "#a011111b"
+                        border.width: 1
+                        border.color: configs.border_color
+
+                        Text {
+                            anchors.centerIn: parent
+                            text: "LIVE"
+                            color: "white"
+                            font.pixelSize: 9
+                            font.bold: true
+                            font.family: "JetBrainsMono Nerd Font"
+                        }
+                    }
+
+                    // Elegant title below the card, visible only if active
+                    Text {
+                        id: titleText
+                        anchors.bottom: parent.bottom
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        width: Math.min(parent.width, Screen.width * 0.9)
+                        text: {
+                            var base = fileName.split(".")[0];
+                            var words = base.replace(/[-_]/g, " ").split(" ");
+                            for (var i = 0; i < words.length; i++) {
+                                words[i] = words[i].charAt(0).toUpperCase() + words[i].slice(1);
+                            }
+                            return words.join(" ");
+                        }
+                        color: "white"
+                        horizontalAlignment: Text.AlignHCenter
+                        elide: Text.ElideRight
+                        font.pixelSize: 13
+                        font.bold: true
+                        font.family: "JetBrainsMono Nerd Font"
+                        opacity: card.active ? 0.9 : 0.0
+
+                        Behavior on opacity {
+                            NumberAnimation {
+                                duration: 200
+                                easing.type: Easing.OutCubic
+                            }
+                        }
                     }
                 }
+            }
 
-                onStatusChanged: {
-                    if (status === Image.Ready)
-                        card.hadPreview = true
+            Keys.onPressed: function(event) {
+                const step = 1
+                const big = Math.max(1, configs.number_of_pictures)
 
-                    if (status !== Image.Error)
-                        return
-
-                    if (card.previewRetries < 2) {
-                        retryTimer.start()
-                        return
-                    }
-
-                    if (!list.isLiveFile(fileName) && !card.triedOriginalFallback) {
-                        card.triedOriginalFallback = true
-                        source = fileUrl
-                        return
-                    }
-
-                    if (card.previewRetries < 10)
-                        retryTimer.start()
+                if (event.key === Qt.Key_J || event.key === Qt.Key_Right) {
+                    centerIndex(selectedIndex + step)
+                } else if (event.key === Qt.Key_K || event.key === Qt.Key_Left) {
+                    centerIndex(selectedIndex - step)
+                } else if (event.key === Qt.Key_D || event.key === Qt.Key_PageDown) {
+                    centerIndex(selectedIndex + big)
+                } else if (event.key === Qt.Key_U || event.key === Qt.Key_PageUp) {
+                    centerIndex(selectedIndex - big)
+                } else if (event.key === Qt.Key_Space || event.key === Qt.Key_Return) {
+                    activateCurrent()
+                } else if (event.key === Qt.Key_Escape) {
+                    Qt.quit()
+                } else {
+                    return
                 }
+
+                event.accepted = true
+            }
+        }
+    }
+
+    // Translucent help bar at the bottom
+    Rectangle {
+        id: helpBar
+        anchors.bottom: parent.bottom
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottomMargin: Math.max(20, Screen.height * 0.04)
+        width: helpContent.implicitWidth + 32
+        height: 38
+        color: "#9011111b"
+        border.width: 1
+        border.color: "#25ffffff"
+        radius: 19
+
+        Row {
+            id: helpContent
+            anchors.centerIn: parent
+            spacing: 16
+
+            Text {
+                text: "󰄾󰄼 Naviga"
+                color: "#cdd6f4"
+                font.pixelSize: 11
+                font.bold: true
+                font.family: "JetBrainsMono Nerd Font"
             }
 
             Text {
-                id: alt
-                z: 2
-                visible: !card.hadPreview && img.status !== Image.Ready
-                text: img.status === Image.Error && card.previewRetries >= 10 ? "No preview" : "Preview"
+                text: "•"
+                color: "#585b70"
+                font.pixelSize: 11
+            }
+
+            Text {
+                text: "󰌑 Applica"
                 color: configs.border_color
-                anchors.centerIn: parent
-                font.pixelSize: 16
-                transform: Shear { xFactor: -0.25 }
+                font.pixelSize: 11
+                font.bold: true
+                font.family: "JetBrainsMono Nerd Font"
             }
 
-            Rectangle {
-                z: 10
-                anchors.fill: parent
-                color: "transparent"
-                visible: card.active
-                border.width: 5
-                border.color: configs.border_color
-                transform: Shear { xFactor: -0.25 }
+            Text {
+                text: "•"
+                color: "#585b70"
+                font.pixelSize: 11
             }
 
-            Rectangle {
-                z: 11
-                visible: list.isLiveFile(fileName)
-                anchors.right: parent.right
-                anchors.top: parent.top
-                anchors.margins: 18
-                width: 74
-                height: 28
-                radius: 14
-                color: "#000000aa"
-                border.width: 1
-                border.color: configs.border_color
-
-                Text {
-                    anchors.centerIn: parent
-                    text: "LIVE"
-                    color: "white"
-                    font.pixelSize: 12
-                    font.bold: true
-                }
+            Text {
+                text: "󱊷 Chiudi"
+                color: "#f38ba8"
+                font.pixelSize: 11
+                font.bold: true
+                font.family: "JetBrainsMono Nerd Font"
             }
-        }
-
-        Keys.onPressed: function(event) {
-            const step = 1
-            const big = Math.max(1, configs.number_of_pictures)
-
-            if (event.key === Qt.Key_J || event.key === Qt.Key_Right) {
-                centerIndex(selectedIndex + step)
-            } else if (event.key === Qt.Key_K || event.key === Qt.Key_Left) {
-                centerIndex(selectedIndex - step)
-            } else if (event.key === Qt.Key_D || event.key === Qt.Key_PageDown) {
-                centerIndex(selectedIndex + big)
-            } else if (event.key === Qt.Key_U || event.key === Qt.Key_PageUp) {
-                centerIndex(selectedIndex - big)
-            } else if (event.key === Qt.Key_Space || event.key === Qt.Key_Return) {
-                activateCurrent()
-            } else if (event.key === Qt.Key_Escape) {
-                Qt.quit()
-            } else {
-                return
-            }
-
-            event.accepted = true
         }
     }
 }
@@ -482,6 +747,8 @@ CONFIG="$1/config.json"
 wallpaper_path="$(jq -r '.wallpaper_path' "$CONFIG")"
 cache_path="$(jq -r '.cache_path' "$CONFIG")"
 cache_batch_size="$(jq -r '.cache_batch_size' "$CONFIG")"
+wallpaper_core="${ANTO426_WALLPAPER_CORE:-$HOME/.config/anto426/wallpaper_core}"
+color_engine_version="core-preview-v1"
 if ! [[ "$cache_batch_size" =~ ^[0-9]+$ ]]; then
     cache_batch_size=4
 fi
@@ -496,6 +763,39 @@ trap 'rmdir "$lock_dir" 2>/dev/null || true' EXIT
 
 declare -A expected_thumbs=()
 
+fallback_color() {
+    local image="$1"
+    local hex
+
+    hex=$(magick "$image" -resize 1x1 -format "%[hex:u]" info: 2>/dev/null || convert "$image" -resize 1x1 -format "%[hex:u]" info: 2>/dev/null || echo "8cb8e4")
+    hex="$(printf '%s' "$hex" | tr -d '#' | tr '[:lower:]' '[:upper:]')"
+    printf '#%s\n' "${hex:0:6}"
+}
+
+write_color_file() {
+    local input="$1"
+    local preview="$2"
+    local color_file="$3"
+    local tmp_color="${color_file}.tmp.$$"
+    local tmp_meta="${color_file}.engine.tmp.$$"
+    local hex
+    local engine="$color_engine_version"
+
+    if [[ -x "$wallpaper_core" ]]; then
+        hex="$("$wallpaper_core" preview-color "$input" accent 2>/dev/null | head -n1 || true)"
+    fi
+
+    if [[ ! "$hex" =~ ^#[[:xdigit:]]{6}$ ]]; then
+        hex="$(fallback_color "$preview")"
+        engine="fallback-v1"
+    fi
+
+    printf '%s\n' "${hex^^}" >"$tmp_color"
+    mv -f "$tmp_color" "$color_file"
+    printf '%s\n' "$engine" >"$tmp_meta"
+    mv -f "$tmp_meta" "$color_file.engine"
+}
+
 thumb_command() {
     local input="$1"
     local output="$2"
@@ -508,16 +808,16 @@ thumb_command() {
 
     if [[ "$mime_type" =~ ^video/ ]]; then
         if command -v ffmpegthumbnailer >/dev/null 2>&1; then
-            ffmpegthumbnailer -i "$input" -o "$tmp_output" -s 0 -q 8 >/dev/null 2>&1
+            ffmpegthumbnailer -i "$input" -o "$tmp_output" -s 800 -q 8 >/dev/null 2>&1
         elif command -v ffmpeg >/dev/null 2>&1; then
-            ffmpeg -y -loglevel error -ss 1 -i "$input" -frames:v 1 -vf "scale=-1:420" "$tmp_output" >/dev/null 2>&1
+            ffmpeg -y -loglevel error -ss 1 -i "$input" -frames:v 1 -vf "scale=-1:800" "$tmp_output" >/dev/null 2>&1
         else
             return 1
         fi
     elif command -v magick >/dev/null 2>&1; then
-        magick "$input[0]" -thumbnail x420 -strip -quality 82 "$tmp_output"
+        magick "$input[0]" -thumbnail x800 -strip -quality 82 "$tmp_output"
     elif command -v convert >/dev/null 2>&1; then
-        convert "$input[0]" -thumbnail x420 -strip -quality 82 "$tmp_output"
+        convert "$input[0]" -thumbnail x800 -strip -quality 82 "$tmp_output"
     else
         cp "$input" "$tmp_output"
     fi
@@ -527,6 +827,8 @@ thumb_command() {
         return 1
     }
     mv -f "$tmp_output" "$output"
+
+    write_color_file "$input" "$output" "${output%.png}.accent"
 }
 
 while read -r img; do
@@ -534,7 +836,14 @@ while read -r img; do
     out="$cache_path/$filename.png"
     expected_thumbs["$filename.png"]=1
 
-    [[ -s "$out" && "$out" -nt "$img" ]] && continue
+    if [[ -s "$out" && "$out" -nt "$img" ]]; then
+        color_file="${out%.png}.accent"
+        color_meta="$color_file.engine"
+        if [[ ! -s "$color_file" || "$color_file" -ot "$img" || "$(cat "$color_meta" 2>/dev/null || true)" != "$color_engine_version" ]]; then
+            write_color_file "$img" "$out" "$color_file" &
+        fi
+        continue
+    fi
     thumb_command "$img" "$out" &
 
     if (( cache_batch_size > 0 )); then
@@ -556,10 +865,29 @@ done < <(find "$wallpaper_path" -maxdepth 3 -type f \( \
 
 wait
 
+# Combine all palette accent files into colors.json atomically.
+json_tmp="$cache_path/colors.json.tmp.$$"
+printf '{\n' >"$json_tmp"
+first=1
+while read -r color_file; do
+    filename="$(basename "${color_file%.accent}")"
+    color_val="$(cat "$color_file" 2>/dev/null || echo "#8cb8e4")"
+    if (( first )); then
+        first=0
+    else
+        printf ',\n' >>"$json_tmp"
+    fi
+    key_json="$(jq -Rn --arg s "$filename" '$s')"
+    val_json="$(jq -Rn --arg s "$color_val" '$s')"
+    printf '  %s: %s' "$key_json" "$val_json" >>"$json_tmp"
+done < <(find "$cache_path" -maxdepth 1 -type f -name "*.accent" | sort -f)
+printf '\n}\n' >>"$json_tmp"
+mv -f "$json_tmp" "$cache_path/colors.json"
+
 find "$cache_path" -maxdepth 1 -type f -name "*.png" | while read -r thumb; do
     thumb_name="$(basename "$thumb")"
     [[ -n "${expected_thumbs[$thumb_name]:-}" ]] && continue
-    rm -f "$thumb"
+    rm -f "$thumb" "${thumb%.png}.accent" "${thumb%.png}.accent.engine" "${thumb%.png}.color"
 done
 EOF_CACHE
     chmod +x "$quickpaper_config/cache.sh"
@@ -569,8 +897,7 @@ ensure_hyprquickpaper_config() {
     local wallpaper_path cache_path border_color background_color
     local top_margin
 
-    [[ -d "$quickpaper_config" && -f "$quickpaper_config/shell.qml" ]] || return 1
-    mkdir -p "$quickpaper_cache"
+    mkdir -p "$quickpaper_config" "$quickpaper_cache"
 
     top_margin="$selector_top_margin"
     [[ "$top_margin" =~ ^[0-9]+$ ]] || top_margin=52
@@ -604,108 +931,18 @@ EOF
     write_hyprquickpaper_cache
 }
 
-try_hyprquickpaper() {
-    [[ "$selector" != "rofi" ]] || return 1
-    command -v quickshell >/dev/null 2>&1 || return 1
-    ensure_hyprquickpaper_config || return 1
+if ! command -v quickshell >/dev/null 2>&1; then
+    notify "quickshell non è installato per il selettore sfondi!"
+    exit 1
+fi
 
-    bash "$quickpaper_config/cache.sh" "$quickpaper_config" >/dev/null 2>&1 || true
-    quickshell --no-duplicate -c hyprquickpaper
-    exit 0
-}
-
-try_hyprquickpaper
-
-tmp_map="$(mktemp)"
-trap 'rm -f "$tmp_map"' EXIT
-
-while true; do
-    : >"$tmp_map"
-    current="$(canonical_path "$(current_wallpaper)")"
-    selected_row=0
-    mapfile -t wallpaper_list < <(wallpaper_files)
-
-    lines=()
-    if ((${#wallpaper_list[@]} > 0)); then
-        index=0
-        for file in "${wallpaper_list[@]}"; do
-            canonical_file="$(canonical_path "$file")"
-            rel="${file#"$wallpapers_dir"/}"
-            label="${rel%.*}"
-            if is_video_path "$file"; then
-                label="  $label (Live)"
-            fi
-            if [[ -n "$current" && "$canonical_file" == "$current" ]]; then
-                label="󰄬  $label"
-                selected_row="$index"
-            fi
-            lines+=("$label|$file")
-            index=$((index + 1))
-        done
-    fi
-
-    choice="$(
-        {
-            count=${#lines[@]}
-            if (( count > 0 )); then
-                for ((i=0; i<count; i++)); do
-                    item="${lines[i]}"
-                    lbl="${item%|*}"
-                    fl="${item#*|}"
-                    printf '%s\t%s\n' "$lbl" "$fl" >>"$tmp_map"
-                    printf '%s\0icon\x1f%s\n' "$lbl" "$fl"
-                done
-            else
-                printf 'No wallpapers found\0icon\x1fdialog-error\n'
-            fi
-
-            printf 'Random wallpaper\0icon\x1fmedia-playlist-shuffle\n'
-            printf 'Regenerate current theme\0icon\x1fview-refresh\n'
-            printf 'Open wallpaper folder\0icon\x1fuser-home\n'
-            printf 'Back\0icon\x1fgo-previous\n'
-        } |
-            rofi -dmenu -i -matching fuzzy -show-icons \
-                -p "Wallpaper" \
-                -selected-row "$selected_row" \
-                -theme "$theme"
-    )"
-
-    [[ -z "$choice" ]] && exit 0
-
-    case "$choice" in
-        "No wallpapers found")
-            open_wallpaper_dir
-            exit 0
-            ;;
-        "Random wallpaper")
-            "$HOME/.config/anto426/wallpaper_random.sh"
-            exit 0
-            ;;
-        "Regenerate current theme")
-            current="$(current_wallpaper)"
-            if [[ -n "$current" && -f "$current" ]]; then
-                "$HOME/.config/anto426/wallpaper_effects.sh" "$current"
-                notify "Theme regenerated"
-            else
-                notify "Current wallpaper not found"
-            fi
-            exit 0
-            ;;
-        "Open wallpaper folder")
-            open_wallpaper_dir
-            exit 0
-            ;;
-        "Back")
-            go_back
-            ;;
-        *)
-            selected_path="$(awk -F'\t' -v label="$choice" '$1 == label {print $2; exit}' "$tmp_map")"
-            [[ -n "$selected_path" && -f "$selected_path" ]] || {
-                notify "Wallpaper not found"
-                exit 1
-            }
-            "$apply_script" "$selected_path"
-            exit 0
-            ;;
-    esac
-done
+ensure_hyprquickpaper_config
+bash "$quickpaper_config/cache.sh" "$quickpaper_config" >/dev/null 2>&1 || true
+quickpaper_pid=""
+trap '[[ -n "${quickpaper_pid:-}" ]] && kill "$quickpaper_pid" 2>/dev/null || true; release_selector_lock; exit 130' INT TERM
+quickshell --no-duplicate -c hyprquickpaper &
+quickpaper_pid="$!"
+wait "$quickpaper_pid"
+status="$?"
+release_selector_lock
+exit "$status"

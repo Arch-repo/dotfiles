@@ -59,7 +59,7 @@ button label {
 }
 
 button:hover, button:focus, button:hover label, button:focus label {
-    color: @foreground;
+    color: @selected-fg;
 }
 
 button:hover, button:focus {

@@ -16,30 +16,82 @@ generate_palette_from_samples() {
             function hex(rr, gg, bb) { return sprintf("#%02x%02x%02x", clamp(rr), clamp(gg), clamp(bb)) }
             function mix(a, b, ratio) { return a * (1 - ratio) + b * ratio }
             function brightness(rr, gg, bb) { return (299 * rr + 587 * gg + 114 * bb) / 1000 }
+            function max3(a, b, c) { m = a > b ? a : b; return m > c ? m : c }
+            function min3(a, b, c) { m = a < b ? a : b; return m < c ? m : c }
+            function linear(v) {
+                v = v / 255
+                return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ^ 2.4
+            }
+            function luminance(rr, gg, bb) {
+                return 0.2126 * linear(rr) + 0.7152 * linear(gg) + 0.0722 * linear(bb)
+            }
+            function contrast(l1, l2,    tmp) {
+                if (l1 < l2) {
+                    tmp = l1
+                    l1 = l2
+                    l2 = tmp
+                }
+                return (l1 + 0.05) / (l2 + 0.05)
+            }
             BEGIN {
-                bg_r = clamp(r * 0.36 + ar * 0.08)
-                bg_g = clamp(g * 0.36 + ag * 0.08)
-                bg_b = clamp(b * 0.36 + ab * 0.08)
+                accent_chroma = max3(ar, ag, ab) - min3(ar, ag, ab)
+                if (accent_chroma < 24) {
+                    ar = clamp(r * 0.28 + 120 * 0.72)
+                    ag = clamp(g * 0.28 + 168 * 0.72)
+                    ab = clamp(b * 0.28 + 228 * 0.72)
+                }
 
-                surface_r = clamp(r * 0.52 + ar * 0.22 + 255 * 0.12)
-                surface_g = clamp(g * 0.52 + ag * 0.22 + 255 * 0.12)
-                surface_b = clamp(b * 0.52 + ab * 0.22 + 255 * 0.12)
+                accent_brightness = brightness(ar, ag, ab)
+                if (accent_brightness < 92) {
+                    ar = mix(ar, 255, 0.40)
+                    ag = mix(ag, 255, 0.40)
+                    ab = mix(ab, 255, 0.40)
+                } else if (accent_brightness > 205) {
+                    ar = mix(ar, 0, 0.18)
+                    ag = mix(ag, 0, 0.18)
+                    ab = mix(ab, 0, 0.18)
+                } else {
+                    ar = mix(ar, 255, 0.10)
+                    ag = mix(ag, 255, 0.10)
+                    ab = mix(ab, 255, 0.10)
+                }
 
-                select_r = clamp(r * 0.45 + ar * 0.35 + 255 * 0.20)
-                select_g = clamp(g * 0.45 + ag * 0.35 + 255 * 0.20)
-                select_b = clamp(b * 0.45 + ab * 0.35 + 255 * 0.20)
+                bg_r = clamp(r * 0.26 + ar * 0.07 + 8)
+                bg_g = clamp(g * 0.26 + ag * 0.07 + 8)
+                bg_b = clamp(b * 0.26 + ab * 0.07 + 8)
 
-                accent_r = clamp(ar * 0.70 + 255 * 0.30)
-                accent_g = clamp(ag * 0.70 + 255 * 0.30)
-                accent_b = clamp(ab * 0.70 + 255 * 0.30)
+                if (brightness(bg_r, bg_g, bg_b) > 112) {
+                    bg_r = mix(bg_r, 0, 0.18)
+                    bg_g = mix(bg_g, 0, 0.18)
+                    bg_b = mix(bg_b, 0, 0.18)
+                } else if (brightness(bg_r, bg_g, bg_b) < 20) {
+                    bg_r = mix(bg_r, 255, 0.06)
+                    bg_g = mix(bg_g, 255, 0.06)
+                    bg_b = mix(bg_b, 255, 0.06)
+                }
 
-                border_r = clamp(r * 0.45 + ar * 0.25 + 255 * 0.24)
-                border_g = clamp(g * 0.45 + ag * 0.25 + 255 * 0.24)
-                border_b = clamp(b * 0.45 + ab * 0.25 + 255 * 0.24)
+                accent_r = clamp(ar)
+                accent_g = clamp(ag)
+                accent_b = clamp(ab)
 
-                bg_brightness = brightness(bg_r, bg_g, bg_b)
-                fg = bg_brightness > 155 ? "#11111b" : "#f6f7fb"
-                muted = bg_brightness > 155 ? "#343746" : "#b9c4d2"
+                surface_r = clamp(bg_r * 0.68 + r * 0.14 + accent_r * 0.08 + 255 * 0.10)
+                surface_g = clamp(bg_g * 0.68 + g * 0.14 + accent_g * 0.08 + 255 * 0.10)
+                surface_b = clamp(bg_b * 0.68 + b * 0.14 + accent_b * 0.08 + 255 * 0.10)
+
+                select_r = clamp(bg_r * 0.48 + accent_r * 0.42 + 255 * 0.10)
+                select_g = clamp(bg_g * 0.48 + accent_g * 0.42 + 255 * 0.10)
+                select_b = clamp(bg_b * 0.48 + accent_b * 0.42 + 255 * 0.10)
+
+                border_r = clamp(bg_r * 0.40 + accent_r * 0.38 + 255 * 0.22)
+                border_g = clamp(bg_g * 0.40 + accent_g * 0.38 + 255 * 0.22)
+                border_b = clamp(bg_b * 0.40 + accent_b * 0.38 + 255 * 0.22)
+
+                bg_luma = luminance(bg_r, bg_g, bg_b)
+                fg = contrast(bg_luma, luminance(246, 247, 251)) >= contrast(bg_luma, luminance(17, 17, 27)) ? "#f6f7fb" : "#11111b"
+                if (fg == "#f6f7fb")
+                    muted = hex(mix(bg_r, 246, 0.62), mix(bg_g, 247, 0.62), mix(bg_b, 251, 0.62))
+                else
+                    muted = hex(mix(bg_r, 17, 0.58), mix(bg_g, 17, 0.58), mix(bg_b, 27, 0.58))
 
                 background = hex(bg_r, bg_g, bg_b)
                 surface = hex(surface_r, surface_g, surface_b)
@@ -47,12 +99,13 @@ generate_palette_from_samples() {
                 accent = hex(accent_r, accent_g, accent_b)
                 border = hex(border_r, border_g, border_b)
 
-                base = hex(mix(bg_r, surface_r, 0.22), mix(bg_g, surface_g, 0.22), mix(bg_b, surface_b, 0.22))
-                base_alt = hex(mix(bg_r, surface_r, 0.58), mix(bg_g, surface_g, 0.58), mix(bg_b, surface_b, 0.58))
-                titlebar = surface
+                base = hex(mix(bg_r, surface_r, 0.24), mix(bg_g, surface_g, 0.24), mix(bg_b, surface_b, 0.24))
+                base_alt = hex(mix(bg_r, surface_r, 0.62), mix(bg_g, surface_g, 0.62), mix(bg_b, surface_b, 0.62))
+                titlebar = hex(mix(surface_r, accent_r, 0.08), mix(surface_g, accent_g, 0.08), mix(surface_b, accent_b, 0.08))
                 titlebar_backdrop = hex(mix(bg_r, surface_r, 0.78), mix(bg_g, surface_g, 0.78), mix(bg_b, surface_b, 0.78))
                 popover = hex(mix(bg_r, surface_r, 0.78), mix(bg_g, surface_g, 0.78), mix(bg_b, surface_b, 0.78))
-                selected_fg = brightness(accent_r, accent_g, accent_b) > 155 ? "#11111b" : "#f6f7fb"
+                accent_luma = luminance(accent_r, accent_g, accent_b)
+                selected_fg = contrast(accent_luma, luminance(17, 17, 27)) >= contrast(accent_luma, luminance(246, 247, 251)) ? "#11111b" : "#f6f7fb"
 
                 red = hex(ar * 0.15 + 243 * 0.85, ag * 0.15 + 139 * 0.85, ab * 0.15 + 168 * 0.85)
                 orange = hex(ar * 0.12 + 250 * 0.88, ag * 0.12 + 179 * 0.88, ab * 0.10 + 135 * 0.90)

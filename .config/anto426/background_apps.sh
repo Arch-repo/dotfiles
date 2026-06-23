@@ -108,7 +108,6 @@ background_clients_filter='
     map(select(
         (.mapped // true) == true
         and (.hidden // false) == false
-        and ((.address // "") != $active_address)
         and ((.class // .initialClass // "") | test("^(rofi|waybar|swaync|swaync-control-center|wofi|anto426-osd)$"; "i") | not)
         and ((.title // "") | length > 0)
     ))
@@ -129,20 +128,90 @@ ensure_icon_cache() {
     [[ -f "$ICON_CACHE_FILE" ]] || touch "$ICON_CACHE_FILE"
 }
 
-desktop_icon_for_class() {
+resolve_app_icon() {
     local class="${1:-}"
+    [[ -n "$class" ]] || { printf 'application-x-executable'; return; }
+
     local class_lc
     class_lc="$(printf '%s' "$class" | tr '[:upper:]' '[:lower:]')"
-    
+
+    # 1. Check hardcoded/known mappings first
     case "$class_lc" in
-        waybar) printf 'utilities-system-monitor' ;;
-        swaync) printf 'preferences-system-notifications' ;;
-        cava) printf 'audio-volume-high' ;;
-        vlc) printf 'vlc' ;;
-        ghostty) printf 'terminal' ;;
-        python*) printf 'python' ;;
-        *) printf 'application-x-executable' ;;
+        waybar) printf 'utilities-system-monitor'; return ;;
+        swaync) printf 'preferences-system-notifications'; return ;;
+        cava) printf 'audio-volume-high'; return ;;
+        vlc) printf 'vlc'; return ;;
+        ghostty|kitty|alacritty|foot|xterm) printf 'utilities-terminal'; return ;;
+        python*) printf 'python'; return ;;
+        zen|firefox) printf 'firefox'; return ;;
+        chromium) printf 'chromium'; return ;;
+        nemo|thunar|dolphin|nautilus) printf 'system-file-manager'; return ;;
+        spotify) printf 'spotify'; return ;;
+        discord) printf 'discord'; return ;;
+        telegram*) printf 'telegram'; return ;;
+        steam*) printf 'steam'; return ;;
     esac
+
+    # 2. Check cache file
+    ensure_icon_cache
+    if [[ -f "$ICON_CACHE_FILE" ]]; then
+        local cached_icon
+        cached_icon="$(awk -F'\t' -v cls="$class_lc" '$1 == cls { print $2; exit }' "$ICON_CACHE_FILE")"
+        if [[ -n "$cached_icon" ]]; then
+            printf '%s' "$cached_icon"
+            return
+        fi
+    fi
+
+    # 3. Look up in .desktop files
+    local icon=""
+    local df file_icon startup_class
+    local paths=(
+        "$HOME/.local/share/applications"
+        "/usr/share/applications"
+        "/var/lib/flatpak/exports/share/applications"
+    )
+
+    for dir in "${paths[@]}"; do
+        [[ -d "$dir" ]] || continue
+        if [[ -f "$dir/$class_lc.desktop" ]]; then
+            icon="$(grep -E '^Icon=' "$dir/$class_lc.desktop" | head -n1 | cut -d= -f2-)"
+            [[ -n "$icon" ]] && break
+        fi
+        if [[ -f "$dir/$class.desktop" ]]; then
+            icon="$(grep -E '^Icon=' "$dir/$class.desktop" | head -n1 | cut -d= -f2-)"
+            [[ -n "$icon" ]] && break
+        fi
+    done
+
+    if [[ -z "$icon" ]]; then
+        for dir in "${paths[@]}"; do
+            [[ -d "$dir" ]] || continue
+            while read -r df; do
+                icon="$(grep -E '^Icon=' "$df" | head -n1 | cut -d= -f2-)"
+                [[ -n "$icon" ]] && break 2
+            done < <(grep -l -F -i "StartupWMClass=$class" "$dir"/*.desktop 2>/dev/null)
+        done
+    fi
+
+    if [[ -z "$icon" ]]; then
+        for dir in "${paths[@]}"; do
+            [[ -d "$dir" ]] || continue
+            local match
+            match="$(find "$dir" -maxdepth 1 -iname "*${class_lc}*.desktop" -print -quit 2>/dev/null)"
+            if [[ -n "$match" ]]; then
+                icon="$(grep -E '^Icon=' "$match" | head -n1 | cut -d= -f2-)"
+                [[ -n "$icon" ]] && break
+            fi
+        done
+    fi
+
+    if [[ -z "$icon" ]]; then
+        icon="$class_lc"
+    fi
+
+    printf '%s\t%s\n' "$class_lc" "$icon" >> "$ICON_CACHE_FILE"
+    printf '%s' "$icon"
 }
 
 get_running_processes() {
@@ -185,54 +254,70 @@ categorize_process() {
 }
 
 build_menu_files() {
+    local mode="${1:-main}"
     local active clients apps address class initial_class title workspace icon label count
-    local win_lines=() win_data=()
+    local win_primo_lines=() win_primo_data=()
+    local win_secondo_lines=() win_secondo_data=()
     local daemon_lines=() daemon_data=()
     local app_lines=() app_data=()
 
     : >"$MAP_FILE"
     : >"$MENU_FILE"
 
-    # 1. Gather GUI Windows
-    active="$(active_address)"
-    clients="$(clients_json)"
-    apps="$(background_clients_json "$clients" "$active")"
+    # 1. Gather GUI Windows (Only for main mode)
+    if [[ "$mode" == "main" ]]; then
+        active="$(active_address)"
+        clients="$(clients_json)"
+        apps="$(background_clients_json "$clients" "$active")"
+        
+        # Get active workspace ID
+        local active_ws
+        active_ws="$(hyprctl activeworkspace -j 2>/dev/null | jq -r '.id // empty')"
+        [[ -n "$active_ws" ]] || active_ws="1"
 
-    while IFS=$'\t' read -r address class initial_class title workspace; do
-        [[ -n "$address" ]] || continue
-        class="${class:-App}"
-        title="${title:-Window}"
-        workspace="${workspace:-?}"
-        icon="$(desktop_icon_for_class "$class")"
-        
-        # Trim class and title for compact 430px wide layout
-        local short_class="$class"
-        ((${#short_class} > 10)) && short_class="${short_class:0:8}.."
-        local short_title="$title"
-        ((${#short_title} > 15)) && short_title="${short_title:0:13}.."
-        
-        label="[WS $workspace]  $short_class  •  $short_title"
-        ((${#label} > 80)) && label="${label:0:77}..."
-        
-        win_lines+=("$label|$icon")
-        win_data+=("$label"$'\t'"window"$'\t'"$address"$'\t'"$class"$'\t'"$title"$'\t'"$workspace")
-    done < <(
-        printf '%s' "$apps" |
-            jq -r '.[] | [
-                (.address // ""),
-                (.class // "App"),
-                (.initialClass // .class // "App"),
-                ((.title // "") | gsub("[\t\n\r]"; " ")),
-                ((.workspace.name // .workspace.id // "?") | tostring)
-            ] | @tsv' 2>/dev/null
-    )
+        while IFS=$'\t' read -r address class initial_class title workspace workspace_id; do
+            [[ -n "$address" ]] || continue
+            class="${class:-App}"
+            title="${title:-Window}"
+            workspace="${workspace:-?}"
+            workspace_id="${workspace_id:-1}"
+            icon="$(resolve_app_icon "$class")"
+
+            # Trim class and title for compact 430px wide layout
+            local short_class="$class"
+            ((${#short_class} > 10)) && short_class="${short_class:0:8}.."
+            local short_title="$title"
+            ((${#short_title} > 15)) && short_title="${short_title:0:13}.."
+
+            label="[WS $workspace]  $short_class  •  $short_title"
+            ((${#label} > 80)) && label="${label:0:77}..."
+
+            if [[ "$workspace_id" == "$active_ws" || "$workspace" == "$active_ws" ]]; then
+                win_primo_lines+=("$label|$icon")
+                win_primo_data+=("$label"$'\t'"window"$'\t'"$address"$'\t'"$class"$'\t'"$title"$'\t'"$workspace")
+            else
+                win_secondo_lines+=("$label|$icon")
+                win_secondo_data+=("$label"$'\t'"window"$'\t'"$address"$'\t'"$class"$'\t'"$title"$'\t'"$workspace")
+            fi
+        done < <(
+            printf '%s' "$apps" |
+                jq -r '.[] | [
+                    (.address // ""),
+                    (.class // "App"),
+                    (.initialClass // .class // "App"),
+                    ((.title // "") | gsub("[\t\n\r]"; " ")),
+                    ((.workspace.name // .workspace.id // "?") | tostring),
+                    ((.workspace.id // 1) | tostring)
+                ] | @tsv' 2>/dev/null
+        )
+    fi
 
     # 2. Gather Running Processes
     while IFS=$'\t' read -r pid ppid cpu mem comm args; do
         [[ -n "$pid" ]] || continue
         local cat icon_name display_line
         cat="$(categorize_process "$comm" "$args")"
-        icon_name="$(desktop_icon_for_class "$comm")"
+        icon_name="$(resolve_app_icon "$comm")"
         
         # Trim command name for compact 430px wide layout
         local short_comm="$comm"
@@ -243,57 +328,90 @@ build_menu_files() {
         if [[ "$cat" == "daemon" ]]; then
             daemon_lines+=("$display_line|$icon_name")
             daemon_data+=("$display_line"$'\t'"process"$'\t'"$pid"$'\t'"$comm"$'\t'"$cpu"$'\t'"$mem"$'\t'"$args")
-        else
+        elif [[ "$cat" == "app" ]]; then
             app_lines+=("$display_line|$icon_name")
             app_data+=("$display_line"$'\t'"process"$'\t'"$pid"$'\t'"$comm"$'\t'"$cpu"$'\t'"$mem"$'\t'"$args")
+        else
+            # Put other uncategorized processes in daemon list
+            daemon_lines+=("$display_line|$icon_name")
+            daemon_data+=("$display_line"$'\t'"process"$'\t'"$pid"$'\t'"$comm"$'\t'"$cpu"$'\t'"$mem"$'\t'"$args")
         fi
     done < <(get_running_processes)
 
-    # 3. Write Quick Actions to map and menu
-    printf 'Refresh Dashboard\taction\trefresh\n' >>"$MAP_FILE"
-    printf 'Kill All Background Apps\taction\tkillall\n' >>"$MAP_FILE"
-    printf 'Back\taction\tback\n' >>"$MAP_FILE"
+    # 3. Write items based on mode
+    if [[ "$mode" == "main" ]]; then
+        # 3.1 Write GUI Windows in Active Workspace (App in primo piano)
+        local primo_count=${#win_primo_lines[@]}
+        if (( primo_count > 0 )); then
+            # Header
+            printf '─── App in primo piano ──────────────────────\theader\tprimo\n' >>"$MAP_FILE"
+            printf '─── App in primo piano ──────────────────────\0icon\x1fwindow-restore\n' >>"$MENU_FILE"
+            for ((i=0; i<primo_count; i++)); do
+                local item="${win_primo_lines[i]}"
+                local lbl="${item%|*}"
+                local icn="${item#*|}"
+                printf '%s\n' "${win_primo_data[i]}" >>"$MAP_FILE"
+                printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
+            done
+        fi
 
-    printf 'Refresh Dashboard\0icon\x1fview-refresh\n' >>"$MENU_FILE"
-    printf 'Kill All Background Apps\0icon\x1fapplication-x-executable\n' >>"$MENU_FILE"
+        # 3.2 Write GUI Windows in Other Workspaces (App in secondo piano)
+        local secondo_count=${#win_secondo_lines[@]}
+        if (( secondo_count > 0 )); then
+            # Header
+            printf '─── App in secondo piano ──────────────────\theader\tsecondo\n' >>"$MAP_FILE"
+            printf '─── App in secondo piano ──────────────────\0icon\x1fpreferences-system-windows\n' >>"$MENU_FILE"
+            for ((i=0; i<secondo_count; i++)); do
+                local item="${win_secondo_lines[i]}"
+                local lbl="${item%|*}"
+                local icn="${item#*|}"
+                printf '%s\n' "${win_secondo_data[i]}" >>"$MAP_FILE"
+                printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
+            done
+        fi
 
-    # 4. Write GUI Windows
-    local win_count=${#win_lines[@]}
-    if (( win_count > 0 )); then
-        for ((i=0; i<win_count; i++)); do
-            local item="${win_lines[i]}"
-            local lbl="${item%|*}"
-            local icn="${item#*|}"
-            printf '%s\n' "${win_data[i]}" >>"$MAP_FILE"
-            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-        done
+        # 3.3 Write User Background Processes (Processi in bg)
+        local app_count=${#app_lines[@]}
+        if (( app_count > 0 )); then
+            # Header
+            printf '─── Processi in bg ──────────────────────────\theader\tprocessi\n' >>"$MAP_FILE"
+            printf '─── Processi in bg ──────────────────────────\0icon\x1futilities-system-monitor\n' >>"$MENU_FILE"
+            for ((i=0; i<app_count; i++)); do
+                local item="${app_lines[i]}"
+                local lbl="${item%|*}"
+                local icn="${item#*|}"
+                printf '%s\n' "${app_data[i]}" >>"$MAP_FILE"
+                printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
+            done
+        fi
+
+        # Write Navigation to Submenus and Actions
+        printf 'System Daemons & Services\tsubmenu\tdaemons\n' >>"$MAP_FILE"
+        printf 'Refresh Dashboard\taction\trefresh\n' >>"$MAP_FILE"
+        printf 'Kill All Background Apps\taction\tkillall\n' >>"$MAP_FILE"
+        printf 'Back\taction\tback\n' >>"$MAP_FILE"
+
+        printf 'System Daemons & Services\0icon\x1fpreferences-system\n' >>"$MENU_FILE"
+        printf 'Refresh Dashboard\0icon\x1fview-refresh\n' >>"$MENU_FILE"
+        printf 'Kill All Background Apps\0icon\x1fprocess-stop\n' >>"$MENU_FILE"
+        printf 'Back\0icon\x1fgo-previous\n' >>"$MENU_FILE"
+
+    elif [[ "$mode" == "daemons" ]]; then
+        # Write Daemons / services
+        local daemon_count=${#daemon_lines[@]}
+        if (( daemon_count > 0 )); then
+            for ((i=0; i<daemon_count; i++)); do
+                local item="${daemon_lines[i]}"
+                local lbl="${item%|*}"
+                local icn="${item#*|}"
+                printf '%s\n' "${daemon_data[i]}" >>"$MAP_FILE"
+                printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
+            done
+        fi
+
+        printf 'Back to Main list\tsubmenu\tmain\n' >>"$MAP_FILE"
+        printf 'Back to Main list\0icon\x1fgo-previous\n' >>"$MENU_FILE"
     fi
-
-    # 5. Write Desktop Services
-    local daemon_count=${#daemon_lines[@]}
-    if (( daemon_count > 0 )); then
-        for ((i=0; i<daemon_count; i++)); do
-            local item="${daemon_lines[i]}"
-            local lbl="${item%|*}"
-            local icn="${item#*|}"
-            printf '%s\n' "${daemon_data[i]}" >>"$MAP_FILE"
-            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-        done
-    fi
-
-    # 6. Write User Background Processes
-    local app_count=${#app_lines[@]}
-    if (( app_count > 0 )); then
-        for ((i=0; i<app_count; i++)); do
-            local item="${app_lines[i]}"
-            local lbl="${item%|*}"
-            local icn="${item#*|}"
-            printf '%s\n' "${app_data[i]}" >>"$MAP_FILE"
-            printf '%s\0icon\x1f%s\n' "$lbl" "$icn" >>"$MENU_FILE"
-        done
-    fi
-
-    printf 'Back\0icon\x1fgo-previous\n' >>"$MENU_FILE"
 }
 
 focus_app() {
@@ -383,7 +501,7 @@ build_workspace_menu_files() {
             label="${lines[i]}"
             arg="${args[i]}"
             printf '%s\t%s\n' "$label" "$arg" >>"$WORKSPACE_MAP_FILE"
-            printf '%s\0icon\x1fview-grid-symbolic\n' "$label" >>"$WORKSPACE_MENU_FILE"
+            printf '%s\0icon\x1fview-grid\n' "$label" >>"$WORKSPACE_MENU_FILE"
         done
     else
         printf 'No workspaces available\0icon\x1fdialog-error\n' >>"$WORKSPACE_MENU_FILE"
@@ -431,11 +549,12 @@ app_actions_menu() {
             {
                 printf 'Focus & Raise Window\0icon\x1fwindow-restore\n'
                 printf 'Bring Window Here\0icon\x1fgo-home\n'
-                printf 'Send Window to Workspace...\0icon\x1fview-grid-symbolic\n'
+                printf 'Send Window to Workspace...\0icon\x1fview-grid\n'
                 printf 'Close Window\0icon\x1fwindow-close\n'
                 printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -matching fuzzy \
+                    -show-icons \
                     -p "$short_name" \
                     -theme "$THEME"
         )"
@@ -510,6 +629,7 @@ process_actions_menu() {
                 printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -matching fuzzy \
+                    -show-icons \
                     -p "$short_comm" \
                     -theme "$THEME"
         )"
@@ -610,6 +730,7 @@ subprocesses_menu() {
                 printf 'Back\0icon\x1fgo-previous\n'
             } |
                 rofi -dmenu -i -p "${parent_comm:0:15} (Children)" \
+                    -show-icons \
                     -theme "$THEME"
         )"
         
@@ -645,6 +766,7 @@ subprocesses_menu() {
                     printf 'Back\0icon\x1fgo-previous\n'
                 } |
                     rofi -dmenu -i -p "${child_comm:0:15} [$child_pid]" \
+                        -show-icons \
                         -theme "$THEME"
             )"
             
@@ -677,6 +799,7 @@ go_back() {
 open_menu() {
     local choice row type address class title workspace pid comm cpu mem args
     local cpu_tot mem_tot win_count proc_tot message_card
+    local VIEW_MODE="main"
 
     require_stack || {
         notify "Hyprland or jq not available"
@@ -686,7 +809,7 @@ open_menu() {
     pkill -x rofi 2>/dev/null || true
 
     while true; do
-        build_menu_files
+        build_menu_files "$VIEW_MODE"
 
         cpu_tot="$(ps -u "$USER" -o %cpu | awk '{s+=$1} END {printf "%.1f", s}')"
         mem_tot="$(ps -u "$USER" -o %mem | awk '{s+=$1} END {printf "%.1f", s}')"
@@ -703,6 +826,10 @@ open_menu() {
         local clean_choice="$choice"
         
         if [[ "$clean_choice" == "Back" ]]; then
+            if [[ "$VIEW_MODE" != "main" ]]; then
+                VIEW_MODE="main"
+                continue
+            fi
             go_back
             return 0
         fi
@@ -710,25 +837,41 @@ open_menu() {
         row="$(awk -F'\t' -v label="$clean_choice" '$1 == label { print; exit }' "$MAP_FILE" 2>/dev/null)"
         
         if [[ -z "$row" ]]; then
-            if [[ "$clean_choice" == "Refresh Dashboard" ]]; then
-                continue
-            fi
-            if [[ "$clean_choice" == "Kill All Background Apps" ]]; then
-                while IFS=$'\t' read -r pid _ _ _ comm args; do
-                    [[ -n "$pid" ]] || continue
-                    if [[ "$(categorize_process "$comm" "$args")" == "app" ]]; then
-                        kill -15 "$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null
-                    fi
-                done < <(get_running_processes)
-                notify "All background apps terminated"
-                continue
-            fi
             continue
         fi
         
         IFS=$'\t' read -r _ type address class title workspace args <<<"$row"
 
         case "$type" in
+            header)
+                continue
+                ;;
+            submenu)
+                VIEW_MODE="$address"
+                ;;
+            action)
+                if [[ "$address" == "refresh" ]]; then
+                    continue
+                fi
+                if [[ "$address" == "back" ]]; then
+                    if [[ "$VIEW_MODE" != "main" ]]; then
+                        VIEW_MODE="main"
+                        continue
+                    fi
+                    go_back
+                    return 0
+                fi
+                if [[ "$address" == "killall" ]]; then
+                    while IFS=$'\t' read -r pid _ _ _ comm args; do
+                        [[ -n "$pid" ]] || continue
+                        if [[ "$(categorize_process "$comm" "$args")" == "app" ]]; then
+                            kill -15 "$pid" 2>/dev/null || kill -9 "$pid" 2>/dev/null
+                        fi
+                    done < <(get_running_processes)
+                    notify "All background apps terminated"
+                    continue
+                fi
+                ;;
             window)
                 app_actions_menu "$address" "$class" "$title" "$workspace"
                 ;;

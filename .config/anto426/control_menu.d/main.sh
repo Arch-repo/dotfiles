@@ -80,41 +80,44 @@ main_menu() {
 
         choice="$(
             {
-                printf 'Wi-Fi\0icon\x1fnetwork-wireless\n'
-                printf 'Bluetooth\0icon\x1fpreferences-system-bluetooth\n'
-                printf 'Audio\0icon\x1faudio-volume-high\n'
-                printf 'Brightness\0icon\x1fdisplay-brightness\n'
-                printf 'Battery\0icon\x1fbattery\n'
-                printf 'Keyboard\0icon\x1finput-keyboard\n'
-                printf 'Notifications\0icon\x1fpreferences-desktop-notification\n'
-                printf 'Calendar\0icon\x1foffice-calendar\n'
-                printf 'Display\0icon\x1fvideo-display\n'
-                printf 'Wallpaper\0icon\x1fpreferences-desktop-wallpaper\n'
-                printf 'Widgets\0icon\x1fpreferences-desktop-theme\n'
-                printf 'Floating Manager\0icon\x1fwindow-restore\n'
-                printf 'Power Menu\0icon\x1fsystem-shutdown\n'
+                printf '%s\0icon\x1fnetwork-wireless\n' "$(system_text "Wi-Fi")"
+                printf '%s\0icon\x1fpreferences-system-bluetooth\n' "$(system_text "Bluetooth")"
+                printf '%s\0icon\x1faudio-volume-high\n' "$(system_text "Audio")"
+                printf '%s\0icon\x1fdisplay-brightness\n' "$(system_text "Brightness")"
+                printf '%s\0icon\x1fbattery\n' "$(system_text "Battery")"
+                printf '%s\0icon\x1finput-keyboard\n' "$(system_text "Keyboard")"
+                printf '%s\0icon\x1fpreferences-desktop-notification\n' "$(system_text "Notifications")"
+                printf '%s\0icon\x1foffice-calendar\n' "$(system_text "Calendar")"
+                printf '%s\0icon\x1fcomputer\n' "$(system_text "Hardware")"
+                printf '%s\0icon\x1fvideo-display\n' "$(system_text "Display")"
+                printf '%s\0icon\x1fpreferences-desktop-wallpaper\n' "$(system_text "Wallpaper")"
+                printf '%s\0icon\x1fpreferences-desktop-theme\n' "$(system_text "Widgets")"
+                printf '%s\0icon\x1fwindow-restore\n' "$(system_text "Floating Manager")"
+                printf '%s\0icon\x1fsystem-shutdown\n' "$(system_text "Power Menu")"
             } | rofi_pick_msg "Dashboard" "$message"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "Bluetooth") MENU_STATE="bluetooth"; return 0 ;;
-            "Wi-Fi") MENU_STATE="wifi"; return 0 ;;
-            "Audio") MENU_STATE="audio"; return 0 ;;
-            "Brightness") ANTO426_MENU_PARENT=control run_script_or_notify "Brightness" "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
-            "Battery") MENU_STATE="battery"; return 0 ;;
-            "Keyboard") MENU_STATE="keyboard"; return 0 ;;
-            "Notifications") MENU_STATE="notifications"; return 0 ;;
-            "Calendar") MENU_STATE="calendar"; return 0 ;;
-            "Wallpaper") ANTO426_MENU_PARENT=control run_script_or_notify "Wallpaper" "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
-            "Display") ANTO426_MENU_PARENT=control run_script_or_notify "Display" "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
-            "Widgets") run_script_or_notify "Widgets" "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
-            "Floating Manager") ANTO426_MENU_PARENT=control run_script_or_notify "Floating Manager" "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
-            "Power Menu") MENU_STATE="power"; return 0 ;;
+            "$(system_text "Bluetooth")") MENU_STATE="bluetooth"; return 0 ;;
+            "$(system_text "Wi-Fi")") MENU_STATE="wifi"; return 0 ;;
+            "$(system_text "Audio")") MENU_STATE="audio"; return 0 ;;
+            "$(system_text "Brightness")") ANTO426_MENU_PARENT=control run_script_or_notify "Brightness" "$HOME/.config/anto426/brightness_menu.sh"; return 0 ;;
+            "$(system_text "Battery")") MENU_STATE="battery"; return 0 ;;
+            "$(system_text "Keyboard")") MENU_STATE="keyboard"; return 0 ;;
+            "$(system_text "Notifications")") MENU_STATE="notifications"; return 0 ;;
+            "$(system_text "Calendar")") MENU_STATE="calendar"; return 0 ;;
+            "$(system_text "Hardware")") ANTO426_MENU_PARENT=control run_script_or_notify "Hardware" "$HOME/.config/anto426/hardware_stats.sh" menu; return 0 ;;
+            "$(system_text "Wallpaper")") ANTO426_MENU_PARENT=control run_script_or_notify "Wallpaper" "$HOME/.config/anto426/wallpaper_select.sh"; return 0 ;;
+            "$(system_text "Display")") ANTO426_MENU_PARENT=control run_script_or_notify "Display" "$HOME/.config/anto426/projection_menu.sh"; return 0 ;;
+            "$(system_text "Widgets")") run_script_or_notify "Widgets" "$HOME/.config/anto426/widgets.sh" arrange; return 0 ;;
+            "$(system_text "Floating Manager")") ANTO426_MENU_PARENT=control run_script_or_notify "Floating Manager" "$HOME/.config/anto426/floating_manager.sh" menu; return 0 ;;
+            "$(system_text "Power Menu")") MENU_STATE="power"; return 0 ;;
             *) return 0 ;;
         esac
     done
 }
 
 main_menu
+

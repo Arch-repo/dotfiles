@@ -179,7 +179,7 @@ battery_menu() {
     path="$(battery_path)" || {
         local choice
         choice="$(
-            printf 'Back\0icon\x1fgo-previous\n' |
+            printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")" |
                 rofi_pick_msg "$(system_text "Battery")" "$(system_text "No battery detected")"
         )"
         [[ -n "$choice" ]] && back_or_main
@@ -192,40 +192,44 @@ battery_menu() {
         title="$(system_text "Battery")"
         profile="$(battery_profile)"
 
+        local active_saver active_balanced active_perf
+        active_saver=""
+        [[ "$profile" == "power-saver" ]] && active_saver=" ($(system_text "Active"))"
+        active_balanced=""
+        [[ "$profile" == "balanced" ]] && active_balanced=" ($(system_text "Active"))"
+        active_perf=""
+        [[ "$profile" == "performance" ]] && active_perf=" ($(system_text "Active"))"
+
         choice="$(
             {
                 if command -v powerprofilesctl >/dev/null 2>&1; then
-                    printf '%sPower Saver Profile\0icon\x1fbattery-low\n' "$([[ "$profile" == "power-saver" ]] && printf "󰄬  ")"
-                    printf '%sBalanced Profile\0icon\x1fbattery-good\n' "$([[ "$profile" == "balanced" ]] && printf "󰄬  ")"
-                    printf '%sPerformance Profile\0icon\x1fbattery-full\n' "$([[ "$profile" == "performance" ]] && printf "󰄬  ")"
+                    printf '%s%s\0icon\x1fbattery-low\n' "$(menu_item "󰌪" "Power Saver Profile")" "$active_saver"
+                    printf '%s%s\0icon\x1fbattery-good\n' "$(menu_item "󰗑" "Balanced Profile")" "$active_balanced"
+                    printf '%s%s\0icon\x1fbattery-full\n' "$(menu_item "󰓅" "Performance Profile")" "$active_perf"
                 fi
-                printf 'Refresh Status\0icon\x1fview-refresh\n'
-                printf 'Battery Details\0icon\x1fdialog-information\n'
-                printf 'Suspend System\0icon\x1fsystem-suspend\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fview-refresh\n' "$(menu_item "󰑐" "Refresh Status")"
+                printf '%s\0icon\x1fdialog-information\n' "$(menu_item "󰄧" "Battery Details")"
+                printf '%s\0icon\x1fsystem-suspend\n' "$(menu_item "󰤄" "Suspend System")"
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "$title" "$message"
         )"
 
         [[ -z "$choice" ]] && return 0
         local clean_choice="$choice"
-        clean_choice="${clean_choice#󰄬  }"
 
         case "$clean_choice" in
-            "Power Saver Profile") run_or_notify "$(system_text "Power Saver")" powerprofilesctl set power-saver ;;
-            "Balanced Profile") run_or_notify "$(system_text "Balanced")" powerprofilesctl set balanced ;;
-            "Performance Profile") run_or_notify "$(system_text "Performance")" powerprofilesctl set performance ;;
-            "Refresh Status") continue ;;
-            "Battery Details") rofi_pick_msg "Battery Details" "$(battery_details_message "$path")" >/dev/null ;;
-            "Suspend System") systemctl suspend; return 0 ;;
-            "Back")
+            "$(system_text "Power Saver Profile")"*) run_or_notify "$(system_text "Power Saver")" powerprofilesctl set power-saver ;;
+            "$(system_text "Balanced Profile")"*) run_or_notify "$(system_text "Balanced")" powerprofilesctl set balanced ;;
+            "$(system_text "Performance Profile")"*) run_or_notify "$(system_text "Performance")" powerprofilesctl set performance ;;
+            "$(system_text "Refresh Status")") continue ;;
+            "$(system_text "Battery Details")") rofi_pick_msg "Battery Details" "$(battery_details_message "$path")" >/dev/null ;;
+            "$(system_text "Suspend System")") systemctl suspend; return 0 ;;
+            "$(system_text "Back")")
                 back_or_main
                 return 0
                 ;;
-            *) return 0 ;;
         esac
     done
 }
-
-
 
 battery_menu

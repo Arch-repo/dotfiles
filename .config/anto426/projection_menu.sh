@@ -4,6 +4,10 @@ export PATH="$HOME/.config/anto426/bin:$PATH"
 
 THEME="$HOME/.config/rofi/control_menu.rasi"
 
+if [[ -f "$HOME/.config/anto426/control_menu.d/utils.sh" ]]; then
+    source "$HOME/.config/anto426/control_menu.d/utils.sh"
+fi
+
 notify() {
     notify-send "Schermi" "$*" 2>/dev/null || true
 }
@@ -134,13 +138,13 @@ external="$(external_monitor "$primary")"
 while true; do
     choice="$(
         {
-            printf 'Main screen only\0icon\x1fvideo-display\n'
-            printf 'Duplicate\0icon\x1fvideo-display\n'
-            printf 'Extend\0icon\x1fvideo-display\n'
-            printf 'External screen only\0icon\x1fvideo-display\n'
-            printf 'Back\0icon\x1fgo-previous\n'
+            printf '%s\0icon\x1fvideo-display\n' "$(menu_item "󰍹" "Main screen only")"
+            printf '%s\0icon\x1fvideo-display\n' "$(menu_item "󰍹" "Duplicate")"
+            printf '%s\0icon\x1fvideo-display\n' "$(menu_item "󰍹" "Extend")"
+            printf '%s\0icon\x1fvideo-display\n' "$(menu_item "󰍹" "External screen only")"
+            printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
         } |
-            rofi -dmenu -i -matching fuzzy \
+            rofi -dmenu -i -matching fuzzy -show-icons \
                 -p "Project" \
                 -mesg "Primary: ${primary:-?}\nExternal: ${external:-not detected}" \
                 -theme "$THEME"
@@ -149,10 +153,12 @@ while true; do
     [[ -z "$choice" ]] && exit 0
 
     case "$choice" in
-        "Main screen only") only_primary "$primary"; exit 0 ;;
-        "Duplicate") duplicate_displays "$primary" "$external"; exit 0 ;;
-        "Extend") extend_displays "$primary" "$external"; exit 0 ;;
-        "External screen only") only_external "$primary" "$external"; exit 0 ;;
-        "Back") go_back ;;
+        "$(system_text "Main screen only")") only_primary "$primary"; exit 0 ;;
+        "$(system_text "Duplicate")") duplicate_displays "$primary" "$external"; exit 0 ;;
+        "$(system_text "Extend")") extend_displays "$primary" "$external"; exit 0 ;;
+        "$(system_text "External screen only")") only_external "$primary" "$external"; exit 0 ;;
+        "$(system_text "Back")")
+            go_back
+            ;;
     esac
 done

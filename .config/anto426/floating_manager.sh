@@ -214,7 +214,7 @@ pick_corner() {
             "Bottom left"$'\0'"icon"$'\x1f'"go-down" \
             "Bottom right"$'\0'"icon"$'\x1f'"go-last" \
             "Back"$'\0'"icon"$'\x1f'"go-previous" |
-            rofi -dmenu -i -matching fuzzy -p "Corner" -theme "$THEME"
+            rofi -dmenu -i -matching fuzzy -show-icons -p "Corner" -theme "$THEME"
     )"
     [[ -z "$choice" ]] && return 0
     printf '%s' "$choice"
@@ -232,6 +232,7 @@ menu() {
         choice="$(
             printf 'Back\0icon\x1fgo-previous\n' |
                 rofi -dmenu -i -matching fuzzy \
+                    -show-icons \
                     -p "Floating Manager" \
                     -mesg "No active window" \
                     -theme "$THEME"
@@ -255,6 +256,7 @@ menu() {
             printf 'Back\0icon\x1fgo-previous\n'
         } |
             rofi -dmenu -i -matching fuzzy \
+                -show-icons \
                 -p "Floating Manager" \
                 -mesg "$(active_summary)" \
                 -theme "$THEME"

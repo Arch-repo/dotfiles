@@ -90,20 +90,20 @@ keyboard_active_code() {
 
 keyboard_rows() {
     local active_code="$1"
-    local code index marker label desc icon
+    local code index active_suffix label desc icon
     index=0
 
     while IFS= read -r code; do
-        marker="    "
+        active_suffix=""
         icon="input-keyboard"
         if [[ "$code" == "$active_code" ]]; then
-            marker="󰄬  "
+            active_suffix=" ($(system_text "Active"))"
             icon="emblem-default"
         fi
         label="$(printf '%s' "$code" | tr '[:lower:]' '[:upper:]')"
         desc="$(xkb_description "$code")"
-        # Output layout description, active status, layout code
-        printf '%s%s (%s)\t%s\t%s\t%s\t%s\n' "$marker" "$desc" "$label" "$index" "$code" "$desc" "$icon"
+        local entry_label="$desc (${label})$active_suffix"
+        printf '%s\t%s\t%s\t%s\t%s\n' "$entry_label" "$index" "$code" "$desc" "$icon"
         index=$((index + 1))
     done < <(xkb_layout_codes)
 }
@@ -123,8 +123,8 @@ keyboard_menu() {
 
         choice="$(
             {
-                printf 'Switch to Next Layout\0icon\x1fmedia-playlist-next\n'
-                printf 'Switch to Previous Layout\0icon\x1fmedia-playlist-previous\n'
+                printf '%s\0icon\x1fmedia-playlist-next\n' "$(menu_item "󰌌" "Switch to Next Layout")"
+                printf '%s\0icon\x1fmedia-playlist-previous\n' "$(menu_item "󰌌" "Switch to Previous Layout")"
                 
                 if [[ -n "$rows" ]]; then
                     while IFS=$'\t' read -r label index code desc icon; do
@@ -134,13 +134,13 @@ keyboard_menu() {
                 fi
                 
                 if command -v fcitx5-configtool >/dev/null 2>&1; then
-                    printf 'Input Method Settings\0icon\x1fpreferences-desktop-keyboard\n'
+                    printf '%s\0icon\x1fpreferences-desktop-keyboard\n' "$(menu_item "󰌌" "Input Method Settings")"
                 fi
                 if command -v fcitx5 >/dev/null 2>&1; then
-                    printf 'Restart Input Method\0icon\x1fview-refresh\n'
+                    printf '%s\0icon\x1fview-refresh\n' "$(menu_item "󰑐" "Restart Input Method")"
                 fi
-                printf 'Diagnostics\0icon\x1futilities-system-monitor\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1futilities-system-monitor\n' "$(menu_item "󰄧" "Diagnostics")"
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "$title" "<b>$(system_text "Current")</b>: <b><span foreground='${c_accent}'>$(xkb_description "$active_code")</span></b>\n<b>$(system_text "System")</b>: <span foreground='${c_muted}'>${im_status}</span>\n<span foreground='${c_muted}'>${gtk_status}</span>"
         )"
 
@@ -148,25 +148,25 @@ keyboard_menu() {
         local clean_choice="$choice"
 
         case "$clean_choice" in
-            "Switch to Next Layout")
+            "$(system_text "Switch to Next Layout")")
                 run_or_notify "$(system_text "Keyboard")" hyprctl switchxkblayout all next
                 ;;
-            "Switch to Previous Layout")
+            "$(system_text "Switch to Previous Layout")")
                 run_or_notify "$(system_text "Keyboard")" hyprctl switchxkblayout all prev
                 ;;
-            "Input Method Settings")
+            "$(system_text "Input Method Settings")")
                 open_or_notify "Input Method Settings" fcitx5-configtool
                 return 0
                 ;;
-            "Restart Input Method")
+            "$(system_text "Restart Input Method")")
                 pkill -x fcitx5 >/dev/null 2>&1 || true
                 fcitx5 >/dev/null 2>&1 &
                 notify "fcitx5 riavviato"
                 ;;
-            "Diagnostics")
+            "$(system_text "Diagnostics")")
                 rofi_pick_msg "Diagnostics" "$(localectl status 2>/dev/null)\n\nHyprland: ${active:-$(system_text "Unknown")}\n$im_status\n$gtk_status" >/dev/null
                 ;;
-            "Back")
+            "$(system_text "Back")")
                 back_or_main
                 return 0
                 ;;

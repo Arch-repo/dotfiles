@@ -9,7 +9,7 @@ mkdir -p "$(dirname "$config_file")" "$notes_dir"
 
 if [[ ! -f "$config_file" ]]; then
     cat >"$config_file" <<EOF
-# Command opened by the Copilot/notes key.
+# Command opened by the notes key.
 # You can replace this with obsidian, code, sublime_text, nvim, etc.
 export ANTO426_NOTES_COMMAND='gnome-text-editor "$HOME/Documents/Notes/inbox.md"'
 EOF

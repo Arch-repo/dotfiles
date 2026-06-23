@@ -25,7 +25,7 @@ rofi_pick_msg() {
     local message="$2"
 
     message="$(printf '%b' "$message")"
-    rofi -dmenu -i -matching fuzzy -p "$prompt" -mesg "$message" -theme "$THEME_SETUP"
+    rofi -dmenu -i -matching fuzzy -show-icons -p "$prompt" -mesg "$message" -theme "$THEME_SETUP"
 }
 
 rofi_input() {
@@ -214,10 +214,10 @@ guided_calendar_config() {
     choice="$(
         {
             printf '  ── GOOGLE CALENDAR ──────────────\n'
-            printf '%s\n' "󰁔  Paste/Update iCal URL"
-            printf '%s\n' "󰅖  Disable Google Calendar"
+            printf 'Paste/Update iCal URL\0icon\x1foffice-calendar\n'
+            printf 'Disable Google Calendar\0icon\x1fedit-clear\n'
             printf '  ────────────────────────────────\n'
-            printf '%s\n' "󰌍  Back"
+            printf 'Back\0icon\x1fgo-previous\n'
         } |
             rofi_pick_msg "Google Calendar" "Use the secret address in iCal format.\nGoogle Calendar -> Settings -> Integrate Calendar -> Secret address in iCal format."
     )"
@@ -256,13 +256,13 @@ guided_interval_config() {
     choice="$(
         {
             printf '  ── INTERVAL ─────────────────────\n'
-            printf '%s\n' "5 minutes"
-            printf '%s\n' "15 minutes"
-            printf '%s\n' "30 minutes"
-            printf '%s\n' "1 hour"
-            printf '%s\n' "Custom"
+            printf '5 minutes\0icon\x1foffice-calendar\n'
+            printf '15 minutes\0icon\x1foffice-calendar\n'
+            printf '30 minutes\0icon\x1foffice-calendar\n'
+            printf '1 hour\0icon\x1foffice-calendar\n'
+            printf 'Custom\0icon\x1fpreferences-system\n'
             printf '  ────────────────────────────────\n'
-            printf '%s\n' "󰌍  Back"
+            printf 'Back\0icon\x1fgo-previous\n'
         } |
             rofi_pick_msg "Sync interval" "How often the daemon updates Calendar"
     )"
@@ -302,13 +302,13 @@ guided_config() {
         choice="$(
             {
                 printf '  ── CALENDAR ─────────────────────\n'
-                printf '%s\n' "󰃭  Configure Google Calendar"
-                printf '%s\n' "󰔚  Sync Interval"
+                printf 'Configure Google Calendar\0icon\x1foffice-calendar\n'
+                printf 'Sync Interval\0icon\x1foffice-calendar\n'
                 printf '  ── ACTIONS ──────────────────────\n'
-                printf '%s\n' "󰑓  Save and Test All"
-                printf '%s\n' "󰈙  Open Advanced Config File"
+                printf 'Save and Test All\0icon\x1fdocument-save\n'
+                printf 'Open Advanced Config File\0icon\x1ftext-x-generic\n'
                 printf '  ────────────────────────────────\n'
-                printf '%s\n' "󰌍  Exit"
+                printf 'Exit\0icon\x1fgo-previous\n'
             } |
                 rofi_pick_msg "Sync Config" "$(config_status_message)"
         )"

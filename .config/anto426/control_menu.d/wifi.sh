@@ -35,9 +35,9 @@ wifi_network_rows() {
 
             sig = $4 + 0
             security = ($3 == "" || $3 == "--") ? "open" : $3
-            lock = (security == "open") ? "" : " 󰌿"
+            secure_label = (security == "open") ? "" : " (Protetta)"
             active_str = ($1 == "yes") ? " (Connesso)" : ""
-            label = sprintf("%s%s%s  (%d%%)", $2, lock, active_str, sig)
+            label = sprintf("%s%s%s  (%d%%)", $2, secure_label, active_str, sig)
 
             icon = "network-wireless-signal-excellent"
             if (security != "open") {
@@ -341,25 +341,28 @@ wifi_device_menu() {
     fi
 
     while true; do
+        local conn_label
+        if [[ "$active" == "yes" ]]; then
+            conn_label="$(system_text "Disconnect")"
+        else
+            conn_label="$(system_text "Connect")"
+        fi
+
         choice="$(
             {
-                if [[ "$active" == "yes" ]]; then
-                    printf 'Disconnect\0icon\x1fnetwork-wireless-offline\n'
-                else
-                    printf 'Connect\0icon\x1fnetwork-wireless-connected\n'
-                fi
+                printf '%s\0icon\x1fnetwork-wireless\n' "$conn_label"
                 if [[ "$has_profile" == "true" ]]; then
-                    printf 'Forget network\0icon\x1fuser-trash\n'
+                    printf '%s\0icon\x1fuser-trash\n' "$(system_text "Forget network")"
                 fi
-                printf 'Info\0icon\x1fdialog-information\n'
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fdialog-information\n' "$(system_text "Info")"
+                printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
             } | rofi_pick "$ssid"
         )"
 
         [[ -z "$choice" ]] && return 0
 
         case "$choice" in
-            "Connect")
+            "$(system_text "Connect")")
                 if [[ "$has_profile" == "true" ]]; then
                     wifi_connect_saved "$ssid" "$security" "$profile_name"
                 else
@@ -367,18 +370,18 @@ wifi_device_menu() {
                 fi
                 return 0
                 ;;
-            "Disconnect")
+            "$(system_text "Disconnect")")
                 notify "Disconnecting from $ssid..."
                 run_or_notify "Disconnection from $ssid" nmcli connection down id "${profile_name:-$ssid}"
                 wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
-            "Forget network")
+            "$(system_text "Forget network")")
                 run_or_notify "Network forgotten" nmcli connection delete id "${profile_name:-$ssid}"
                 wifi_cache_update >/dev/null 2>&1 || true
                 return 0
                 ;;
-            "Info")
+            "$(system_text "Info")")
                 if [[ "$has_profile" == "true" ]]; then
                     local raw_info uuid device state ip4 gw4 dns4 ip6 gw6 dns6
                     raw_info="$(nmcli connection show id "$profile_name" 2>/dev/null)"
@@ -411,7 +414,7 @@ wifi_device_menu() {
                                 
                                 if [[ -n "$ip4" && "$ip4" != "--" ]]; then
                                     printf 'IPv4: %s\0icon\x1fnetwork-wired\n' "${ip4}"
-                                    printf 'Copy IPv4\0icon\x1fedit-copy\n'
+                                    printf '%s\0icon\x1fedit-copy\n' "$(system_text "Copy IPv4")"
                                     [[ -n "$gw4" && "$gw4" != "--" ]] && printf 'IPv4 Gateway: %s\0icon\x1fnetwork-wired\n' "${gw4}"
                                     [[ -n "$dns4" && "$dns4" != "--" ]] && printf 'IPv4 DNS: %s\0icon\x1fnetwork-wired\n' "${dns4}"
                                 fi
@@ -421,15 +424,15 @@ wifi_device_menu() {
                                     [[ -n "$gw6" && "$gw6" != "--" ]] && printf 'IPv6 Gateway: %s\0icon\x1fnetwork-wired\n' "${gw6}"
                                     [[ -n "$dns6" && "$dns6" != "--" ]] && printf 'IPv6 DNS: %s\0icon\x1fnetwork-wired\n' "${dns6}"
                                 fi
-                                printf 'Back\0icon\x1fgo-previous\n'
-                            } | rofi -dmenu -i -p "Network Info" -theme "$THEME_MENU"
+                                printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
+                            } | rofi -dmenu -i -show-icons -p "Network Info" -theme "$THEME_MENU"
                         )"
                         
                         [[ -z "$info_choice" ]] && break
-                        if [[ "$info_choice" == "Back" ]]; then
+                        if [[ "$info_choice" == "$(system_text "Back")" ]]; then
                             break
                         fi
-                        if [[ "$info_choice" == "Copy IPv4" ]]; then
+                        if [[ "$info_choice" == "$(system_text "Copy IPv4")" ]]; then
                             if command -v wl-copy >/dev/null 2>&1; then
                                 printf '%s' "$ip4" | wl-copy && notify "IPv4 copiato"
                             else
@@ -445,15 +448,15 @@ wifi_device_menu() {
                                 printf 'SSID: %s\0icon\x1fnetwork-wireless\n' "${ssid}"
                                 printf 'Status: Unsaved / Available\0icon\x1finfo\n'
                                 printf 'Security: %s\0icon\x1fnetwork-wireless-encrypted\n' "${security:---}"
-                                printf 'Copy SSID\0icon\x1fedit-copy\n'
-                                printf 'Back\0icon\x1fgo-previous\n'
-                            } | rofi -dmenu -i -p "Network Info" -theme "$THEME_MENU"
+                                printf '%s\0icon\x1fedit-copy\n' "$(system_text "Copy SSID")"
+                                printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
+                            } | rofi -dmenu -i -show-icons -p "Network Info" -theme "$THEME_MENU"
                         )"
                         [[ -z "$info_choice" ]] && break
-                        if [[ "$info_choice" == "Back" ]]; then
+                        if [[ "$info_choice" == "$(system_text "Back")" ]]; then
                             break
                         fi
-                        if [[ "$info_choice" == "Copy SSID" ]]; then
+                        if [[ "$info_choice" == "$(system_text "Copy SSID")" ]]; then
                             if command -v wl-copy >/dev/null 2>&1; then
                                 printf '%s' "$ssid" | wl-copy && notify "SSID copiato"
                             else
@@ -463,8 +466,10 @@ wifi_device_menu() {
                     done
                 fi
                 ;;
-            "Back")
-                return 0
+            *)
+                if [[ "$choice" == "$(system_text "Back")" ]]; then
+                    return 0
+                fi
                 ;;
         esac
     done
@@ -493,19 +498,19 @@ wifi_menu() {
         local message_card
         message_card="Status: <b><span foreground='${state_color}'>Wi-Fi ${state}</span></b>\nConnected: <b><span foreground='${conn_color}'>${connected}</span></b>\n<span foreground='${c_muted}'>${cache_status}</span>"
 
-        local toggle_label="Enable Wi-Fi"
-        local toggle_icon="network-wireless"
+        local toggle_label
         if [[ "$state" == "on" ]]; then
-            toggle_label="Disable Wi-Fi"
-            toggle_icon="network-wireless-offline"
+            toggle_label="$(system_text "Disable Wi-Fi")"
+        else
+            toggle_label="$(system_text "Enable Wi-Fi")"
         fi
 
         choice="$(
             {
-                printf '%s\0icon\x1f%s\n' "$toggle_label" "$toggle_icon"
-                printf 'Scan networks\0icon\x1fsystem-search\n'
+                printf '%s\0icon\x1fnetwork-wireless\n' "$toggle_label"
+                printf '%s\0icon\x1fsystem-search\n' "$(system_text "Scan networks")"
                 if command -v nm-connection-editor >/dev/null 2>&1; then
-                    printf 'Network settings\0icon\x1fpreferences-system-network\n'
+                    printf '%s\0icon\x1fpreferences-system-network\n' "$(system_text "Network settings")"
                 fi
                 
                 if [[ -n "$network_rows" ]]; then
@@ -515,7 +520,7 @@ wifi_menu() {
                     done <<< "$network_rows"
                 fi
                 
-                printf 'Back\0icon\x1fgo-previous\n'
+                printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
             } | rofi_pick_msg "Wi-Fi" "$message_card"
         )"
 
@@ -523,19 +528,19 @@ wifi_menu() {
         local clean_choice="$choice"
 
         case "$clean_choice" in
-            "Enable Wi-Fi" | "Disable Wi-Fi")
+            "$(system_text "Enable Wi-Fi")" | "$(system_text "Disable Wi-Fi")")
                 wifi_toggle
                 wifi_cache_refresh_background true
                 ;;
-            "Scan networks")
+            "$(system_text "Scan networks")")
                 wifi_rescan
                 ;;
-            "Network settings")
+            "$(system_text "Network settings")")
                 open_or_notify "Network settings" nm-connection-editor
                 return 0
                 ;;
             *)
-                if [[ "$clean_choice" == "Back" ]]; then
+                if [[ "$clean_choice" == "$(system_text "Back")" ]]; then
                     back_or_main
                     return 0
                 fi

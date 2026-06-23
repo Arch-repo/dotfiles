@@ -1,19 +1,18 @@
 /* =============================================================================
-   WAYBAR CYBER-GLASSMORPHIC FLOATING CAPSULE STYLE SHEET
-   Theme: Floating Premium Glassmorphic Minimalist Design
+   WAYBAR FLOATING NAVBAR (Redesigned for Legibility & Aesthetics)
    ============================================================================= */
 
 @import "../colors/colors.css";
 
 /* Universal Reset & Sleek Defaults */
 * {
-    font-family: "JetBrainsMono Nerd Font", sans-serif;
-    font-size: 12px;
+    font-family: "JetBrainsMono Nerd Font", "Noto Sans", sans-serif;
+    font-size: 13px; /* Increased from 12px for better readability */
     font-weight: 600;
     background-color: transparent;
     border-radius: 0;
     min-height: 0;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 /* Premium Sober Tooltip */
@@ -21,13 +20,13 @@ tooltip {
     color: @foreground;
     background: @panel-bg;
     border: 1px solid @border-medium;
-    border-radius: 14px;
-    padding: 8px 12px;
-    box-shadow: 0 4px 15px @shadow-medium;
+    border-radius: 10px;
+    padding: 8px 14px;
+    box-shadow: 0 6px 20px @shadow-medium;
 }
 
 tooltip label {
-    font-size: 12px;
+    font-size: 13px;
     color: @foreground;
 }
 
@@ -38,69 +37,170 @@ tooltip label {
 }
 
 /* =============================================================================
-   Minimalist Transparent Layout
+   Minimalist Glassmorphic Layout
    ============================================================================= */
 
-#workspaces,
-#custom-clock,
-#custom-hardware,
+#custom-workspaces,
+#window,
+#center-group,
+#custom-screenshot,
 #custom-background-apps,
-#status,
-#tools,
+#custom-sys-status,
 #custom-power {
+    color: @foreground;
+    background: @panel-bg;
+    border: 1px solid @border-soft;
+    border-radius: 10px; /* More modern, softer corners */
+    margin: 6px 4px;
+    min-height: 34px;
+    box-shadow: 0 4px 15px @shadow-soft;
+}
+
+#window {
+    padding: 0 14px;
+    font-weight: 700;
+}
+
+#window.empty {
     background: transparent;
     border: none;
-    margin: 5px 4px;
+    padding: 0;
+    margin: 0;
     box-shadow: none;
+}
+
+/* Unified Center Group Styles */
+#center-group {
+    padding: 0 4px;
+}
+
+#center-group #custom-media-prev,
+#center-group #custom-media-next {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 3px 1px;
+    padding: 0;
+    min-height: 28px;
+    min-width: 28px;
+    border-radius: 6px;
+    font-size: 14px;
+    color: @foreground;
+}
+
+#center-group #mpris {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 3px 0;
+    padding: 0 10px;
+    font-weight: 700;
+}
+
+#center-group #mpris.playing {
+    color: @accent;
+}
+
+#center-group #mpris.paused {
+    color: @muted;
+}
+
+#center-group #custom-clock {
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    margin: 3px 0;
+    padding: 0 14px;
+    font-weight: 700;
+    color: @foreground;
+}
+
+#center-group #custom-clock {
+    border-left: 1px solid @border-soft;
+}
+
+#center-group > widget:first-child #custom-clock {
+    border-left: none;
+}
+
+#custom-workspaces,
+#custom-sys-status,
+#custom-screenshot {
+    padding: 0 14px;
+    font-weight: 700;
+}
+
+#custom-screenshot.recording {
+    color: @red;
+    border-color: @red;
+    animation: heartbeat 1.4s infinite ease-in-out;
+}
+
+#window:hover,
+#custom-workspaces:hover,
+#custom-sys-status:hover,
+#custom-screenshot:hover,
+#center-group #custom-media-prev:hover,
+#center-group #custom-media-next:hover,
+#center-group #mpris:hover,
+#center-group #custom-clock:hover {
+    color: @accent;
+    background: @item-bg-hover;
+    border-color: alpha(@accent, 0.4);
 }
 
 /* Left - Workspaces */
 #workspaces {
     margin-left: 12px;
-    padding: 0;
+    padding: 2px 6px;
 }
 
 #workspaces button {
-    color: alpha(@foreground, 0.45);
+    color: alpha(@foreground, 0.55);
     background: transparent;
     border: none;
-    margin: 3px 3px;
-    padding: 0;
-    min-width: 24px;
+    border-radius: 7px;
+    margin: 0 2px;
+    padding: 0 8px;
+    min-width: 20px;
     min-height: 28px;
 }
 
 #workspaces button:hover {
     color: @foreground;
-    background: transparent;
+    background: @item-bg-hover;
 }
 
 #workspaces button.active {
-    color: @accent;
-    background: transparent;
+    color: @selected-fg;
+    background: linear-gradient(135deg, @accent, @purple); /* Gorgeous gradient pill */
     font-weight: 700;
+    box-shadow: 0 0 8px alpha(@accent, 0.35);
 }
 
 #workspaces button.urgent {
-    color: @red;
-    background: transparent;
+    color: @selected-fg;
+    background: @red;
+    box-shadow: 0 0 8px alpha(@red, 0.35);
 }
 
 /* Center - Clock */
 #custom-clock {
-    padding: 0 16px;
-    min-height: 34px;
+    padding: 0 20px;
+    min-width: 80px;
     font-weight: 700;
 }
 
 /* Right - Background Apps */
 #custom-background-apps {
-    padding: 0 10px;
-    min-height: 34px;
+    padding: 0 12px;
+    min-width: 44px;
 }
 
 #custom-background-apps.active {
     color: @accent;
+    border-color: @accent;
+    background: alpha(@accent, 0.1);
 }
 
 #custom-background-apps.empty {
@@ -111,7 +211,7 @@ tooltip label {
 #custom-hardware,
 #status,
 #tools {
-    padding: 0 6px;
+    padding: 0 8px;
 }
 
 /* Remove default individual margins and borders for grouped children */
@@ -126,14 +226,16 @@ tooltip label {
 #tools #custom-control {
     background: transparent;
     border: none;
-    margin: 3px 6px;
+    border-radius: 7px;
+    margin: 2px 2px;
+    padding: 0 8px;
     min-height: 28px;
-    color: alpha(@foreground, 0.75);
+    color: alpha(@foreground, 0.90); /* Increased opacity from 0.75 for sharper contrast */
 }
 
 #custom-hardware {
-    padding: 0 10px;
-    min-width: 205px;
+    padding: 0 14px;
+    min-width: 195px;
 }
 
 #status #network,
@@ -141,34 +243,37 @@ tooltip label {
 #tools #custom-screenshot,
 #tools #custom-notifications,
 #tools #custom-control {
-    min-width: 28px;
-    padding: 0;
+    min-width: 32px;
 }
 
 #status #pulseaudio,
 #status #battery,
 #tools #custom-keyboard {
-    padding: 0 4px;
+    min-width: 52px;
 }
 
-/* Individual Module Hover highlight (no glow, no background) */
+/* Individual Module Hover highlight */
 #custom-hardware:hover,
 #status > widget > *:hover,
 #tools > widget > *:hover {
     color: @accent;
+    background: @item-bg-hover;
 }
 
 /* Soft Accent overrides on Hover for critical actions */
 #tools #custom-screenshot:hover {
     color: @green;
+    background: alpha(@green, 0.1);
 }
 
 #tools #custom-notifications:hover {
     color: @accent;
+    background: alpha(@accent, 0.1);
 }
 
 #tools #custom-control:hover {
     color: @yellow;
+    background: alpha(@yellow, 0.1);
 }
 
 /* Integrated Status States */
@@ -181,15 +286,15 @@ tooltip label {
 #network.disconnected,
 #bluetooth.disabled,
 #bluetooth.off {
-    color: alpha(@foreground, 0.4);
+    color: alpha(@foreground, 0.45);
 }
 
 #battery.warning {
-    color: @yellow;
+    color: @orange;
 }
 
 #custom-hardware.warning {
-    color: @yellow;
+    color: @orange;
 }
 
 #battery.critical {
@@ -200,46 +305,34 @@ tooltip label {
     color: @red;
 }
 
+#battery.charging,
+#battery.plugged {
+    color: @green; /* Green highlight when charging/full */
+}
+
 #tools #custom-keyboard {
     color: @accent;
 }
 
-/* Right - Power Module - Subtle Red Accent */
+/* Right - Power Module - Bold Red Accent */
 #custom-power {
-    margin: 5px 12px 5px 4px;
-    padding: 0;
-    min-width: 34px;
-    min-height: 34px;
-    color: alpha(@foreground, 0.75);
-    font-size: 14px;
+    margin: 6px 12px 6px 4px;
+    padding: 0 12px;
+    min-width: 18px;
+    color: alpha(@red, 0.85); /* Slightly red tinted by default */
+    font-size: 15px;
 }
 
 #custom-power:hover {
-    color: @red;
+    color: @selected-fg;
+    background: @red;
+    border-color: @red;
+    box-shadow: 0 0 10px alpha(@red, 0.45);
 }
 
 /* =============================================================================
    Premium Desktop Animations (Keyframes & Effects)
    ============================================================================= */
-
-
-
-/* Pulsing Active Workspace */
-@keyframes workspace-glow {
-    0% {
-        color: alpha(@accent, 0.65);
-    }
-    50% {
-        color: @accent;
-    }
-    100% {
-        color: alpha(@accent, 0.65);
-    }
-}
-
-#workspaces button.active {
-    animation: workspace-glow 2.5s infinite ease-in-out;
-}
 
 /* Pulsing Background Apps */
 @keyframes apps-glow {
@@ -258,27 +351,26 @@ tooltip label {
     animation: apps-glow 3s infinite ease-in-out;
 }
 
-
-/* Critical Battery Heartbeat Pulse */
-@keyframes battery-heartbeat {
+/* Critical Battery & Hardware Heartbeat Pulse */
+@keyframes heartbeat {
     0% {
-        color: @red;
-        opacity: 0.6;
+        opacity: 0.65;
+        background: transparent;
     }
     50% {
-        color: @red;
         opacity: 1.0;
+        background: alpha(@red, 0.12);
     }
     100% {
-        color: @red;
-        opacity: 0.6;
+        opacity: 0.65;
+        background: transparent;
     }
 }
 
 #status #battery.critical {
-    animation: battery-heartbeat 1.4s infinite ease-in-out;
+    animation: heartbeat 1.4s infinite ease-in-out;
 }
 
 #custom-hardware.critical {
-    animation: battery-heartbeat 1.4s infinite ease-in-out;
+    animation: heartbeat 1.4s infinite ease-in-out;
 }

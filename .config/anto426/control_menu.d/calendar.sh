@@ -73,12 +73,12 @@ calendar_rows_for_date() {
     calendar_events_for_date "$date" |
         awk -F'\t' -v date="$date" '
             NF {
-                source_icon = ($6 == "google") ? "󰊭" : "󰃭"
+                icon = ($6 == "google") ? "google-calendar" : "office-calendar"
                 when = ($8 == "true" || $1 == "") ? "Tutto il giorno" : $1 (($2 != "") ? "-" $2 : "")
                 desc = ($4 == "") ? "" : "  · " $4
-                label = sprintf("%s %s  %s%s", source_icon, when, $3, desc)
+                label = sprintf("%s  %s%s", when, $3, desc)
                 if (length(label) > 118) label = substr(label, 1, 115) "..."
-                printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", label, $5, $6, date, $1, $2, $3, $4, $7, $8
+                printf "%s\0icon\x1f%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", label, icon, $5, $6, date, $1, $2, $3, $4, $7, $8
             }
         '
 }
@@ -90,12 +90,12 @@ calendar_upcoming_rows() {
     calendar_events_between "$today" "$end_date" |
         awk -F'\t' '
             NF {
-                source_icon = ($7 == "google") ? "󰊭" : "󰃭"
+                icon = ($7 == "google") ? "google-calendar" : "office-calendar"
                 when = ($9 == "true" || $2 == "") ? "Tutto il giorno" : $2 (($3 != "") ? "-" $3 : "")
                 desc = ($5 == "") ? "" : "  · " $5
-                label = sprintf("%s %s  %s  %s%s", source_icon, $1, when, $4, desc)
+                label = sprintf("%s  %s  %s%s", $1, when, $4, desc)
                 if (length(label) > 118) label = substr(label, 1, 115) "..."
-                printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", label, $6, $7, $1, $2, $3, $4, $5, $8, $9
+                printf "%s\0icon\x1f%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", label, icon, $6, $7, $1, $2, $3, $4, $5, $8, $9
             }
         '
 }
@@ -157,10 +157,10 @@ calendar_event_detail_menu() {
 
     choice="$(
         {
-            printf '%s\n' "󰅍  Copy Details"
-            [[ -n "$url" ]] && printf '%s\n' "󰖟  Open Event"
-            [[ "$source" != "google" ]] && printf '%s\n' "󰆴  Delete Local Event"
-            printf '%s\n' "󰌍  Back"
+            printf '%s\0icon\x1fedit-copy\n' "$(system_text "Copy Details")"
+            [[ -n "$url" ]] && printf '%s\0icon\x1fweb-browser\n' "$(system_text "Open Event")"
+            [[ "$source" != "google" ]] && printf '%s\0icon\x1fuser-trash\n' "$(system_text "Delete Local Event")"
+            printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")"
         } | rofi_pick_msg "${label%%  *}" "$detail" "$THEME_CALENDAR"
     )"
 
@@ -238,7 +238,8 @@ calendar_show_date() {
 
     rows="$(calendar_rows_for_date "$date")"
     if [[ -z "$rows" ]]; then
-        printf '%s\n' "󰌍  Back" | rofi_pick_msg "$date" "No events for this date" "$THEME_CALENDAR" >/dev/null
+        printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")" |
+            rofi_pick_msg "$date" "No events for this date" "$THEME_CALENDAR" >/dev/null
         return 0
     fi
 
@@ -255,7 +256,8 @@ calendar_show_upcoming() {
 
     rows="$(calendar_upcoming_rows)"
     if [[ -z "$rows" ]]; then
-        printf '%s\n' "󰌍  Back" | rofi_pick_msg "Upcoming Events" "No events in the next 30 days" "$THEME_CALENDAR" >/dev/null
+        printf '%s\0icon\x1fgo-previous\n' "$(system_text "Back")" |
+            rofi_pick_msg "Upcoming Events" "No events in the next 30 days" "$THEME_CALENDAR" >/dev/null
         return 0
     fi
 
@@ -358,7 +360,7 @@ calendar_month_message() {
 
 calendar_menu() {
     if ! calendar_require_jq; then
-        printf 'Back\0icon\x1fgo-previous\n' |
+        printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")" |
             rofi_pick_msg "Calendar" "jq non disponibile" "$THEME_CALENDAR" >/dev/null
         back_or_main
         return 0
@@ -372,15 +374,15 @@ calendar_menu() {
 
         choice="$(
             {
-                printf "Today's events\0icon\x1foffice-calendar\n"
-                printf "Next 30 days\0icon\x1fappointment-new\n"
-                printf "Choose date\0icon\x1fgo-jump\n"
-                printf "Add local event\0icon\x1flist-add\n"
-                printf "Delete local event\0icon\x1flist-remove\n"
-                printf "Sync Google Calendar\0icon\x1fview-refresh\n"
-                printf "Open Google Calendar\0icon\x1fweb-browser\n"
-                printf "Config sync\0icon\x1fpreferences-system\n"
-                printf "Back\0icon\x1fgo-previous\n"
+                printf '%s\0icon\x1foffice-calendar\n' "$(menu_item "󰃭" "Today's events")"
+                printf '%s\0icon\x1fappointment-new\n' "$(menu_item "󰃭" "Next 30 days")"
+                printf '%s\0icon\x1fgo-jump\n' "$(menu_item "󰃭" "Choose date")"
+                printf '%s\0icon\x1flist-add\n' "$(menu_item "󰃬" "Add local event")"
+                printf '%s\0icon\x1fuser-trash\n' "$(menu_item "󰃬" "Delete local event")"
+                printf '%s\0icon\x1fview-refresh\n' "$(menu_item "󰑐" "Sync Google Calendar")"
+                printf '%s\0icon\x1fweb-browser\n' "$(menu_item "󰃭" "Open Google Calendar")"
+                printf '%s\0icon\x1fpreferences-system\n' "$(menu_item "󰃭" "Config sync")"
+                printf '%s\0icon\x1fgo-previous\n' "$(menu_item "󰌍" "Back")"
             } | rofi_pick_msg "$month" "$message" "$THEME_CALENDAR"
         )"
 
@@ -388,11 +390,11 @@ calendar_menu() {
         local clean_choice="$choice"
 
         case "$clean_choice" in
-            "Sync Google Calendar") calendar_sync_google ;;
-            "Add local event") calendar_add_event ;;
-            "Today's events") calendar_show_date "$today" ;;
-            "Next 30 days") calendar_show_upcoming ;;
-            "Choose date")
+            "$(system_text "Sync Google Calendar")") calendar_sync_google ;;
+            "$(system_text "Add local event")") calendar_add_event ;;
+            "$(system_text "Today's events")") calendar_show_date "$today" ;;
+            "$(system_text "Next 30 days")") calendar_show_upcoming ;;
+            "$(system_text "Choose date")")
                 picked_date="$(rofi_input "Date (YYYY-MM-DD)" "$today")"
                 if [[ -n "$picked_date" ]]; then
                     if picked_date="$(date -d "$picked_date" +%F 2>/dev/null)"; then
@@ -402,14 +404,11 @@ calendar_menu() {
                     fi
                 fi
                 ;;
-            "Delete local event") calendar_delete_event ;;
-            "Open Google Calendar") xdg-open "https://calendar.google.com/calendar/u/0/r" >/dev/null 2>&1 & ;;
-            "Config sync") run_script_or_notify "Config sync" "$REMOTE_SYNC_SCRIPT" config ;;
-            "Back")
+            "$(system_text "Delete local event")") calendar_delete_event ;;
+            "$(system_text "Open Google Calendar")") xdg-open "https://calendar.google.com/calendar/u/0/r" >/dev/null 2>&1 & ;;
+            "$(system_text "Config sync")") run_script_or_notify "Config sync" "$REMOTE_SYNC_SCRIPT" config ;;
+            "$(system_text "Back")")
                 back_or_main
-                return 0
-                ;;
-            *)
                 return 0
                 ;;
         esac
