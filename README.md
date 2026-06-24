@@ -124,6 +124,12 @@ Initialize palettes and wallpaper configuration:
 ~/.config/anto426/wallpaper_select.sh
 ```
 
+The wallpaper picker uses the Anto426 HyprQuickPaper fork when available:
+```bash
+git clone https://github.com/Arch-repo/hyprquickpaper.git ~/Git/arch/hyprquickpaper
+~/Git/arch/hyprquickpaper/install.sh
+```
+
 <p align="center">
   <img src="https://raw.githubusercontent.com/Anto426/Anto426/main/asset/divider.gif" width="440" height="40" />
 </p>

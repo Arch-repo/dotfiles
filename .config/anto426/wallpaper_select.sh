@@ -9,6 +9,7 @@ apply_script="$HOME/.config/anto426/wallpaper_apply.sh"
 depth="${ANTO426_WALLPAPER_DEPTH:-3}"
 quickpaper_config="${ANTO426_HYPRQUICKPAPER_CONFIG:-$HOME/.config/quickshell/hyprquickpaper}"
 quickpaper_cache="${ANTO426_HYPRQUICKPAPER_CACHE:-$HOME/.cache/quickshell/hyprquickpaper/thumbs}"
+quickpaper_src="${ANTO426_HYPRQUICKPAPER_SRC:-$HOME/Git/arch/hyprquickpaper}"
 selector="${ANTO426_WALLPAPER_SELECTOR:-auto}"
 selector_top_margin="${ANTO426_WALLPAPER_SELECTOR_TOP_MARGIN:-52}"
 runtime_dir="${XDG_RUNTIME_DIR:-/tmp}"
@@ -187,6 +188,16 @@ theme_qml_alpha_color() {
 }
 
 write_hyprquickpaper_shell() {
+    local source_qml="$quickpaper_src/shell.qml"
+    local target_qml="$quickpaper_config/shell.qml"
+
+    if [[ -f "$source_qml" ]]; then
+        if [[ "$(readlink -f "$source_qml" 2>/dev/null || printf '%s' "$source_qml")" != "$(readlink -f "$target_qml" 2>/dev/null || printf '%s' "$target_qml")" ]]; then
+            install -m 644 "$source_qml" "$target_qml"
+        fi
+        return 0
+    fi
+
     cat >"$quickpaper_config/shell.qml" <<'EOF_QML'
 import Quickshell
 import Quickshell.Io
@@ -219,6 +230,7 @@ PanelWindow {
     WlrLayershell.namespace: "hyprquickpaper"
 
     property var colorsMap: ({})
+    property string centeredBackgroundSource: ""
 
     function loadColorsMap() {
         if (!configs.cache_path || configs.cache_path.length === 0)
@@ -284,6 +296,33 @@ PanelWindow {
     }
 
     // Full screen overlay background
+    Rectangle {
+        anchors.fill: parent
+        color: "#d011111b"
+    }
+
+    Image {
+        id: centeredBackdrop
+        anchors.centerIn: parent
+        width: parent.width
+        height: parent.height
+        source: main.centeredBackgroundSource
+        fillMode: Image.PreserveAspectCrop
+        horizontalAlignment: Image.AlignHCenter
+        verticalAlignment: Image.AlignVCenter
+        asynchronous: true
+        cache: true
+        smooth: true
+        opacity: main.centeredBackgroundSource.length > 0 ? 0.34 : 0.0
+
+        Behavior on opacity {
+            NumberAnimation {
+                duration: 220
+                easing.type: Easing.OutCubic
+            }
+        }
+    }
+
     Rectangle {
         anchors.fill: parent
         color: configs.background_color && configs.background_color.length > 0 ? configs.background_color : "#471e1e2e"
@@ -352,9 +391,11 @@ PanelWindow {
             function centerIndex(i) {
                 selectedIndex = wrapIndex(i)
                 currentIndex = selectedIndex
+                updateCenteredBackground()
                 positionViewAtIndex(selectedIndex, ListView.Center)
                 Qt.callLater(function() {
                     positionViewAtIndex(selectedIndex, ListView.Center)
+                    updateCenteredBackground()
                 })
             }
 
@@ -382,12 +423,28 @@ PanelWindow {
                 return String(name) + ".png"
             }
 
+            function colorFor(name) {
+                const imageKey = String(name)
+                const previewImageKey = previewKey(name)
+                return main.colorsMap[imageKey] || main.colorsMap[previewImageKey] || configs.border_color
+            }
+
             function cachedPreview(name) {
                 return "file://" + configs.cache_path + encodeURIComponent(previewKey(name))
             }
 
             function previewSource(name) {
                 return cachedPreview(name)
+            }
+
+            function updateCenteredBackground() {
+                if (count <= 0 || selectedIndex < 0) {
+                    main.centeredBackgroundSource = ""
+                    return
+                }
+
+                const name = folderModel.get(selectedIndex, "fileName")
+                main.centeredBackgroundSource = name ? previewSource(name) : ""
             }
 
             Behavior on contentX {
@@ -419,6 +476,7 @@ PanelWindow {
                 }
                 selectedIndex = 0
                 currentIndex = 0
+                updateCenteredBackground()
                 positionViewAtIndex(0, ListView.Center)
                 initialPositioned = true
                 initialCenterPasses += 1
@@ -428,6 +486,7 @@ PanelWindow {
 
             onCountChanged: {
                 requestInitialCenter()
+                Qt.callLater(function() { updateCenteredBackground() })
             }
 
             onWidthChanged: {
@@ -471,7 +530,7 @@ PanelWindow {
                     property bool triedOriginalFallback: false
                     property bool hadPreview: false
                     property int previewRetries: 0
-                    property color activeColor: main.colorsMap[list.previewKey(fileName)] ? main.colorsMap[list.previewKey(fileName)] : configs.border_color
+                    property color activeColor: list.colorFor(fileName)
 
                     Behavior on scale {
                         NumberAnimation {
@@ -743,6 +802,18 @@ EOF_QML
 }
 
 write_hyprquickpaper_cache() {
+    local source_cache="$quickpaper_src/cache.sh"
+    local target_cache="$quickpaper_config/cache.sh"
+
+    if [[ -f "$source_cache" ]]; then
+        if [[ "$(readlink -f "$source_cache" 2>/dev/null || printf '%s' "$source_cache")" != "$(readlink -f "$target_cache" 2>/dev/null || printf '%s' "$target_cache")" ]]; then
+            install -m 755 "$source_cache" "$target_cache"
+        else
+            chmod +x "$target_cache"
+        fi
+        return 0
+    fi
+
     cat >"$quickpaper_config/cache.sh" <<'EOF_CACHE'
 #!/usr/bin/env bash
 set -uo pipefail

@@ -69,6 +69,23 @@ Icon generation is handled by the C core through a delayed low-priority worker b
 ~/.local/state/anto426/icon-theme.signature
 ```
 
+## HyprQuickPaper
+
+The Quickshell wallpaper selector lives in a separate fork:
+
+```bash
+~/Git/arch/hyprquickpaper
+https://github.com/Arch-repo/hyprquickpaper.git
+```
+
+`wallpaper_select.sh` installs `shell.qml` and `cache.sh` from that checkout when it exists, then generates machine-local `config.json` and `commands.sh` under:
+
+```bash
+~/.config/quickshell/hyprquickpaper
+```
+
+Keep runtime paths out of the fork; update `config.example.json`, `commands.example.sh`, and the installer instead.
+
 Force icon regeneration:
 
 ```bash

@@ -42,7 +42,7 @@ ui_note() {
 pacman_packages=(
     # Hyprland & Wayland environment
     hyprland hyprlock awww grim slurp wf-recorder swaync waybar
-    rofi rofi-emoji yad hyprshot
+    rofi rofi-emoji yad hyprshot quickshell
     xdg-desktop-portal xdg-desktop-portal-hyprland xdg-desktop-portal-wlr xdg-desktop-portal-gtk
 
     # System services and controls
@@ -282,6 +282,35 @@ install_mpvpaper() {
     build_mpvpaper_from_git
 }
 
+install_hyprquickpaper() {
+    if [[ "${ANTO426_SKIP_HYPRQUICKPAPER:-0}" == "1" ]]; then
+        ui_note "Skipping HyprQuickPaper install."
+        return 0
+    fi
+
+    local quickpaper_src="${ANTO426_HYPRQUICKPAPER_SRC:-$HOME/Git/arch/hyprquickpaper}"
+    local quickpaper_repo="${ANTO426_HYPRQUICKPAPER_REPO:-https://github.com/Arch-repo/hyprquickpaper.git}"
+
+    if [[ ! -d "$quickpaper_src/.git" ]]; then
+        ui_note "Cloning HyprQuickPaper into $quickpaper_src"
+        mkdir -p "$(dirname "$quickpaper_src")"
+        git clone "$quickpaper_repo" "$quickpaper_src"
+    else
+        ui_note "Using existing HyprQuickPaper checkout: $quickpaper_src"
+        (
+            cd "$quickpaper_src"
+            git pull --ff-only || ui_note "Could not fast-forward HyprQuickPaper; installing the current checkout."
+        )
+    fi
+
+    if [[ -x "$quickpaper_src/install.sh" ]]; then
+        ANTO426_HYPRQUICKPAPER_SRC="$quickpaper_src" "$quickpaper_src/install.sh"
+        ui_ok "HyprQuickPaper installed from fork checkout."
+    else
+        ui_note "HyprQuickPaper install script not found: $quickpaper_src/install.sh"
+    fi
+}
+
 build_anto426_helper() {
     local source_file="$1"
     local output_file="$2"
@@ -344,31 +373,34 @@ build_anto426_helpers() {
 
 ui_banner
 
-ui_step 1 9 "Installing base build tools"
+ui_step 1 10 "Installing base build tools"
 sudo pacman -S --needed --noconfirm base-devel git
 
-ui_step 2 9 "Checking AUR helper"
+ui_step 2 10 "Checking AUR helper"
 ensure_yay
 
-ui_step 3 9 "Installing official packages"
+ui_step 3 10 "Installing official packages"
 sudo pacman -S --needed --noconfirm "${pacman_packages[@]}"
 
-ui_step 4 9 "Installing AUR packages"
+ui_step 4 10 "Installing AUR packages"
 yay -S --needed --noconfirm "${aur_packages[@]}"
 
-ui_step 5 9 "Installing wallpaper apps"
+ui_step 5 10 "Installing wallpaper apps"
 install_mpvpaper
 
-ui_step 6 9 "Building local Anto426 apps"
+ui_step 6 10 "Installing HyprQuickPaper"
+install_hyprquickpaper
+
+ui_step 7 10 "Building local Anto426 apps"
 build_anto426_helpers
 
-ui_step 7 9 "Building Anto426 rofi"
+ui_step 8 10 "Building Anto426 rofi"
 build_anto426_rofi
 
-ui_step 8 9 "Configuring NetworkManager iwd backend"
+ui_step 9 10 "Configuring NetworkManager iwd backend"
 configure_networkmanager_iwd
 
-ui_step 9 9 "Configuring lid suspend"
+ui_step 10 10 "Configuring lid suspend"
 configure_lid_suspend
 
 ui_ok "Package install complete."
