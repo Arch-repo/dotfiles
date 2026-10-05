@@ -1,3 +1,0 @@
-#!/usr/bin/env bash
-# Directly execute the system rofi with all options intact to enable native theme icons
-exec /usr/bin/rofi "$@"

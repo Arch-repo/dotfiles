@@ -1,0 +1,103 @@
+{
+  "swaync": {
+    ".ui-action": [
+      ".notification-row .notification-background .notification .notification-action > button",
+      ".control-center .widget-title > button",
+      ".notification-group .notification-group-collapse-button",
+      ".notification-group .notification-group-close-all-button",
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button"
+    ],
+    ".ui-action:hover": [
+      ".notification-row .notification-background .notification .notification-action > button:hover",
+      ".control-center .widget-title > button:hover",
+      ".notification-group .notification-group-collapse-button:hover",
+      ".notification-group .notification-group-close-all-button:hover",
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button:hover"
+    ],
+    ".ui-action.primary": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button"
+    ],
+    ".round-button": [
+      ".notification-row .notification-background .notification .close-button",
+      ".notification-group .notification-group-close-button .close-button"
+    ],
+    ".round-button:hover": [
+      ".notification-row .notification-background .notification .close-button:hover",
+      ".notification-group .notification-group-close-button .close-button:hover"
+    ],
+    ".ui-switch": [
+      ".control-center .widget-dnd > switch"
+    ],
+    ".ui-switch:checked": [
+      ".control-center .widget-dnd > switch:checked"
+    ],
+    ".ui-switch slider": [
+      ".control-center .widget-dnd > switch slider"
+    ],
+    ".ui-row": [
+      ".control-center .widget-dnd"
+    ],
+    ".ui-heading": [
+      ".control-center .widget-title > label"
+    ],
+    ".item-title": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .text-box .summary",
+      ".control-center .widget-dnd > label"
+    ],
+    ".item-subtitle": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .text-box .body"
+    ],
+    ".ui-meter trough": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content progressbar trough"
+    ],
+    ".ui-meter progress": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content progressbar progress"
+    ],
+    ".ui-entry": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-entry"
+    ],
+    ".ui-entry:focus-within": [
+      ".notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-entry:focus"
+    ],
+    ".ui-glass": [
+      ".control-center",
+      ".notification-row .notification-background .notification"
+    ]
+  },
+  "waybar": {
+    ".ui-action": [
+      "#workspaces button",
+      "#taskbar button"
+    ],
+    ".ui-action.ui-navigation": [
+      "#workspaces button",
+      "#taskbar button"
+    ],
+    ".ui-action.ui-navigation:hover": [
+      "#workspaces button:hover",
+      "#taskbar button:hover"
+    ],
+    ".ui-action.ui-navigation.active": [
+      "#workspaces button.active",
+      "#taskbar button.active"
+    ],
+    ".ui-glass": [
+      "tooltip",
+      "#custom-launcher",
+      "#workspaces",
+      "#window",
+      "#center-deck",
+      "#quick",
+      "#status",
+      "#custom-power"
+    ]
+  },
+  "native": {
+    ".ui-glass": [
+      ".anto-menu-panel",
+      ".wallpaper-panel",
+      ".osd-panel",
+      "popover > contents"
+    ]
+  }
+}

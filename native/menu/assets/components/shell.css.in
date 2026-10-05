@@ -1,0 +1,32 @@
+/* The shell owns geometry. Material and palette come from the shared tokens. */
+.anto-menu-window, .menu-backdrop { background: transparent; color: @foreground; }
+.anto-menu-panel {
+  margin: {{size.panel_inset}}px;
+  border-radius: {{radius.panel}}px;
+  font-family: "Inter", "SF Pro Text", sans-serif;
+  font-size: {{font.body}}px;
+}
+.menu-sidebar { padding: 20px 12px 16px; background: alpha(@background, 0.12); border-right: 1px solid @ui-border; }
+.sidebar-brand { padding: 0 6px 12px; font-size: 14px; font-weight: 600; }
+.brand-icon { color: @accent; }
+.sidebar-icon { color: @ui-secondary; }
+.sidebar-label { font-size: 13px; }
+.sidebar-group { margin: 18px 9px 5px; color: @ui-tertiary; font-size: 11px; font-weight: 600; }
+.sidebar-clock { padding: 12px 7px 0; border-top: 1px solid @ui-border; }
+.context-time { font-size: 18px; font-weight: 600; }
+.context-date { color: @ui-tertiary; font-size: 10px; }
+.menu-sidebar.compact { padding: 18px 6px; }
+.menu-sidebar.compact .sidebar-label, .menu-sidebar.compact .ui-action-label, .menu-sidebar.compact .sidebar-group,
+.menu-sidebar.compact .context-date { font-size: 0; min-width: 0; }
+.menu-sidebar.compact .sidebar-brand { padding: 0 4px; }
+.menu-sidebar.compact .context-time { font-size: 11px; }
+.menu-main { padding: 26px 28px 18px; }
+.menu-footer { font-size: 10px; color: @ui-tertiary; }
+.context-strip { padding-top: 12px; border-top: 1px solid @ui-border; }
+.context-card-value { font-size: 10px; color: @ui-secondary; }
+.context-icon { color: @ui-tertiary; }
+.status-accent .context-icon { color: @accent; }
+.status-green .context-icon { color: @success; }
+.status-warn .context-icon { color: @warning; }
+.status-danger .context-icon { color: @error; }
+.menu-list, .menu-grid, .custom-content { background: transparent; padding-bottom: 8px; }

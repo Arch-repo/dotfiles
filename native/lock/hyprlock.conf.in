@@ -1,0 +1,166 @@
+# Shared design, rendered by scripts/design.py. Authentication stays with PAM.
+source = ~/.local/share/anto-desktop/hyprlock-defaults.conf
+source = ~/.config/anto426-local/hypr/theme.generated.conf
+
+general {
+    hide_cursor = true
+    ignore_empty_input = true
+    immediate_render = true
+    text_trim = true
+    fail_timeout = 2000
+    fractional_scaling = 2
+}
+auth {
+    pam:enabled = true
+    pam:module = hyprlock
+    fingerprint:enabled = true
+    fingerprint:ready_message = Appoggia il dito sul lettore
+    fingerprint:present_message = Lettura impronta…
+    fingerprint:retry_delay = 350
+}
+animations {
+    enabled = true
+    bezier = unlockEase, 0.16, 1, 0.3, 1
+    animation = fadeIn, 1, 2, unlockEase
+    animation = fadeOut, 1, 2, unlockEase
+    animation = inputFieldColors, 1, 1.5, unlockEase
+}
+background {
+    monitor =
+    path = $anto426_wallpaper
+    color = $anto426_background
+    blur_passes = 3
+    blur_size = 8
+    noise = 0.008
+    contrast = 0.90
+    brightness = 0.55
+    vibrancy = 0.12
+}
+shape {
+    monitor =
+    size = {{size.auth_width}}, {{size.lock_height}}
+    position = 0, 0
+    halign = center
+    valign = center
+    rounding = {{radius.panel}}
+    color = $anto426_panel_bg
+    border_size = 1
+    border_color = $anto426_border_panel
+    shadow_passes = 1
+    shadow_size = 8
+    shadow_color = rgba(00000020)
+    zindex = 0
+}
+label {
+    monitor =
+    text = $TIME
+    color = $anto426_foreground
+    font_size = {{font.widget_clock}}
+    font_family = Noto Sans
+    position = 0, 136
+    halign = center
+    valign = center
+    zindex = 1
+}
+label {
+    monitor =
+    text = cmd[update:60000] $HOME/.config/anto426/lock_info.sh date
+    color = $anto426_muted
+    font_size = {{font.caption}}
+    font_family = Noto Sans
+    position = 0, 84
+    halign = center
+    valign = center
+    zindex = 1
+}
+label {
+    monitor =
+    text = Bentornato, $USER
+    color = $anto426_foreground
+    font_size = {{font.body}}
+    font_family = Noto Sans
+    position = 0, 8
+    halign = center
+    valign = center
+    zindex = 1
+}
+input-field {
+    monitor =
+    size = 340, 48
+    position = 0, -52
+    halign = center
+    valign = center
+    outline_thickness = 1
+    rounding = {{radius.control}}
+    dots_size = 0.24
+    dots_spacing = 0.30
+    dots_center = true
+    dots_rounding = -1
+    outer_color = $anto426_border_panel
+    inner_color = $anto426_surface_soft
+    font_color = $anto426_foreground
+    font_family = Noto Sans
+    fade_on_empty = false
+    placeholder_text = Password
+    check_color = $anto426_accent
+    check_text = Verifica in corso…
+    fail_color = $anto426_error
+    fail_text = Accesso non riuscito ($ATTEMPTS)
+    capslock_color = $anto426_warning
+    numlock_color = $anto426_accent
+    zindex = 2
+}
+label {
+    monitor =
+    text = cmd[update:5000] $HOME/.config/anto426/lock_info.sh status "$LAYOUT"
+    color = $anto426_muted
+    font_size = {{font.caption}}
+    font_family = Noto Sans
+    position = 0, -112
+    halign = center
+    valign = center
+    zindex = 1
+}
+label {
+    monitor =
+    text = Sessione protetta · Invio per accedere
+    color = $anto426_muted
+    font_size = {{font.section}}
+    font_family = Noto Sans
+    position = 0, -198
+    halign = center
+    valign = center
+    zindex = 1
+}
+label {
+    monitor =
+    text = $FPRINTPROMPT
+    color = $anto426_accent
+    font_size = {{font.caption}}
+    font_family = Noto Sans
+    position = 0, -142
+    halign = center
+    valign = center
+    zindex = 1
+}
+label {
+    monitor =
+    text = cmd[update:2000] $HOME/.config/anto426/lock_info.sh media
+    color = $anto426_muted
+    font_size = {{font.caption}}
+    font_family = Noto Sans
+    position = 0, 28
+    halign = center
+    valign = bottom
+}
+label {
+    monitor =
+    text = $FPRINTFAIL
+    color = $anto426_error
+    font_size = {{font.section}}
+    font_family = Noto Sans
+    position = 0, -172
+    halign = center
+    valign = center
+    zindex = 1
+}

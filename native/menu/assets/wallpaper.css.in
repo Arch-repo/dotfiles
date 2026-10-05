@@ -1,0 +1,8 @@
+/* Gallery composition; all control, card and selection styles are shared. */
+window.wallpaper-window, .wallpaper-backdrop { background: transparent; color: @foreground; }
+.wallpaper-panel { padding: 26px 28px 18px; font-family: "Inter", "SF Pro Text", sans-serif; font-size: {{font.body}}px; }
+.wallpaper-footer { padding-top: {{spacing.md}}px; border-top: 1px solid @ui-border; }
+.wallpaper-preview { border-radius: {{radius.control}}px; }
+.wallpaper-empty { margin: {{spacing.sm}}px; }
+window.wallpaper-preview-window { background: @background; }
+.wallpaper-preview-dim { background: linear-gradient(to bottom, alpha(@background, 0.55), alpha(@background, 0.22) 48%, alpha(@background, 0.70)); }

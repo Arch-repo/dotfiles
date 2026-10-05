@@ -1,0 +1,35 @@
+{
+  "verified_at": "2026-10-04T12:52:04.812971+02:00",
+  "passed": true,
+  "session": "nested-wayland",
+  "personal_data": false,
+  "widget_count": 4,
+  "native_bottom_layer": true,
+  "real_pointer_click": true,
+  "mpris_play_pause": true,
+  "keyboard_focus_preserved": true,
+  "source": "native/widgets/tests/ui.c",
+  "fixture_output": "native widgets: registry, shared views and data, agenda updates, MPRIS play/next, geometry-only lock, keyboard NONE, idempotent reconciliation and task disposal verified",
+  "merged_music_card": true,
+  "spectrum_stream_rendered": true,
+  "installed_session": {
+    "verified_at": "2026-10-04T12:53:03.728529+02:00",
+    "processes": 1,
+    "dsp_processes": 1,
+    "legacy_terminal_widget_windows": 0,
+    "visible_cards": 4,
+    "bottom_layer": true,
+    "state_version": 2,
+    "visible": {
+      "calendar": true,
+      "clock": true,
+      "media": true,
+      "system": true
+    },
+    "runtime_warnings": 0
+  },
+  "suite": {
+    "passed": 31,
+    "total": 31
+  }
+}

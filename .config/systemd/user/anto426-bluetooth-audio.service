@@ -1,0 +1,13 @@
+[Unit]
+Description=Anto426 Bluetooth audio auto-switch
+After=pipewire.service pipewire-pulse.service wireplumber.service bluetooth.target
+Wants=pipewire.service wireplumber.service
+
+[Service]
+Type=simple
+ExecStart=%h/.config/anto426/bluetooth_audio_daemon.sh daemon
+Restart=on-failure
+RestartSec=2
+
+[Install]
+WantedBy=default.target

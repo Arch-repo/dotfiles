@@ -1,0 +1,68 @@
+{
+  "verified_at": "2026-10-04T09:35:53.412565+02:00",
+  "passed": true,
+  "session": "nested-wayland",
+  "personal_data": false,
+  "outside_pixels": [
+    [
+      109,
+      41,
+      58
+    ],
+    [
+      39,
+      85,
+      58
+    ]
+  ],
+  "glass_pixels": [
+    [
+      132,
+      45,
+      65
+    ],
+    [
+      43,
+      102,
+      66
+    ]
+  ],
+  "glass_stats": {
+    "monitors": [
+      {
+        "name": "WAYLAND-1",
+        "frames": 548,
+        "windowGlassDraws": 0,
+        "windowOpaqueSkipped": 0,
+        "windowCacheHits": 0,
+        "windowCacheMisses": 0,
+        "windowDeferredResamples": 0,
+        "windowPassDiscarded": 0,
+        "layerGlassDraws": 451,
+        "layerCacheHits": 262,
+        "layerCacheMisses": 189,
+        "layerDeferredResamples": 0,
+        "subsurfaceGlassDraws": 0,
+        "subsurfaceCacheHits": 0,
+        "subsurfaceCacheMisses": 0,
+        "subsurfaceDeferredResamples": 0,
+        "blurPasses": 378,
+        "sampledMegapixels": 188.101,
+        "glassMegapixels": 667.362,
+        "stageTimersAvgMicroseconds": {
+          "sample_background": 0.0,
+          "blur_background": 0.0,
+          "apply_glass_effect": 0.0,
+          "layer_sample": 38.873,
+          "layer_composite": 138.851,
+          "subsurface_sample": 0.0,
+          "subsurface_composite": 0.0
+        }
+      }
+    ],
+    "timersEnabled": true,
+    "timersAvailable": true
+  },
+  "preview_removed_on_close": true,
+  "fixture_output": "wallpaper menu: one production window, fixed geometry, arrows from search, immediate preview, global Escape close, history, pending-task disposal and background boot-only action verified"
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Anto Desktop Calendar synchronization and reminders
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/anto426/remote_sync.sh daemon
+Restart=on-failure
+RestartSec=3
+Environment=GDK_BACKEND=wayland

@@ -1,0 +1,11 @@
+{
+  "verified_at": "2026-10-04T12:49:20.628266+02:00",
+  "passed": true,
+  "backend": "pipewire",
+  "private_sink": true,
+  "speaker_output": false,
+  "frames": 52,
+  "bars": 32,
+  "peak": 1000,
+  "note": "Synthetic signal on an isolated sink; KDE Connect remote audio is not local PCM"
+}

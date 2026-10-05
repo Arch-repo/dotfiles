@@ -3,45 +3,59 @@
     "positionX": "right",
     "positionY": "top",
     "cssPriority": "user",
-    
+    "ignore-gtk-theme": true,
+
     "layer": "overlay",
     "control-center-layer": "top",
     "layer-shell": true,
+    "layer-shell-cover-screen": false,
+    "control-center-exclusive-zone": false,
 
-    "control-center-width": 420,
-    "control-center-height": 720,
+    "control-center-width": 368,
+    "control-center-height": 620,
     "control-center-positionX": "right",
     "control-center-positionY": "top",
-    "control-center-margin-top": 10,
+    "control-center-margin-top": 16,
     "control-center-margin-bottom": 10,
     "control-center-margin-right": 10,
     "control-center-margin-left": 0,
 
-    "notification-window-width": 340,
-    "notification-window-height": 520,
-    "notification-icon-size": 50,
-    "notification-body-image-height": 200,
+    "notification-window-width": 344,
+    "notification-window-height": 480,
+    "notification-body-image-height": 100,
     "notification-body-image-width": 200,
 
     "timeout": 8,
     "timeout-low": 6,
     "timeout-critical": 0,
- 
+
     "fit-to-screen": false,
     "keyboard-shortcuts": true,
     "image-visibility": "when-available",
-    "transition-time": 0,
+    "transition-time": 140,
     "hide-on-clear": false,
     "hide-on-action": true,
+    "notification-grouping": true,
+    "relative-timestamps": true,
     "text-empty": "Nessuna notifica",
     "script-fail-notify": true,
-    "notification-visibility": {
-        "example-name": {
-            "state": "muted",
-            "urgency": "Low",
-            "app-name": "Spotify"
+    "notification-visibility": {},
+    "widgets": [
+        "title",
+        "dnd",
+        "notifications"
+    ],
+    "widget-config": {
+        "title": {
+            "text": "Notifiche",
+            "clear-all-button": true,
+            "button-text": "Svuota"
+        },
+        "dnd": {
+            "text": "Non disturbare"
+        },
+        "notifications": {
+            "vexpand": true
         }
-    },
-    "widgets": [],
-    "widget-config": {}
+    }
 }

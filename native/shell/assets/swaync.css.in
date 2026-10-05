@@ -1,0 +1,464 @@
+
+:root {
+    /* Override the variables consumed by SwayNC's packaged stylesheet too.
+     * This prevents high-specificity system rules from leaking Adwaita colors
+     * around the user theme. */
+    --cc-bg: @ui-panel;
+    --noti-border-color: alpha(@border, 0.20);
+    --noti-bg-darker: @base;
+    --noti-bg-hover: @ui-surface-hover;
+    --noti-bg-focus: alpha(@accent, 0.09);
+    --noti-close-bg: alpha(@surface, 0.18);
+    --noti-close-bg-hover: @red;
+    --text-color: @foreground;
+    --text-color-disabled: alpha(@muted, 0.55);
+    --bg-selected: @accent;
+    --border: 1px solid alpha(@border, 0.20);
+    --border-radius: 12px;
+    --notification-shadow: inset 0 1px alpha(@foreground, 0.025);
+    --notification-icon-size: 42px;
+    --notification-app-icon-size: 18px;
+    --notification-group-icon-size: 24px;
+    --font-size-summary: 13px;
+    --font-size-body: 11px;
+    --hover-tranistion: background 140ms ease, border-color 140ms ease;
+    --group-collapse-tranistion: opacity 140ms ease;
+    --hover-transition: var(--hover-tranistion);
+    --group-collapse-transition: var(--group-collapse-tranistion);
+}
+
+* {
+    outline: none;
+    color: @foreground;
+    font-family: "Inter", "Noto Sans", "JetBrainsMono Nerd Font", sans-serif;
+    text-shadow: none;
+}
+
+notificationwindow,
+blankwindow,
+.blank-window,
+.floating-notifications {
+    background: transparent;
+}
+
+/* Waybar reserves the top edge, but popup notifications live on the overlay
+ * layer and therefore need their own visual breathing room.  Keep this on the
+ * notification container (instead of every row) so stacked toasts remain
+ * compact and receive exactly one offset on displays with different scale. */
+.floating-notifications {
+    padding: 14px 0 0;
+}
+
+/* Control center --------------------------------------------------------- */
+.control-center {
+    margin: 0;
+    padding: 10px;
+    color: @foreground;
+    border-radius: {{radius.panel}}px;
+}
+
+.control-center .widget,
+.control-center .widget-notifications {
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.control-center .control-center-list,
+.control-center .control-center-list-placeholder {
+    color: alpha(@muted, 0.78);
+    background: transparent;
+}
+
+.control-center .control-center-list-placeholder {
+    padding: 24px 12px;
+    font-size: 12px;
+    font-weight: 650;
+}
+
+/* SwayNC's GTK scroller otherwise inherits a wide white scrollbar with
+ * steppers from the desktop theme.  It remains scrollable by wheel,
+ * touchpad and keyboard while consuming no visible horizontal space. */
+.control-center scrollbar,
+.control-center scrollbar.vertical,
+.control-center scrolledwindow > scrollbar {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    background: transparent;
+}
+
+.control-center scrollbar trough,
+.control-center scrollbar slider,
+.control-center scrollbar button {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    opacity: 0;
+    background: transparent;
+    box-shadow: none;
+}
+
+/* Header and DND --------------------------------------------------------- */
+.control-center .widget-title {
+    margin: 0 0 7px;
+    padding: 7px 8px 8px;
+    border-bottom: 1px solid alpha(@border, 0.14);
+}
+
+.control-center .widget-title > label {
+    color: @foreground;
+    font-size: 17px;
+    font-weight: 600;
+    letter-spacing: -0.45px;
+}
+
+.control-center .widget-title > button {
+    min-height: 28px;
+    padding: 3px 10px;
+    color: @red;
+    background: alpha(@red, 0.08);
+    border: 1px solid alpha(@red, 0.22);
+    border-radius: 10px;
+    box-shadow: none;
+    font-size: {{font.caption}}px;
+    font-weight: 600;
+    transition: 140ms ease;
+}
+
+.control-center .widget-title > button:hover,
+.control-center .widget-title > button:focus-visible {
+    color: @selected-fg;
+    background: @red;
+    border-color: @red;
+}
+
+.control-center .widget-dnd {
+    margin: 0 0 8px;
+    padding: 8px 10px;
+    color: @foreground;
+    background: alpha(@surface, 0.16);
+    border: 1px solid alpha(@border, 0.15);
+    border-radius: 13px;
+}
+
+.control-center .widget-dnd > label {
+    color: @foreground;
+    font-size: {{font.caption}}px;
+    font-weight: 600;
+}
+
+.control-center .widget-dnd > switch {
+    min-width: 40px;
+    min-height: 21px;
+    padding: 2px;
+    color: transparent;
+    background: alpha(@foreground, 0.12);
+    border: 1px solid alpha(@border, 0.24);
+    border-radius: 999px;
+    box-shadow: inset 0 1px 3px alpha(black, 0.18);
+    transition: 140ms ease;
+}
+
+.control-center .widget-dnd > switch:checked {
+    background: linear-gradient(90deg, @accent, @select);
+    border-color: alpha(@accent, 0.64);
+}
+
+.control-center .widget-dnd > switch slider {
+    min-width: 17px;
+    min-height: 17px;
+    background: @foreground;
+    border: 0;
+    border-radius: 999px;
+    box-shadow: 0 2px 6px alpha(black, 0.24);
+}
+
+/* Notification list ----------------------------------------------------- */
+.notification-row,
+.notification-background,
+.notification-default-action {
+    margin: 0;
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+}
+
+.notification-row:focus,
+.notification-group:focus {
+    background: transparent;
+}
+
+.control-center .notification-row .notification-background {
+    padding: 3px 1px;
+}
+
+.floating-notifications .notification-row {
+    margin: 0 8px 8px;
+}
+
+.floating-notifications .notification-row .notification-background {
+    padding: 0;
+}
+
+.notification-row .notification-background .notification {
+    margin: 0;
+    padding: 0;
+    color: @foreground;
+    border-radius: {{radius.panel}}px;
+    transition: 140ms ease;
+}
+
+.control-center .control-center-list .notification-row .notification-background .notification {
+    background: alpha(@surface, 0.16);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.notification-row:hover .notification-background .notification,
+.notification-row:focus .notification-background .notification,
+.notification-row .notification-background .notification:hover {
+    background: alpha(@surface, 0.24);
+    border-color: alpha(@accent, 0.34);
+    border-left-color: @accent;
+}
+
+.notification-row .notification-background .notification.low {
+    border-left-color: alpha(@muted, 0.66);
+}
+
+.notification-row .notification-background .notification.critical {
+    background: alpha(@red, 0.11);
+    border-color: alpha(@red, 0.30);
+    border-left-color: @red;
+}
+
+.notification-row .notification-background .notification.critical:hover {
+    background: alpha(@red, 0.15);
+    border-color: alpha(@red, 0.48);
+}
+
+.notification-row .notification-background .notification .notification-default-action {
+    padding: 0;
+    color: @foreground;
+    border-radius: 13px;
+}
+
+.notification-row .notification-background .notification .notification-default-action:hover,
+.notification-row .notification-background .notification .notification-default-action:focus {
+    background: alpha(@surface, 0.09);
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content {
+    padding: {{spacing.md}}px {{spacing.lg}}px;
+    background: transparent;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .image {
+    margin: 1px 10px 1px 0;
+    border-radius: 10px;
+    -gtk-icon-size: var(--notification-icon-size);
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .app-icon {
+    margin: 4px;
+    border-radius: 6px;
+    -gtk-icon-size: var(--notification-app-icon-size);
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .text-box .summary {
+    color: @foreground;
+    font-size: var(--font-size-summary);
+    font-weight: 600;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .text-box .time {
+    margin-right: 25px;
+    color: alpha(@muted, 0.72);
+    font-size: {{font.caption}}px;
+    font-weight: 700;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .text-box .body {
+    margin-top: 2px;
+    color: alpha(@foreground, 0.78);
+    font-size: var(--font-size-body);
+    font-weight: 550;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .body-image {
+    margin-top: 6px;
+    background: transparent;
+    border-radius: 9px;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content progressbar {
+    margin-top: 5px;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content progressbar trough {
+    min-height: 4px;
+    background: alpha(@foreground, 0.10);
+    border-radius: 999px;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content progressbar progress {
+    min-height: 4px;
+    background: @accent;
+    border-radius: 999px;
+}
+
+/* Per-notification controls --------------------------------------------- */
+.notification-row .notification-background .notification .close-button {
+    min-width: 22px;
+    min-height: 22px;
+    margin: 6px 7px 0 3px;
+    padding: 0;
+    color: alpha(@foreground, 0.56);
+    background: alpha(@surface, 0.20);
+    border: 1px solid alpha(@border, 0.13);
+    border-radius: 999px;
+    box-shadow: none;
+}
+
+.notification-row .notification-background .notification .close-button:hover,
+.notification-row .notification-background .notification .close-button:focus-visible {
+    color: @selected-fg;
+    background: @red;
+    border-color: @red;
+}
+
+.notification-row .notification-background .notification .notification-alt-actions {
+    padding: 3px 5px 5px;
+    background: transparent;
+}
+
+.notification-row .notification-background .notification .notification-action {
+    margin: 2px;
+    padding: 0;
+}
+
+.notification-row .notification-background .notification .notification-action > button {
+    min-height: 28px;
+    margin: 2px;
+    padding: 3px 8px;
+    color: alpha(@foreground, 0.84);
+    background: alpha(@surface, 0.17);
+    border: 1px solid alpha(@border, 0.15);
+    border-radius: 9px;
+    box-shadow: none;
+    font-size: {{font.caption}}px;
+    font-weight: 600;
+}
+
+.notification-row .notification-background .notification .notification-action > button:hover,
+.notification-row .notification-background .notification .notification-action > button:focus-visible {
+    color: @accent;
+    background: alpha(@accent, 0.11);
+    border-color: alpha(@accent, 0.34);
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply {
+    margin-top: 6px;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-entry {
+    min-height: 28px;
+    padding: 3px 8px;
+    color: @foreground;
+    caret-color: @accent;
+    background: alpha(@base, 0.82);
+    border: 1px solid alpha(@border, 0.20);
+    border-radius: 9px;
+    box-shadow: none;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-entry:focus {
+    border-color: alpha(@accent, 0.58);
+    box-shadow: inset 0 0 0 1px alpha(@accent, 0.12);
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button {
+    min-height: 28px;
+    margin-left: 5px;
+    padding: 3px 9px;
+    color: @foreground;
+    background: alpha(@accent, 0.12);
+    border: 1px solid alpha(@accent, 0.28);
+    border-radius: 9px;
+    box-shadow: none;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button:hover,
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button:focus-visible {
+    color: @selected-fg;
+    background: @accent;
+    border-color: @accent;
+}
+
+.notification-row .notification-background .notification .notification-default-action .notification-content .inline-reply .inline-reply-button:disabled {
+    color: alpha(@muted, 0.45);
+    background: alpha(@surface, 0.08);
+    border-color: transparent;
+}
+
+/* Groups --------------------------------------------------------------- */
+.notification-group {
+    margin: 2px 0;
+    background: transparent;
+}
+
+.notification-group .notification-group-buttons,
+.notification-group .notification-group-headers {
+    margin: 0 4px;
+}
+
+.notification-group .notification-group-header,
+.notification-group .notification-group-headers {
+    padding: 4px 6px;
+    color: alpha(@foreground, 0.78);
+    font-size: {{font.caption}}px;
+    font-weight: 600;
+}
+
+.notification-group .notification-group-icon {
+    -gtk-icon-size: var(--notification-group-icon-size);
+}
+
+.notification-group .notification-group-collapse-button,
+.notification-group .notification-group-close-all-button {
+    min-width: 25px;
+    min-height: 25px;
+    padding: 0 7px;
+    color: alpha(@foreground, 0.68);
+    background: alpha(@surface, 0.14);
+    border: 1px solid alpha(@border, 0.13);
+    border-radius: 8px;
+    box-shadow: none;
+}
+
+.notification-group .notification-group-collapse-button:hover {
+    color: @accent;
+    border-color: alpha(@accent, 0.30);
+    background: alpha(@accent, 0.10);
+}
+
+.notification-group .notification-group-close-all-button:hover {
+    color: @selected-fg;
+    border-color: @red;
+    background: @red;
+}
+
+.notification-group .notification-group-close-button .close-button {
+    margin: 5px 7px 0 3px;
+}
+
+.notification-group.collapsed .notification-row .notification-background .notification {
+    background: alpha(@base, 0.96);
+}

@@ -1,0 +1,17 @@
+[Unit]
+Description=Anto426 monitor-local workspace hotplug watcher
+Documentation=file:%h/.config/anto426/README.md
+After=graphical-session.target
+PartOf=graphical-session.target
+StartLimitIntervalSec=60
+StartLimitBurst=8
+
+[Service]
+Type=simple
+ExecStart=%h/.local/bin/anto-menu workspace-output watch
+Restart=on-failure
+RestartSec=2s
+TimeoutStopSec=5s
+
+# Hyprland starts this unit explicitly after importing its session environment;
+# it is intentionally not enabled under default.target.

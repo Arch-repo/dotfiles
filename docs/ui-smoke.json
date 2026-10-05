@@ -1,0 +1,71 @@
+{
+  "session": "nested-wayland",
+  "pages_opened": [
+    "system",
+    "apps",
+    "audio",
+    "wifi",
+    "bluetooth",
+    "brightness",
+    "display",
+    "capture",
+    "record",
+    "hardware",
+    "keyboard",
+    "notifications",
+    "clipboard",
+    "emoji",
+    "floating",
+    "background",
+    "shortcuts",
+    "widgets",
+    "settings",
+    "calendar",
+    "calendar-add",
+    "power"
+  ],
+  "gallery_opened": true,
+  "controls_activated_in_smoke": false,
+  "runtime_gtk_warnings": 0,
+  "interaction_fixtures": [
+    "calendar-ui",
+    "emoji-ui",
+    "gallery-ui",
+    "glass-lifecycle",
+    "shell-alpha",
+    "menu-geometry"
+  ],
+  "calendar_fixture": {
+    "selected_day": "2026-10-03",
+    "events": 3,
+    "personal_data": false
+  },
+  "frontend_switches": [
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    }
+  ],
+  "wallpaper_route": "deck to gallery passed without remapping a closed deck",
+  "menu_geometry": "fixed panel, sidebar and content across grid/list/custom on Wayland"
+}

@@ -1,0 +1,13 @@
+[SddmGreeterTheme]
+Name=Anto Desktop
+Description=Native Qt6 login, sharing the Anto Desktop design tokens
+Author=Anto426
+Copyright=Copyright (C) 2026 Anto426
+License=MIT
+Type=sddm-theme
+Version=2.0
+Website=https://github.com/Arch-repo/dotfiles
+MainScript=Main.qml
+ConfigFile=theme.conf
+Theme-API=2.0
+QtVersion=6

@@ -1,0 +1,29 @@
+{
+  "repository": "tesseract-ocr/tessdata_fast",
+  "revision": "87416418657359cb625c412a48b6e1d6d41c29bd",
+  "glass": {
+    "repository": "https://github.com/hyprnux/hyprglass.git",
+    "revision": "0ec4118fa7f6ddda73a90a52066c8a9b2fbf844d",
+    "hyprland_revision": "efb50993780079460b0cbed1363e2166a2de1d9f",
+    "patch": "support/patches/hyprglass-layer-shape.patch"
+  },
+  "ocr": [
+    {
+      "filename": "ita.traineddata",
+      "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/ita.traineddata",
+      "sha256": "b8f89e1e785118dac4d51ae042c029a64edb5c3ee42ef73027a6d412748d8827"
+    },
+    {
+      "filename": "eng.traineddata",
+      "url": "https://raw.githubusercontent.com/tesseract-ocr/tessdata_fast/87416418657359cb625c412a48b6e1d6d41c29bd/eng.traineddata",
+      "sha256": "7d4322bd2a7749724879683fc3912cb542f19906c83bcc1a52132556427170b2"
+    }
+  ],
+  "emoji": {
+    "version": "18.0",
+    "url": "https://www.unicode.org/Public/18.0.0/emoji/emoji-test.txt",
+    "sha256": "8f3735cda1f92a779d78af67cf86066bb1f07143dc22f2ac29394d9bc57ab21a",
+    "license_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
+    "license": "resources/licenses/Unicode-LICENSE.txt"
+  }
+}

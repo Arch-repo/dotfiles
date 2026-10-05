@@ -1,0 +1,106 @@
+{
+  "verified_at": "2026-10-03T17:57:34+02:00",
+  "ctest_passed": 26,
+  "ctest_failed": 0,
+  "additional_checks": [
+    "launcher-layout",
+    "clipboard-guard",
+    "swaync-static"
+  ],
+  "shared_tokens": "design/tokens.json",
+  "shared_primitives": "native/common/include/primitives.h",
+  "shared_material": "native/common/assets/material.css.in",
+  "selector_adapters": "design/surface-controls.json",
+  "panel_limit_logical_px": [
+    1080,
+    740
+  ],
+  "gallery": {
+    "fixture": "gallery-ui",
+    "destination": "ALL",
+    "destination_picker": false,
+    "job_survives_window": true,
+    "late_callbacks_safe": true,
+    "transparent_host_focus_regression_passed": true,
+    "layout": "large preview left, two-column thumbnail library right"
+  },
+  "calendar": {
+    "fixture": "calendar-ui",
+    "selected_day_events": 5,
+    "right_pane": true,
+    "live_data_reconciled": true
+  },
+  "emoji": {
+    "fixture": "emoji-ui",
+    "palette_selection_pixels_verified": true,
+    "colour_glyph_pixels_verified": true,
+    "responsive_keyboard_navigation": true
+  },
+  "live_surfaces": [
+    "anto426-menu",
+    "waybar",
+    "swaync-notification-window",
+    "swaync-control-center",
+    "anto426-osd",
+    "anto426-wallpaper",
+    "ghostty"
+  ],
+  "runtime_gtk_warnings": 0,
+  "continuous_motion": {
+    "underlay_frequency_hz": 20,
+    "new_samples": 11,
+    "mean_pixel_difference": [
+      11.175405405405405,
+      6.73527027027027,
+      5.931351351351351
+    ]
+  },
+  "hardware_mutations_in_live_verification": false,
+  "terminal_material_shared": true,
+  "glass_lifecycle": "realize/unrealize/remap/destroy passed on Wayland",
+  "shell_alpha_fixture": {
+    "active_workspace": true,
+    "toast": true,
+    "notification_center": true,
+    "outer_and_corner_pixels_transparent": true
+  },
+  "sidebar": {
+    "navigation_alignment": "fixed icon column and left aligned labels",
+    "wallpaper_entry": false,
+    "width_logical_px": 200
+  },
+  "transparent_host_focus_fixture": "glass-lifecycle",
+  "menu_geometry": {
+    "fixture": "menu-geometry",
+    "panel_sidebar_content_stable": true,
+    "long_lists_scroll": true,
+    "wayland": "fixed panel, sidebar and content across grid/list/custom on Wayland"
+  },
+  "frontend_switches": [
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    }
+  ],
+  "wallpaper_route": "deck to gallery passed without remapping a closed deck"
+}

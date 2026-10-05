@@ -1,0 +1,9 @@
+window.anto-menu-window, window.wallpaper-window, window.anto-osd { background: transparent; }
+.anto-menu-panel, .wallpaper-panel, .osd-panel {
+  border-radius: {{radius.panel}}px;
+}
+.wallpaper-backdrop { background: transparent; }
+popover > contents {
+  border-radius: {{radius.card}}px;
+  padding: {{spacing.md}}px;
+}

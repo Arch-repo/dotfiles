@@ -1,0 +1,94 @@
+/* Every native surface loads these controls once. Pages own composition only. */
+* { font-family: "Inter", "Noto Sans", "JetBrainsMono Nerd Font", sans-serif; font-size: {{font.body}}px; }
+button { color: @foreground; font-weight: 500; font-size: {{font.body}}px; }
+button:disabled { opacity: 0.45; }
+.round-button { min-width: 30px; min-height: 30px; padding: {{spacing.xs}}px; border-radius: {{radius.pill}}px; border: 0; background: @ui-surface; box-shadow: none; }
+.round-button:hover { background: @ui-surface-hover; }
+.ui-action, .primary-button { font-size: {{font.body}}px; min-height: {{control.action_min_height}}px; padding: {{control.action_padding_y}}px {{control.action_padding_x}}px; border: 1px solid @ui-border; border-radius: {{radius.control}}px; background: @ui-surface; box-shadow: none; }
+.ui-action:hover { background: @ui-surface-hover; }
+.ui-action.primary, .primary-button, button.suggested-action { color: @selected-fg; background: @accent; border-color: transparent; }
+.ui-action:checked { background: @ui-surface-selected; border-color: alpha(@accent, 0.4); }
+button.danger { color: @error; background: alpha(@error, 0.10); }
+.ui-action-label { font-size: {{font.body}}px; }
+.ui-action.ui-navigation { min-height: 22px; padding: 7px 9px; background: transparent; border: 0; }
+.ui-action.ui-navigation:hover { background: @ui-surface-hover; }
+.ui-action.ui-navigation.active { background: @ui-surface-selected; }
+.ui-navigation.active image { color: @accent; }
+.ui-action.ui-status-action { min-height: 16px; padding: 6px 8px; background: transparent; border: 0; }
+.ui-action.ui-status-action:hover { background: @ui-surface; }
+.ui-status-action .ui-action-label { font-size: 10px; color: @ui-secondary; }
+.item-icon { color: @accent; }
+.item-title { color: @foreground; font-size: {{font.body}}px; font-weight: 550; }
+.item-subtitle { font-size: 11px; color: @ui-secondary; }
+.item-badge { color: @ui-tertiary; font-size: 11px; padding: 3px 6px; }
+.ui-heading { font-size: {{font.heading}}px; font-weight: 650; letter-spacing: -0.7px; }
+.ui-summary-title { font-size: 20px; font-weight: 600; }
+.ui-caption { font-size: 11px; color: @ui-tertiary; }
+.ui-field, .ui-switch, .ui-slider, .ui-card, .ui-row, .ui-meter { color: @foreground; }
+.ui-row { padding: {{control.row_padding_y}}px {{control.row_padding_x}}px; border-radius: {{radius.control}}px; background: @ui-surface; }
+.ui-card { padding: {{spacing.lg}}px; border: 1px solid @ui-border; border-radius: {{radius.card}}px; background: @ui-surface; }
+.ui-tile { padding: 13px 15px; }
+.ui-flat { padding: 0; border: 0; background: transparent; }
+.ui-symbol { padding: {{control.symbol_padding}}px; border-radius: {{radius.control}}px; background: alpha(@accent, 0.10); color: @accent; }
+.ui-tile-value { color: @accent; font-size: 11px; }
+.ui-media { border-radius: {{radius.control}}px; background: @ui-surface; }
+.ui-media-caption { padding: 36px {{spacing.lg}}px {{spacing.lg}}px; background: linear-gradient(to bottom, transparent, alpha(shade(@background, 0.4), 0.92)); }
+.ui-empty { border: 1px dashed @ui-border; }
+.ui-status { padding: {{spacing.xs}}px 9px; border-radius: {{radius.pill}}px; background: alpha(@accent, 0.12); color: @accent; font-size: 10px; }
+.ui-status-dot { min-width: {{control.status_dot}}px; min-height: {{control.status_dot}}px; border-radius: 50%; background: @accent; }
+.ui-status-dot.offline { background: @ui-tertiary; }
+.ui-status-label { font-size: 10px; color: @accent; }
+.ui-field-label { font-size: {{font.caption}}px; color: @ui-secondary; font-weight: 500; }
+.ui-form-status { color: @ui-secondary; font-size: {{font.caption}}px; }
+.error { color: @error; }
+.warning { color: @warning; }
+.success { color: @success; }
+.ui-metric { padding: {{spacing.md}}px {{spacing.lg}}px; border-radius: {{radius.control}}px; background: @ui-surface; }
+.ui-metric-value { font-size: 15px; font-weight: 550; color: @foreground; }
+.ui-slider { padding: {{spacing.sm}}px 0; }
+.ui-slider trough { min-height: {{control.meter_height}}px; min-width: 0; margin: 0; padding: 0; background: @ui-border; border-radius: {{control.meter_height}}px; border: 0; }
+.ui-slider highlight { min-height: {{control.meter_height}}px; min-width: 0; margin: 0; padding: 0; background: @accent; border: 0; border-radius: {{control.meter_height}}px; }
+.ui-slider slider { min-width: {{control.thumb_size}}px; min-height: {{control.thumb_size}}px; margin: -6px; background: @foreground; border: 0; border-radius: 50%; box-shadow: 0 2px 5px alpha(black, 0.2); }
+.ui-meter trough { min-height: {{control.meter_height}}px; min-width: 0; border: 0; padding: 0; border-radius: {{control.meter_height}}px; background: @ui-border; }
+.ui-meter progress, .ui-meter block.filled { min-height: {{control.meter_height}}px; margin: 0; border: 0; border-radius: {{control.meter_height}}px; background: @accent; }
+.ui-meter block.empty { min-height: {{control.meter_height}}px; margin: 0; border: 0; background: transparent; }
+.ui-switch { padding: 0; min-height: 23px; min-width: 41px; border-radius: {{radius.pill}}px; background: alpha(@foreground, 0.15); border: 0; box-shadow: none; }
+.ui-switch:checked { background: @accent; }
+.ui-switch slider { min-width: 19px; min-height: 19px; margin: 2px; background: @foreground; border-radius: 50%; border: 0; box-shadow: none; }
+.ui-entry, .ui-search { font-size: {{font.body}}px; border-radius: {{radius.control}}px; border: 1px solid @ui-border; background: @ui-surface; padding: 10px 12px; color: @foreground; box-shadow: none; }
+.ui-search { min-height: {{control.action_min_height}}px; }
+.ui-entry:focus-within, .ui-search:focus-within { border-color: @accent; outline: none; box-shadow: none; }
+.ui-entry text, .ui-search text { background: transparent; color: @foreground; outline: none; }
+.ui-entry selection, .ui-search selection { background: @accent; color: @selected-fg; }
+.ui-entry text > selection, .ui-search text > selection { background: @accent; color: @selected-fg; }
+.ui-search:focus-visible { outline: none; }
+scrollbar { background: transparent; }
+scrollbar slider { min-width: 4px; min-height: 24px; border-radius: 8px; background: alpha(@foreground, 0.18); }
+scrollbar slider:hover { background: alpha(@foreground, 0.3); }
+button.ui-action:focus-visible, button.round-button:focus-visible,
+switch.ui-switch:focus-visible, scale.ui-slider:focus-visible,
+.ui-collection > child:focus-visible { outline: 2px solid alpha(@accent, 0.65); outline-offset: -2px; }
+
+.ui-calendar { background: transparent; color: @foreground; border: 0; padding: 0; box-shadow: none; }
+.ui-calendar > header, .ui-calendar > grid { background: transparent; border: 0; box-shadow: none; }
+.ui-calendar > header { padding: 0 0 {{spacing.sm}}px; }
+.ui-calendar > header label { color: @foreground; font-weight: 600; }
+.ui-calendar > grid > label { padding: 0; margin: 2px; border: 0; box-shadow: none; background: transparent; color: @foreground; outline: none; }
+.ui-calendar > grid > label.day-name { font-size: 11px; color: @ui-secondary; }
+.ui-calendar > grid > label.day-number { min-width: 30px; min-height: 30px; border: 2px solid transparent; border-radius: {{radius.pill}}px; }
+/* GTK uses checked for event marks and selected for the chosen date. */
+.ui-calendar > grid > label.day-number:checked { color: @accent; background: transparent; border-bottom-color: @accent; border-radius: 8px; }
+.ui-calendar > grid > label.day-number.today { color: @accent; font-weight: 650; }
+.ui-calendar > grid > label.day-number:selected { color: @selected-fg; background: @accent; border-radius: {{radius.pill}}px; }
+.ui-calendar > grid > label.day-number:checked:selected { border-bottom-color: @selected-fg; }
+.ui-calendar > grid > label.day-number:focus { outline: 2px solid alpha(@accent, 0.5); outline-offset: 0; }
+.ui-calendar > grid > label.other-month { color: @ui-tertiary; }
+.ui-glyph, .emoji-icon { font-family: "Noto Color Emoji", "Noto Sans", sans-serif; font-size: {{font.glyph}}px; }
+.ui-glyph-tile { min-width: {{control.glyph_min_size}}px; min-height: {{control.glyph_min_size}}px; padding: {{spacing.sm}}px; border-radius: {{radius.control}}px; }
+.section-title { margin: {{spacing.md}}px 0 {{spacing.sm}}px; font-size: {{font.caption}}px; font-weight: 600; color: @ui-secondary; }
+
+.ui-spinner { color: @accent; }
+.ui-collection { background: transparent; }
+.ui-collection > child { padding: {{spacing.xs}}px; border: 2px solid transparent; border-radius: {{radius.card}}px; background: transparent; }
+.ui-collection > child:selected { border-color: alpha(@accent, 0.65); background: @ui-surface-selected; }
+.ui-collection > child:hover { background: @ui-surface-hover; }

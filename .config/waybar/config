@@ -1,49 +1,107 @@
 {
+  "layer": "top",
   "position": "top",
-  "height": 54,
-  "spacing": 4,
+  "mode": "dock",
+  "exclusive": true,
+  "passthrough": false,
+  "height": 46,
+  "margin-top": 7,
+  "margin-left": 10,
+  "margin-right": 10,
+  "spacing": 7,
+  "fixed-center": true,
+  "reload_style_on_change": true,
+  "on-sigusr2": "reload",
+
   "modules-left": [
-    "custom/workspaces",
+    "custom/launcher",
+    "group/workspaces",
     "hyprland/window"
   ],
   "modules-center": [
-    "group/center-group"
+    "group/center-deck"
   ],
   "modules-right": [
-    "custom/screenshot",
-    "custom/background-apps",
-    "custom/sys-status",
+    "group/quick",
+    "group/status",
     "custom/power"
   ],
-  "custom/workspaces": {
-    "exec": "$HOME/.config/anto426/custom_workspaces.sh",
-    "return-type": "json",
-    "interval": 1,
-    "format": "{}",
-    "on-click": "hyprctl dispatch workspace $(hyprctl workspaces -j | jq 'map(.id) | min')",
-    "on-click-right": "hyprctl dispatch workspace $(hyprctl workspaces -j | jq 'map(.id) | max')",
-    "on-scroll-up": "hyprctl dispatch workspace e-1",
-    "on-scroll-down": "hyprctl dispatch workspace e+1"
+
+  "custom/launcher": {
+    "format": "󰣇",
+    "tooltip-format": "Applicazioni",
+    "on-click": "$HOME/.local/bin/anto-menu apps",
+    "on-click-right": "$HOME/.local/bin/anto-menu system"
   },
-  "custom/sys-status": {
-    "exec": "$HOME/.config/anto426/sys_status.sh",
+
+  "group/workspaces": {
+    "orientation": "horizontal",
+    "modules": [
+      "custom/workspace-first",
+      "custom/workspace-current",
+      "custom/workspace-last"
+    ]
+  },
+
+  "custom/workspace-first": {
+    "exec": "$HOME/.local/libexec/anto426/workspace-triad stream first",
     "return-type": "json",
     "format": "{}",
-    "on-click": "$HOME/.config/anto426/control_menu.sh main",
-    "on-click-right": "$HOME/.config/anto426/control_menu.sh notifications",
-    "on-click-middle": "$HOME/.config/anto426/hardware_stats.sh menu"
+    "restart-interval": 1,
+    "hide-empty-text": true,
+    "escape": true,
+    "tooltip": true,
+    "exec-on-event": false,
+    "on-click": "$HOME/.local/libexec/anto426/workspace-triad activate first",
+    "on-scroll-up": "$HOME/.local/libexec/anto426/workspace-triad cycle previous",
+    "on-scroll-down": "$HOME/.local/libexec/anto426/workspace-triad cycle next"
   },
+
+  "custom/workspace-current": {
+    "exec": "$HOME/.local/libexec/anto426/workspace-triad stream current",
+    "return-type": "json",
+    "format": "{}",
+    "restart-interval": 1,
+    "hide-empty-text": true,
+    "escape": true,
+    "tooltip": true,
+    "exec-on-event": false,
+    "on-click": "$HOME/.local/libexec/anto426/workspace-triad activate current",
+    "on-scroll-up": "$HOME/.local/libexec/anto426/workspace-triad cycle previous",
+    "on-scroll-down": "$HOME/.local/libexec/anto426/workspace-triad cycle next"
+  },
+
+  "custom/workspace-last": {
+    "exec": "$HOME/.local/libexec/anto426/workspace-triad stream last",
+    "return-type": "json",
+    "format": "{}",
+    "restart-interval": 1,
+    "hide-empty-text": true,
+    "escape": true,
+    "tooltip": true,
+    "exec-on-event": false,
+    "on-click": "$HOME/.local/libexec/anto426/workspace-triad activate last",
+    "on-scroll-up": "$HOME/.local/libexec/anto426/workspace-triad cycle previous",
+    "on-scroll-down": "$HOME/.local/libexec/anto426/workspace-triad cycle next"
+  },
+
   "hyprland/window": {
     "format": "{}",
-    "max-length": 40,
+    "max-length": 30,
     "separate-outputs": true,
     "rewrite": {
-      "": "Desktop",
+      "": "",
       "Ghostty": "  Ghostty",
       "bash": "  Terminal",
       "zsh": "  Terminal",
       "(.*) — Mozilla Firefox": "󰈹  $1",
+      "(.*) — Zen Browser": "󰈹  $1",
+      "Zen Browser": "󰈹  Zen Browser",
       "(.*) - Google Chrome": "  $1",
+      "(.*) - Antigravity": "󰘦  $1",
+      "Antigravity": "󰘦  Antigravity",
+      "(.*) - Codex": "󰘦  $1",
+      "Codex": "󰘦  Codex",
       "(.*) - Visual Studio Code": "󰨞  $1",
       "(.*) - Code - OSS": "󰨞  $1",
       "Spotify Free": "  Spotify",
@@ -56,171 +114,110 @@
       "nemo": "󰉋  Nemo"
     }
   },
-  "group/center-group": {
+
+  "group/center-deck": {
     "orientation": "horizontal",
     "modules": [
       "custom/media-prev",
-      "mpris",
+      "custom/media",
       "custom/media-next",
-      "custom/clock"
+      "clock"
     ]
   },
+
   "custom/media-prev": {
+    "format": "󰒮",
+    "tooltip-format": "Traccia precedente",
+    "on-click": "playerctl --player=playerctld previous"
+  },
+
+  "custom/media": {
+    "exec": "$HOME/.local/libexec/anto426/media-marquee stream",
+    "return-type": "json",
     "format": "{}",
-    "return-type": "json",
-    "exec": "playerctl status >/dev/null 2>&1 && echo '{\"text\": \"󰒮\", \"tooltip\": \"Traccia precedente\"}' || echo ''",
-    "interval": 2,
-    "on-click": "playerctl previous"
-  },
-  "custom/media-next": {
-    "format": "{}",
-    "return-type": "json",
-    "exec": "playerctl status >/dev/null 2>&1 && echo '{\"text\": \"󰒭\", \"tooltip\": \"Traccia successiva\"}' || echo ''",
-    "interval": 2,
-    "on-click": "playerctl next"
-  },
-  "mpris": {
-    "format": "{player_icon} {title} - {artist}",
-    "format-paused": "{status_icon} <i>{title} - {artist}</i>",
-    "max-length": 35,
-    "player-icons": {
-      "default": " ",
-      "spotify": " ",
-      "firefox": "󰈹 ",
-      "chrome": " ",
-      "mpv": " "
-    },
-    "status-icons": {
-      "paused": " "
-    },
-    "on-click": "playerctl play-pause"
-  },
-  "custom/background-apps": {
-    "exec": "$HOME/.config/anto426/background_apps.sh status",
-    "return-type": "json",
-    "interval": 1,
+    "max-length": 34,
+    "restart-interval": 2,
     "tooltip": true,
-    "on-click": "$HOME/.config/anto426/background_apps.sh menu",
-    "on-click-right": "$HOME/.config/anto426/background_apps.sh menu"
+    "on-click": "playerctl --player=playerctld play-pause",
+    "on-click-right": "bash -lc '$HOME/.config/anto426/media_status.sh menu >/dev/null 2>&1'",
+    "on-scroll-up": "playerctl --player=playerctld next",
+    "on-scroll-down": "playerctl --player=playerctld previous"
   },
-  "custom/power": {
-    "format": "",
-    "tooltip-format": "Spegnimento",
-    "on-click": "$HOME/.config/anto426/control_menu.sh power",
-    "on-click-right": "hyprlock"
+
+  "custom/media-next": {
+    "format": "󰒭",
+    "tooltip-format": "Traccia successiva",
+    "on-click": "playerctl --player=playerctld next"
   },
-  "custom/screenshot": {
-    "exec": "$HOME/.config/anto426/screenshot_menu.sh record-status-json",
+
+  "clock": {
+    "interval": 30,
+    "format": "{:%H:%M}",
+    "format-alt": "{:%a %d %b  ·  %H:%M}",
+    "tooltip-format": "{:%A %d %B %Y}",
+    "on-click": "$HOME/.local/bin/anto-menu calendar"
+  },
+
+  "group/quick": {
+    "orientation": "horizontal",
+    "modules": [
+      "custom/background-apps",
+      "custom/screenshot",
+      "custom/notifications",
+      "custom/control"
+    ]
+  },
+
+  "custom/background-apps": {
+    "exec": "$HOME/.config/anto426/background_status.sh",
     "return-type": "json",
-    "interval": 1,
-    "format": "{}",
-    "tooltip-format": "Cattura\nClick: stop/menu\nTasto destro: screenshot area\nTasto centrale: recorder",
-    "on-click": "$HOME/.config/anto426/screenshot_menu.sh waybar-click",
-    "on-click-right": "$HOME/.config/anto426/screenshot_menu.sh quick-area",
-    "on-click-middle": "$HOME/.config/anto426/screenshot_menu.sh record-menu"
-  },
-  "custom/notifications": {
-    "exec": "bash -lc 'count=$(swaync-client -c 2>/dev/null || echo 0); case \"$count\" in \"\"|*[!0-9]*) count=0 ;; esac; if [ \"$count\" -gt 0 ]; then printf \"󰂚 %s\\n\" \"$count\"; else printf \"󰂜\\n\"; fi'",
     "interval": 5,
-    "tooltip-format": "Notifiche\nClick: menu\nTasto destro: pulisci\nTasto centrale: DND",
-    "on-click": "$HOME/.config/anto426/control_menu.sh notifications",
-    "on-click-right": "swaync-client -C",
-    "on-click-middle": "swaync-client -d"
+    "tooltip": true,
+    "on-click": "$HOME/.local/bin/anto-menu background",
+    "on-click-right": "$HOME/.local/bin/anto-menu background"
   },
+
+  "custom/screenshot": {
+    "exec": "$HOME/.local/libexec/anto-menu/anto-menu-backend record waybar-json",
+    "return-type": "json",
+    "interval": 2,
+    "format": "{}",
+    "tooltip": true,
+    "on-click": "$HOME/.local/bin/anto-menu capture",
+    "on-click-right": "$HOME/.local/bin/anto-menu capture-area-now",
+    "on-click-middle": "$HOME/.local/bin/anto-menu record"
+  },
+
+  "custom/notifications": {
+    "exec-if": "command -v swaync-client",
+    "exec": "swaync-client -swb",
+    "return-type": "json",
+    "format": "{icon}",
+    "format-icons": {
+      "notification": "󰂚",
+      "none": "󰂜",
+      "dnd-notification": "󰂛",
+      "dnd-none": "󰪓",
+      "inhibited-notification": "󰂛",
+      "inhibited-none": "󰪑",
+      "dnd-inhibited-notification": "󰂛",
+      "dnd-inhibited-none": "󰪑"
+    },
+    "restart-interval": 5,
+    "tooltip": true,
+    "escape": true,
+    "on-click": "swaync-client -t -sw",
+    "on-click-right": "swaync-client -d -sw",
+    "on-click-middle": "$HOME/.local/bin/anto-menu notifications"
+  },
+
   "custom/control": {
     "format": "󰒓",
     "tooltip-format": "Controlli rapidi",
-    "on-click": "$HOME/.config/anto426/control_menu.sh main"
+    "on-click": "$HOME/.local/bin/anto-menu system",
+    "on-click-right": "$HOME/.local/bin/anto-menu hardware"
   },
-  "custom/hardware": {
-    "exec": "$HOME/.config/anto426/hardware_stats.sh",
-    "return-type": "json",
-    "interval": 2,
-    "tooltip": true,
-    "on-click": "$HOME/.config/anto426/hardware_stats.sh menu",
-    "on-click-right": "$HOME/.config/anto426/hardware_stats.sh btop",
-    "on-click-middle": "$HOME/.config/anto426/hardware_stats.sh sensors"
-  },
-  "hyprland/workspaces": {
-    "disable-scroll": true,
-    "all-outputs": true,
-    "warp-on-scroll": false,
-    "format": "{name}",
-    "cursor": true
-  },
-  "network": {
-    "format-wifi": "󰤨",
-    "format-ethernet": "󰈀",
-    "format-linked": "󰖪",
-    "format-disconnected": "󰤭",
-    "tooltip-format-wifi": "{essid}\n{ifname} • {signalStrength}%",
-    "tooltip-format-ethernet": "Ethernet\n{ifname}",
-    "tooltip-format-disconnected": "Rete disconnessa",
-    "on-click": "$HOME/.config/anto426/control_menu.sh wifi",
-    "on-click-right": "bash -lc 'nmcli radio wifi | grep -q enabled && nmcli radio wifi off || nmcli radio wifi on'"
-  },
-  "bluetooth": {
-    "format": "󰂯",
-    "format-disabled": "󰂲",
-    "format-off": "󰂲",
-    "format-connected": "󰂱",
-    "format-connected-battery": "󰂱",
-    "tooltip-format": "{controller_alias}\n{status}",
-    "tooltip-format-connected": "{controller_alias}\n{device_alias}",
-    "tooltip-format-connected-battery": "{controller_alias}\n{device_alias} • {device_battery_percentage}%",
-    "on-click": "$HOME/.config/anto426/control_menu.sh bluetooth",
-    "on-click-right": "bash -lc 'bluetoothctl show | grep -q \"Powered: yes\" && bluetoothctl power off || bluetoothctl power on'"
-  },
-  "battery": {
-    "states": {
-      "good": 85,
-      "warning": 30,
-      "critical": 15
-    },
-    "format": "{icon} {capacity}%",
-    "format-full": "{icon} {capacity}%",
-    "format-plugged": " {capacity}%",
-    "format-charging": " {capacity}%",
-    "format-alt": "{icon} {capacity}%",
-    "format-icons": [
-      " ",
-      " ",
-      " ",
-      " ",
-      " "
-    ],
-    "tooltip-format": "{time}",
-    "on-click": "$HOME/.config/anto426/control_menu.sh battery"
-  },
-  "custom/keyboard": {
-    "exec": "$HOME/.config/anto426/keyboard_status.sh",
-    "return-type": "json",
-    "interval": 1,
-    "tooltip": true,
-    "on-click": "$HOME/.config/anto426/control_menu.sh keyboard",
-    "on-click-right": "hyprctl switchxkblayout all next",
-    "on-scroll-up": "hyprctl switchxkblayout all next",
-    "on-scroll-down": "hyprctl switchxkblayout all prev"
-  },
-  "pulseaudio": {
-    "format": "{icon} {volume}%",
-    "format-muted": "  {volume}%",
-    "format-bluetooth": " {volume}%",
-    "format-bluetooth-muted": "  {volume}%",
-    "format-icons": {
-      "headphone": " ",
-      "headset": " ",
-      "default": [
-        " "
-      ]
-    },
-    "on-click": "$HOME/.config/anto426/control_menu.sh audio"
-  },
-  "custom/clock": {
-    "exec": "$HOME/.config/anto426/custom_clock.sh",
-    "tooltip": false,
-    "on-click": "$HOME/.config/anto426/control_menu.sh calendar"
-  },
+
   "group/status": {
     "orientation": "horizontal",
     "modules": [
@@ -230,13 +227,66 @@
       "battery"
     ]
   },
-  "group/tools": {
-    "orientation": "horizontal",
-    "modules": [
-      "custom/keyboard",
-      "custom/notifications",
-      "custom/screenshot",
-      "custom/control"
-    ]
+
+  "network": {
+    "format-wifi": "󰤨",
+    "format-ethernet": "󰈀",
+    "format-linked": "󰖪",
+    "format-disconnected": "󰤭",
+    "tooltip-format-wifi": "{essid}\n{ifname} · {signalStrength}%",
+    "tooltip-format-ethernet": "Ethernet\n{ifname}",
+    "tooltip-format-disconnected": "Rete disconnessa",
+    "on-click": "$HOME/.local/bin/anto-menu wifi",
+    "on-click-right": "$HOME/.local/bin/anto-menu wifi"
+  },
+
+  "bluetooth": {
+    "format": "󰂯",
+    "format-disabled": "󰂲",
+    "format-off": "󰂲",
+    "format-connected": "󰂱",
+    "format-connected-battery": "󰂱",
+    "tooltip-format": "{controller_alias}\n{status}",
+    "tooltip-format-connected": "{controller_alias}\n{device_alias}",
+    "tooltip-format-connected-battery": "{controller_alias}\n{device_alias} · {device_battery_percentage}%",
+    "on-click": "$HOME/.local/bin/anto-menu bluetooth",
+    "on-click-right": "$HOME/.local/bin/anto-menu bluetooth"
+  },
+
+  "pulseaudio": {
+    "format": "{icon} {volume}%",
+    "format-muted": "󰝟 {volume}%",
+    "format-bluetooth": "󰂰 {volume}%",
+    "format-bluetooth-muted": "󰝟 {volume}%",
+    "format-icons": {
+      "headphone": "󰋋",
+      "headset": "󰋎",
+      "default": ["󰕿", "󰖀", "󰕾"]
+    },
+    "tooltip-format": "Volume · {volume}%",
+    "on-click": "$HOME/.local/bin/anto-menu audio"
+  },
+
+  "battery": {
+    "states": {
+      "good": 85,
+      "warning": 30,
+      "critical": 15
+    },
+    "format": "<span font_family=\"JetBrainsMono Nerd Font\" size=\"large\">{icon}</span> {capacity}%",
+    "format-full": "<span font_family=\"JetBrainsMono Nerd Font\" size=\"large\">{icon}</span> {capacity}%",
+    "format-plugged": "<span font_family=\"JetBrainsMono Nerd Font\" size=\"large\">󰂄</span> {capacity}%",
+    "format-charging": "<span font_family=\"JetBrainsMono Nerd Font\" size=\"large\">󰂄</span> {capacity}%",
+    "format-alt": "<span font_family=\"JetBrainsMono Nerd Font\" size=\"large\">{icon}</span> {time}",
+    "format-icons": ["󰁺", "󰁻", "󰁼", "󰁽", "󰁾", "󰁿", "󰂀", "󰂁", "󰂂", "󰁹"],
+    "tooltip-format": "Batteria · {capacity}%\n{time}",
+    "on-click": "$HOME/.local/bin/anto-menu brightness"
+  },
+
+  "custom/power": {
+    "format": "",
+    "tooltip-format": "Sessione e alimentazione",
+    "on-click": "$HOME/.local/bin/anto-menu power",
+    "on-click-right": "hyprlock"
   }
 }

@@ -1,0 +1,142 @@
+diff --git a/src/GlassLayerSurface.cpp b/src/GlassLayerSurface.cpp
+index 73bc9aa..9850af6 100644
+--- a/src/GlassLayerSurface.cpp
++++ b/src/GlassLayerSurface.cpp
+@@ -4,6 +4,7 @@
+ #include "GlassRenderer.hpp"
+ #include "Globals.hpp"
+ #include "LayerGeometry.hpp"
++#include "ItemHints.hpp"
+ #include "WorkspaceAnimation.hpp"
+ 
+ #include <algorithm>
+@@ -440,7 +441,7 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha, EM
+     const std::string preset   = resolvePresetName();
+     const SResolveContext ctx  = {preset, isDark, g_pGlobalState->config, g_pGlobalState->customPresets};
+ 
+-    float cornerRadius  = 0.0f;
++    std::array<float, 4> radii{};
+     float roundingPower = 2.0f;
+ 
+     // Use the temp FBO's rendered alpha as a mask: glass only where the surface
+@@ -512,6 +513,22 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha, EM
+                 maskInfo.sampleUVScale  = Vector2D(sampleBox.w / transformBox.w,
+                                                     sampleBox.h / transformBox.h);
+             }
++            // Native layer clients describe the visible pane inside a larger
++            // input surface. Shape refraction to that pane, not the monitor.
++            const auto surface = layerSurface->wlSurface();
++            const auto resource = surface ? surface->resource() : nullptr;
++            const auto hints = resource ? ItemHints::forSurface(resource.get()) : std::nullopt;
++            if (hints && hints->shapeMode == eItemShapeMode::EXPLICIT && hints->width > 0 && hints->height > 0) {
++                const float scale = static_cast<float>(monitor->m_scale);
++                CBox shape{rawBox.x + hints->x * scale, rawBox.y + hints->y * scale,
++                           hints->width * scale, hints->height * scale};
++                shape = transformedLayerBox(shape, monitor);
++                maskInfo.glassBoxOffsetPx = Vector2D(shape.x - transformBox.x, shape.y - transformBox.y);
++                maskInfo.glassBoxSizePx = Vector2D(shape.w, shape.h);
++                const float maximum = static_cast<float>(std::min(shape.w, shape.h)) * .5f;
++                for (size_t i = 0; i < radii.size(); ++i)
++                    radii[i] = std::clamp(static_cast<float>(hints->radii[i]) * scale, 0.0f, maximum);
++            }
+             break;
+         }
+         case EMaskSource::NONE:
+@@ -523,7 +540,7 @@ void CGlassLayerSurface::compositeAndRestore(PHLMONITOR monitor, float alpha, EM
+     // in a single pass: glass behind, surface on top, using the temp FBO alpha.
+     GlassRenderer::applyGlassEffect(m_sampleFramebuffer, target,
+                                      rawBox, transformBox, alpha,
+-                                     std::array<float, 4>{cornerRadius, cornerRadius, cornerRadius, cornerRadius},
++                                     radii,
+                                      roundingPower, m_samplePaddingRatio, ctx,
+                                      &maskInfo);
+ }
+diff --git a/src/GlassRenderer.cpp b/src/GlassRenderer.cpp
+index 134244f..655321a 100644
+--- a/src/GlassRenderer.cpp
++++ b/src/GlassRenderer.cpp
+@@ -457,7 +457,8 @@ void applyGlassEffect(SP<Render::IFramebuffer> sampleFramebuffer, SP<Render::IFr
+     const float safeRoundingPower = std::max(roundingPower, 1.0f);
+ 
+     // Reciprocals computed once per draw instead of once per pixel in the shader.
+-    const float minDimensionPx = static_cast<float>(std::min(fullSize.x, fullSize.y));
++    const Vector2D opticalSize = mask && mask->glassBoxSizePx.x > 0 && mask->glassBoxSizePx.y > 0 ? mask->glassBoxSizePx : fullSize;
++    const float minDimensionPx = static_cast<float>(std::min(opticalSize.x, opticalSize.y));
+     glUniform2f(uniforms.invFullSize,
+         1.0f / static_cast<float>(fullSize.x), 1.0f / static_cast<float>(fullSize.y));
+     glUniform1f(uniforms.invRoundingPower, 1.0f / safeRoundingPower);
+diff --git a/src/Shaders.hpp b/src/Shaders.hpp
+index 1f6a46e..d872bfc 100644
+--- a/src/Shaders.hpp
++++ b/src/Shaders.hpp
+@@ -235,6 +235,28 @@ vec2 sdfOutwardNormal(vec2 uv) {
+     return len > 0.0 ? grad / len : vec2(0.0, -1.0);
+ }
+ 
++// External shell clients have multiple independent panes in one surface.
++// Follow their GPU alpha silhouette rather than refracting the enclosing
++// rectangular layer. Eight fixed samples bound cost; no CPU readback.
++float layerCoverage(vec2 uv) {
++    if (any(lessThan(uv, vec2(0.0))) || any(greaterThan(uv, vec2(1.0)))) return 0.0;
++    vec2 coord = uv * maskUVScale + maskUVOffset;
++    return step(maskAlphaThreshold, texture(maskTex, coord).a);
++}
++vec3 layerEdgeField(vec2 uv, float widthPx) {
++    const vec2 directions[8] = vec2[8](vec2(1,0),vec2(-1,0),vec2(0,1),vec2(0,-1),
++        vec2(.707,.707),vec2(-.707,.707),vec2(.707,-.707),vec2(-.707,-.707));
++    vec2 inward = vec2(0.0);
++    float missing = 0.0;
++    for (int i=0; i<8; ++i) {
++        float outside = 1.0 - layerCoverage(uv + directions[i] * widthPx * invFullSize);
++        inward -= directions[i] * outside;
++        missing += outside;
++    }
++    float magnitude = length(inward);
++    return vec3(magnitude > .001 ? inward / magnitude : vec2(0.0), clamp(missing / 4.0, 0.0, 1.0));
++}
++
+ // ============================================================================
+ // MAIN — Thick-glass refraction model
+ // ============================================================================
+@@ -292,7 +314,7 @@ void main() {
+         if (cornerAlpha < 0.001) discard;
+     }
+ 
+-    float minDim = min(fullSize.x, fullSize.y);
++    float minDim = min(glassBoxSizePx.x, glassBoxSizePx.y);
+     float bezelWidthPx = edgeThickness * minDim;
+ 
+     // ========================================
+@@ -309,6 +331,14 @@ void main() {
+     float bevelSdf = roundingPower == 2.0 ? getBevelSDF(uv) : cornerSdf;
+     float edgeProximity = min(exp(bevelSdf * invBezelWidthPx), 1.0);
+     vec2 inwardDir = refractionDir(uv);
++    bool alphaPane = hasMask && maskMode == 0;
++    if (alphaPane) {
++        float edgeWidth = clamp(bezelWidthPx, 6.0 * monitorScale, 16.0 * monitorScale);
++        vec3 field = layerEdgeField(uv, edgeWidth);
++        inwardDir = field.xy;
++        edgeProximity = field.z;
++        bevelSdf = -edgeWidth * (1.0 - field.z);
++    }
+     vec2 posPx = (uv - 0.5) * fullSize; // pixel-space position for the edge-flow direction below
+ 
+     // ========================================
+@@ -328,7 +358,7 @@ void main() {
+     }
+     float refractionMag = lensFalloff * refractionPx;
+     vec2 dir = inwardDir;
+-    if (refractionFlow > 0.001) {
++    if (refractionFlow > 0.001 && !alphaPane) {
+         // pull along the edges instead of toward the centre
+         vec2 mixedDir = mix(inwardDir, edgeDir(posPx), refractionFlow);
+         float mixedLen = length(mixedDir);
+@@ -350,7 +380,7 @@ void main() {
+     // Fades near edges so it doesn't interfere with edge refraction.
+     // ========================================
+     vec2 domeUV = vec2(0.0);
+-    if (lensDistortion > 0.001) {
++    if (lensDistortion > 0.001 && !alphaPane) {
+         vec2 c = (uv - 0.5) * 2.0;
+         vec2 dGrad = vec2(
+             -4.0 * c.x * (1.0 - c.y * c.y),

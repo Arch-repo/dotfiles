@@ -1,0 +1,92 @@
+{
+  "exit_code": 0,
+  "desktop_state_unchanged": true,
+  "stderr": "",
+  "installed_files": [
+    {
+      "path": "/usr/share/grub/themes/anto426/theme.txt",
+      "bytes": 1171,
+      "sha256": "f90f44b2ab11c37a8fea8bf9afebfa37a475745defe01dfbe1e9d848694e2b9c"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/background.jpg",
+      "bytes": 174290,
+      "sha256": "a30d3e1dad1dd6746e26da056a145876a183f65dd101fcda6ccebe7f001cf0e3"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_c.png",
+      "bytes": 301,
+      "sha256": "9851f74f235c288134d1951385dc902337e3a0beb23bd5c65d9d0ba8e1d3e806"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_e.png",
+      "bytes": 312,
+      "sha256": "855c73cbb17bf0aea809bb2bbbd2a114b5cc75a7a0f1166f658bcbc9c460a62b"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_n.png",
+      "bytes": 319,
+      "sha256": "fe99edb7009d1eb7b5302ed4be373297a143b3d5f27aa0db6ee0d78b92f7a998"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_ne.png",
+      "bytes": 547,
+      "sha256": "9463735b0bc433e516e0d22bec1bddb2a3cac905ead4a30633ae9e2f57f1cddd"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_nw.png",
+      "bytes": 490,
+      "sha256": "16650921cf2fd5bb10c4819332afaedf841a39b6fdc2c8966b3b5603e48b3420"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_s.png",
+      "bytes": 317,
+      "sha256": "e2036d8e0b534548dcb2d13c8db8d9da7cab3998f4379d45a45f1762b8330451"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_se.png",
+      "bytes": 505,
+      "sha256": "be58195b81ea74b5c355f10de52791bcd39cc294657c86bc0ef3eef6cd2d95d4"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_sw.png",
+      "bytes": 518,
+      "sha256": "57063965018523d44ad728356e046efa7e6e02c1d105a290375aa661f709b34f"
+    },
+    {
+      "path": "/usr/share/grub/themes/anto426/select_w.png",
+      "bytes": 313,
+      "sha256": "e26e3e603cbd012be6ef0e1e3e4e49fd1d826096ba8d2d7279e7edebb1cf4b45"
+    },
+    {
+      "path": "/usr/share/sddm/themes/anto426-sddm/Main.qml",
+      "bytes": 4325,
+      "sha256": "ca429ce02718bec14c9af2d967022a0f69b6fb43bf76eadbce2356f822f7d9cc"
+    },
+    {
+      "path": "/usr/share/sddm/themes/anto426-sddm/Tokens.qml",
+      "bytes": 2435,
+      "sha256": "37eada137ba39c05386bfebb164c721624b24bf1dcdafe6a2b11529d8d4bee8a"
+    },
+    {
+      "path": "/usr/share/sddm/themes/anto426-sddm/theme.conf",
+      "bytes": 7354,
+      "sha256": "f8d032309e77da0cb151741912380357bedde25fffb370abc37b5ea2c3221797"
+    },
+    {
+      "path": "/usr/share/sddm/themes/anto426-sddm/Backgrounds/anto426-current.png",
+      "bytes": 3555370,
+      "sha256": "2507368b2d18f1dd96df67aec078755fb4fac2b01cdb19739732ba8edb21ddf4"
+    }
+  ],
+  "verified_at": "2026-10-05T09:04:44.121911+02:00",
+  "automatic_updates_enabled": true,
+  "active_grub_theme": "/usr/share/grub/themes/anto426/theme.txt",
+  "image_formats": {
+    "grub": "JPEG 2560x1600 sRGB",
+    "login": "PNG 2560x1600 sRGB"
+  },
+  "boot_screen_visually_verified": false,
+  "nine_slice_assets_verified": true,
+  "canonical_layout": true
+}

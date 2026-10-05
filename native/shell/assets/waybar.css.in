@@ -1,0 +1,415 @@
+
+/* Shared glass material; semantic colour comes from the runtime palette. */
+* {
+    min-height: 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    color: @foreground;
+    font-family: "Inter", "Noto Sans", "JetBrainsMono Nerd Font", sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    transition: color 160ms ease,
+                background-color 160ms ease,
+                border-color 160ms ease,
+                opacity 160ms ease,
+                box-shadow 180ms ease;
+}
+
+button {
+    border-radius: {{radius.pill}}px;
+}
+
+tooltip {
+    padding: 9px 13px;
+    color: @foreground;
+    border-radius: {{radius.card}}px;
+}
+
+tooltip label {
+    color: @foreground;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+window#waybar {
+    color: @foreground;
+    background: transparent;
+}
+
+window#waybar.hidden {
+    opacity: 0.22;
+}
+
+/* Each capsule is a separate alpha silhouette for compositor refraction. */
+#custom-launcher,
+#workspaces,
+#window,
+#center-deck,
+#quick,
+#status,
+#custom-power {
+    min-height: 36px;
+    margin: 0;
+    color: @foreground;
+    border-radius: {{radius.pill}}px;
+}
+
+#custom-launcher {
+    min-width: 38px;
+    padding: 0 1px;
+    color: @accent;
+    border-radius: {{radius.pill}}px;
+    font-size: 16px;
+    text-shadow: none;
+}
+
+#custom-launcher:hover {
+    color: @selected-fg;
+    background: linear-gradient(135deg, alpha(@accent, 0.40), alpha(@purple, 0.30)), @ui-panel;
+    border-color: alpha(@accent, 0.65);
+    box-shadow: inset 0 1px alpha(@foreground, 0.14);
+    text-shadow: none;
+}
+
+/* Output-aware workspace triad. The C listener exposes at most three unique
+ * existing workspaces for this bar's monitor: first, current and last. */
+#workspaces {
+    padding: 3px 5px;
+    border-radius: {{radius.pill}}px;
+}
+
+#custom-workspace-first,
+#custom-workspace-current,
+#custom-workspace-last {
+    min-width: 28px;
+    min-height: 28px;
+    margin: 0 1px;
+    padding: 0 5px;
+    color: alpha(@foreground, 0.52);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: {{radius.pill}}px;
+    box-shadow: none;
+    font-size: {{font.caption}}px;
+    font-weight: 700;
+}
+
+#custom-workspace-first.hidden,
+#custom-workspace-current.hidden,
+#custom-workspace-last.hidden {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    color: transparent;
+    background: transparent;
+    border-width: 0;
+    font-size: 0;
+    opacity: 0;
+}
+
+#custom-workspace-first:hover,
+#custom-workspace-current:hover,
+#custom-workspace-last:hover {
+    color: @foreground;
+    background: @ui-surface-hover;
+    border-color: @ui-border;
+}
+
+#custom-workspace-first.active,
+#custom-workspace-current.active,
+#custom-workspace-last.active {
+    min-width: 36px;
+    color: @selected-fg;
+    background: @accent;
+    border-color: transparent;
+    font-weight: 600;
+    box-shadow: inset 0 1px alpha(@foreground, 0.14);
+}
+
+#window {
+    padding: 0 14px;
+    color: alpha(@foreground, 0.88);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+#window:hover {
+    color: @foreground;
+    border-color: @ui-border-glass;
+    background: linear-gradient(135deg, alpha(@foreground, 0.10), alpha(@foreground, 0.03)), @ui-panel;
+}
+
+/* Hyprland applies empty to the bar window, not to the title module. */
+window#waybar.empty #window {
+    min-width: 0;
+    min-height: 0;
+    margin: 0;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    color: transparent;
+    opacity: 0;
+}
+
+/* Media and clock form one central information deck, without a fixed width. */
+#center-deck {
+    padding: 3px 6px;
+    border-radius: {{radius.pill}}px;
+}
+
+#center-deck #custom-media-prev,
+#center-deck #custom-media,
+#center-deck #custom-media-next,
+#center-deck #clock {
+    min-height: 28px;
+    margin: 0 1px;
+    padding: 0 8px;
+    color: alpha(@foreground, 0.82);
+    background: transparent;
+    border-radius: {{radius.pill}}px;
+}
+
+#center-deck #custom-media-prev,
+#center-deck #custom-media-next {
+    min-width: 28px;
+    padding: 0 4px;
+    font-size: 14px;
+}
+
+#center-deck #custom-media-next {
+    margin-right: 4px;
+    padding-right: 6px;
+    border-right: 1px solid @ui-border;
+}
+
+#center-deck #custom-media-next:hover {
+    border-right-color: transparent;
+}
+
+#center-deck #custom-media {
+    min-width: 140px;
+    font-size: {{font.caption}}px;
+    font-weight: 700;
+}
+
+#center-deck #custom-media.playing {
+    color: @accent;
+    text-shadow: none;
+}
+
+#center-deck #custom-media.paused {
+    color: @muted;
+}
+
+#center-deck #custom-media.idle {
+    color: alpha(@foreground, 0.52);
+}
+
+#center-deck #clock {
+    min-width: 58px;
+    padding: 0 10px;
+    color: @foreground;
+    border: none;
+    border-radius: {{radius.pill}}px;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+#center-deck #custom-media-prev:hover,
+#center-deck #custom-media:hover,
+#center-deck #custom-media-next:hover,
+#center-deck #clock:hover {
+    color: @accent;
+    background: @ui-surface-hover;
+}
+
+/* Quick actions are compact; state is communicated by chroma, not extra text. */
+#quick {
+    padding: 3px 5px;
+    border-radius: {{radius.pill}}px;
+}
+
+#quick #custom-background-apps,
+#quick #custom-screenshot,
+#quick #custom-notifications,
+#quick #custom-control {
+    min-width: 28px;
+    min-height: 28px;
+    margin: 0 1px;
+    padding: 0 6px;
+    color: alpha(@foreground, 0.70);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: {{radius.pill}}px;
+}
+
+#quick #custom-background-apps:hover,
+#quick #custom-screenshot:hover,
+#quick #custom-notifications:hover,
+#quick #custom-control:hover {
+    color: @accent;
+    background: @ui-surface-hover;
+    border-color: @ui-border;
+}
+
+#quick #custom-background-apps.active {
+    color: @accent;
+    text-shadow: none;
+}
+
+#quick #custom-background-apps.empty {
+    color: alpha(@foreground, 0.38);
+}
+
+#quick #custom-screenshot.recording {
+    color: @red;
+    text-shadow: none;
+    animation: recording-beacon 1.1s ease-in-out infinite;
+}
+
+#quick #custom-notifications:hover {
+    color: @accent;
+}
+
+#quick #custom-notifications.notification,
+#quick #custom-notifications.inhibited-notification {
+    color: @accent;
+    text-shadow: none;
+}
+
+#quick #custom-notifications.dnd-notification,
+#quick #custom-notifications.dnd-inhibited-notification {
+    color: @yellow;
+    text-shadow: none;
+}
+
+#quick #custom-notifications.dnd-none,
+#quick #custom-notifications.inhibited-none,
+#quick #custom-notifications.dnd-inhibited-none {
+    color: alpha(@muted, 0.62);
+}
+
+#quick #custom-control:hover {
+    color: @yellow;
+    border-color: alpha(@yellow, 0.30);
+}
+
+/* Connectivity is one calm capsule; only meaningful states receive emphasis. */
+#status {
+    padding: 3px 5px;
+    border-radius: {{radius.pill}}px;
+}
+
+#status #network,
+#status #bluetooth,
+#status #pulseaudio,
+#status #battery {
+    min-height: 28px;
+    margin: 0 1px;
+    padding: 0 7px;
+    color: alpha(@foreground, 0.76);
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: {{radius.pill}}px;
+}
+
+#status #network,
+#status #bluetooth {
+    min-width: 28px;
+    padding-left: 5px;
+    padding-right: 5px;
+}
+
+#status #pulseaudio {
+    min-width: 58px;
+}
+
+#status #battery {
+    min-width: 53px;
+}
+
+#status #network:hover,
+#status #bluetooth:hover,
+#status #pulseaudio:hover,
+#status #battery:hover {
+    color: @accent;
+    background: @ui-surface-hover;
+    border-color: @ui-border;
+}
+
+#status #network.wifi,
+#status #network.ethernet,
+#status #bluetooth.connected {
+    color: @accent;
+}
+
+#status #network.disconnected,
+#status #network.disabled,
+#status #bluetooth.disabled,
+#status #bluetooth.off,
+#status #pulseaudio.muted {
+    color: alpha(@foreground, 0.40);
+}
+
+#status #battery.charging,
+#status #battery.plugged,
+#status #battery.full {
+    color: @green;
+    text-shadow: none;
+}
+
+#status #battery.warning {
+    color: @yellow;
+    text-shadow: none;
+}
+
+#status #battery.critical {
+    color: @red;
+    text-shadow: none;
+    animation: critical-beacon 1.35s ease-in-out infinite;
+}
+
+#custom-power {
+    min-width: 38px;
+    padding: 0 1px;
+    color: alpha(@red, 0.84);
+    border-radius: {{radius.pill}}px;
+    font-size: 14px;
+}
+
+#custom-power:hover {
+    color: @selected-fg;
+    background: linear-gradient(135deg, alpha(@red, 0.70), alpha(@red, 0.45)), @ui-panel;
+    border-color: @red;
+    box-shadow: inset 0 1px alpha(@foreground, 0.14);
+}
+
+@keyframes island-enter {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes urgent-beacon {
+    0% { color: @red; }
+    50% { color: @foreground; }
+    100% { color: @red; }
+}
+
+@keyframes recording-beacon {
+    0% { color: @red; }
+    50% { color: @foreground; }
+    100% { color: @red; }
+}
+
+@keyframes critical-beacon {
+    0% { opacity: 0.72; }
+    50% { opacity: 1; }
+    100% { opacity: 0.72; }
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Anto Desktop Notification history
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=%h/.config/anto426/notification_log.sh
+Restart=on-failure
+RestartSec=3
+Environment=GDK_BACKEND=wayland

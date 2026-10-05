@@ -1,0 +1,8 @@
+.menu-list > row { padding: 0; background: transparent; border-radius: {{radius.control}}px; }
+.menu-list > row.setting-item { margin-bottom: 2px; background: @ui-surface; }
+.menu-list > row.activatable:hover { background: @ui-surface-hover; }
+.menu-list > row.activatable:selected { background: @ui-surface-selected; }
+.chevron { color: @ui-tertiary; }
+flowboxchild.menu-tile { padding: 0; background: transparent; border: 0; border-radius: {{radius.card}}px; }
+flowboxchild.menu-tile:hover .ui-card { background: @ui-surface-hover; }
+flowboxchild.menu-tile:selected .ui-card { background: @ui-surface-selected; border-color: alpha(@accent, 0.4); }

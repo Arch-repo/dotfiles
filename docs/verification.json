@@ -1,0 +1,104 @@
+{
+  "versions": {
+    "gtk4": "4.22.5",
+    "gtk4-layer-shell-0": "1.3.0",
+    "gio-2.0": "2.88.3",
+    "json-c": "0.19",
+    "wayland-client": "1.26.0",
+    "hyprland": "0.56.2"
+  },
+  "dependencies": {
+    "desktop": {
+      "hyprctl": true,
+      "waybar": true,
+      "swaync-client": true,
+      "ghostty": true,
+      "notify-send": true,
+      "timeout": true
+    },
+    "wallpaper": {
+      "awww": true,
+      "awww-daemon": true,
+      "mpvpaper": true,
+      "ffmpeg": true,
+      "magick": true,
+      "jq": true
+    },
+    "network": {
+      "nmcli": true,
+      "bluetoothctl": true,
+      "pactl": true,
+      "wpctl": true
+    },
+    "capture": {
+      "grim": true,
+      "slurp": true,
+      "wl-copy": true,
+      "tesseract": true,
+      "wf-recorder": true
+    },
+    "clipboard": {
+      "wl-paste": true,
+      "cliphist": true
+    },
+    "media": {
+      "playerctl": true,
+      "brightnessctl": true
+    },
+    "calendar": {
+      "curl": true,
+      "dbus-monitor": true
+    },
+    "widgets": {
+      "cava": true
+    },
+    "authentication": {
+      "sddm-greeter-qt6": true,
+      "hyprlock": true,
+      "fprintd-list": true
+    },
+    "ocr-models": {
+      "ita": true,
+      "eng": true
+    },
+    "emoji-data": {
+      "native-unicode-catalog": true
+    },
+    "fonts": {
+      "noto-color-emoji": true
+    }
+  },
+  "installed_matches_build": {
+    "anto-menu": true,
+    "anto-wallpaper": true,
+    "anto-osd": true,
+    "anto-menu-backend": true,
+    "anto-wallpaper-core": true,
+    "anto-widgets": true,
+    "anto-calendar": true
+  },
+  "installed_styles_match_build": {
+    "design.css": true,
+    "glass.css": true,
+    "hyprlock-defaults.conf": true,
+    "hyprlock.conf": true,
+    "menu.css": true,
+    "osd.css": true,
+    "primitives.css": true,
+    "swaync.css": true,
+    "terminal-hypr.conf": true,
+    "terminal.conf": true,
+    "wallpaper.css": true,
+    "waybar.css": true,
+    "widgets.css": true
+  },
+  "terminal_material_shared": true,
+  "glass": {
+    "binary_verified": true,
+    "source_pinned": true,
+    "patch_verified": true,
+    "compositor_matches_build": true,
+    "loaded": true
+  },
+  "hyprland_config_valid": true
+}

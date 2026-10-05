@@ -1,0 +1,11 @@
+{
+  "verified_at": "2026-10-05T09:08:45.923388+02:00",
+  "passed": true,
+  "session": "nested-wayland",
+  "sddm_qt6_test_mode": true,
+  "hyprlock_pam_enabled": true,
+  "fingerprint_parallel_enabled": true,
+  "fingerprint_device_ready": true,
+  "real_authentication_tested": false,
+  "real_boot_tested": false
+}

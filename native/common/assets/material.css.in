@@ -1,0 +1,9 @@
+/* One optical material for native panels and external shell surfaces.
+ * Shape and layout belong to the individual surface; colour stays live. */
+.ui-glass {
+  background: linear-gradient(135deg, @ui-glass-highlight, @ui-glass-tint), @ui-panel;
+  border: 1px solid @ui-border-glass;
+  /* Outer shadows enter alpha-mask layers as extra glass geometry. Keep the
+   * highlight inside the pane so its silhouette stays exactly rounded. */
+  box-shadow: inset 0 1px alpha(@foreground, 0.14);
+}

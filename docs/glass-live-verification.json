@@ -1,0 +1,220 @@
+{
+  "session": "nested-wayland",
+  "surfaces": {
+    "anto426-menu": {
+      "pixel_colours": [
+        [
+          98,
+          59,
+          66
+        ],
+        [
+          74,
+          63,
+          89
+        ],
+        [
+          77,
+          80,
+          70
+        ]
+      ],
+      "glass_draws": 44,
+      "new_samples": 2
+    },
+    "waybar": {
+      "pixel_colours": [
+        [
+          125,
+          44,
+          53
+        ],
+        [
+          57,
+          54,
+          115
+        ],
+        [
+          60,
+          75,
+          54
+        ]
+      ],
+      "glass_draws": 7,
+      "new_samples": 4
+    },
+    "swaync-notification-window": {
+      "pixel_colours": [
+        [
+          128,
+          49,
+          58
+        ],
+        [
+          62,
+          59,
+          118
+        ],
+        [
+          64,
+          79,
+          59
+        ]
+      ],
+      "glass_draws": 15,
+      "new_samples": 3
+    },
+    "swaync-control-center": {
+      "pixel_colours": [
+        [
+          118,
+          52,
+          61
+        ],
+        [
+          66,
+          61,
+          111
+        ],
+        [
+          66,
+          77,
+          60
+        ]
+      ],
+      "glass_draws": 6,
+      "new_samples": 3
+    },
+    "anto426-osd": {
+      "pixel_colours": [
+        [
+          126,
+          45,
+          54
+        ],
+        [
+          57,
+          55,
+          116
+        ],
+        [
+          61,
+          76,
+          55
+        ]
+      ],
+      "glass_draws": 6,
+      "new_samples": 3
+    },
+    "anto426-wallpaper": {
+      "pixel_colours": [
+        [
+          123,
+          43,
+          52
+        ],
+        [
+          55,
+          53,
+          114
+        ],
+        [
+          58,
+          74,
+          53
+        ]
+      ],
+      "glass_draws": 43,
+      "new_samples": 3
+    },
+    "ghostty": {
+      "pixel_colours": [
+        [
+          108,
+          44,
+          57
+        ],
+        [
+          52,
+          55,
+          111
+        ],
+        [
+          52,
+          71,
+          56
+        ]
+      ],
+      "glass_draws": 7,
+      "new_samples": 3
+    }
+  },
+  "glass_lifecycle": "realize/unrealize/remap/destroy passed on Wayland",
+  "menu_geometry": "fixed panel, sidebar and content across grid/list/custom on Wayland",
+  "continuous_motion": {
+    "underlay_frequency_hz": 20,
+    "new_samples": 11,
+    "mean_pixel_difference": [
+      11.175405405405405,
+      6.73527027027027,
+      5.931351351351351
+    ]
+  },
+  "pages_opened": [
+    "apps",
+    "audio",
+    "wifi",
+    "bluetooth",
+    "brightness",
+    "display",
+    "capture",
+    "record",
+    "hardware",
+    "keyboard",
+    "notifications",
+    "clipboard",
+    "emoji",
+    "floating",
+    "background",
+    "shortcuts",
+    "widgets",
+    "settings",
+    "calendar",
+    "calendar-add",
+    "power"
+  ],
+  "calendar_fixture": {
+    "selected_day": "2026-10-03",
+    "events": 3,
+    "personal_data": false
+  },
+  "frontend_switches": [
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-wallpaper",
+      "opened": "anto426-menu",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    },
+    {
+      "closed": "anto426-menu",
+      "opened": "anto426-wallpaper",
+      "previous_exit": 0,
+      "reactivation_passed": true
+    }
+  ],
+  "wallpaper_route": "deck to gallery passed without remapping a closed deck",
+  "passed": true,
+  "runtime_warnings": []
+}

@@ -1,0 +1,10 @@
+[Unit]
+Description=Anto Desktop Clipboard image history
+After=graphical-session.target
+PartOf=graphical-session.target
+
+[Service]
+ExecStart=/usr/bin/wl-paste --type image --watch cliphist store
+Restart=on-failure
+RestartSec=3
+Environment=GDK_BACKEND=wayland

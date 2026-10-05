@@ -1,0 +1,286 @@
+{
+  "verified_at": "2026-10-04T09:27:53.733518+02:00",
+  "hyprland_version": "0.56.2",
+  "hyprland_config_valid": true,
+  "animations": {
+    "layersIn": {
+      "duration_ms": 280,
+      "curve": "motion_out",
+      "style": "slide"
+    },
+    "windowsMove": {
+      "duration_ms": 320,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "specialWorkspace": {
+      "duration_ms": 320,
+      "curve": "motion_spaces",
+      "style": "slidefadevert 16%"
+    },
+    "fadeSwitch": {
+      "duration_ms": 180,
+      "curve": "motion_quick",
+      "style": ""
+    },
+    "fadeOut": {
+      "duration_ms": 180,
+      "curve": "motion_quick",
+      "style": ""
+    },
+    "fade": {
+      "duration_ms": 200,
+      "curve": "motion_quick",
+      "style": ""
+    },
+    "workspaces": {
+      "duration_ms": 360,
+      "curve": "motion_spaces",
+      "style": "slidefade 14%"
+    },
+    "global": {
+      "duration_ms": 300,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "__internal_fadeCTM": {
+      "duration_ms": 500,
+      "curve": "linear",
+      "style": ""
+    },
+    "layersOut": {
+      "duration_ms": 200,
+      "curve": "motion_quick",
+      "style": "slide"
+    },
+    "windowsIn": {
+      "duration_ms": 300,
+      "curve": "motion_out",
+      "style": "popin 96%"
+    },
+    "windowsOut": {
+      "duration_ms": 200,
+      "curve": "motion_quick",
+      "style": "popin 98%"
+    },
+    "layers": {
+      "duration_ms": 280,
+      "curve": "motion_out",
+      "style": "slide"
+    },
+    "fadeIn": {
+      "duration_ms": 220,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "fadePopups": {
+      "duration_ms": 180,
+      "curve": "motion_quick",
+      "style": ""
+    },
+    "fadeShadow": {
+      "duration_ms": 220,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "fadeLayers": {
+      "duration_ms": 220,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "windows": {
+      "duration_ms": 300,
+      "curve": "motion_out",
+      "style": "popin 96%"
+    },
+    "fadeLayersIn": {
+      "duration_ms": 280,
+      "curve": "motion_out",
+      "style": ""
+    },
+    "fadeLayersOut": {
+      "duration_ms": 200,
+      "curve": "motion_quick",
+      "style": ""
+    },
+    "fadeDim": {
+      "duration_ms": 220,
+      "curve": "motion_out",
+      "style": ""
+    }
+  },
+  "curves": {
+    "motion_spaces": {
+      "X0": 0.28,
+      "Y0": 0.0,
+      "X1": 0.24,
+      "Y1": 1.0
+    },
+    "motion_out": {
+      "X0": 0.22,
+      "Y0": 0.35,
+      "X1": 0.3,
+      "Y1": 1.0
+    },
+    "motion_quick": {
+      "X0": 0.22,
+      "Y0": 0.45,
+      "X1": 0.3,
+      "Y1": 1.0
+    }
+  },
+  "targeted_tests_passed": [
+    "styles-gtk4",
+    "styles-gtk3",
+    "shell-alpha",
+    "workspace-output",
+    "backend",
+    "query-lifecycle",
+    "wallpaper-menu",
+    "boot-menu-flow"
+  ],
+  "workspace_probe": {
+    "original_workspace": "eDP\u00b71",
+    "slots": [
+      {
+        "slot": 6,
+        "name": "eDP\u00b76",
+        "waybar_labels": [
+          "eDP\u00b71",
+          "eDP\u00b76"
+        ]
+      },
+      {
+        "slot": 7,
+        "name": "eDP\u00b77",
+        "waybar_labels": [
+          "eDP\u00b71",
+          "eDP\u00b77"
+        ]
+      },
+      {
+        "slot": 8,
+        "name": "eDP\u00b78",
+        "waybar_labels": [
+          "eDP\u00b71",
+          "eDP\u00b78"
+        ]
+      },
+      {
+        "slot": 9,
+        "name": "eDP\u00b79",
+        "waybar_labels": [
+          "eDP\u00b71",
+          "eDP\u00b79"
+        ]
+      },
+      {
+        "slot": 10,
+        "name": "eDP\u00b710",
+        "waybar_labels": [
+          "eDP\u00b71",
+          "eDP\u00b710"
+        ]
+      }
+    ],
+    "restored_workspace": "eDP\u00b71"
+  },
+  "waybar": {
+    "version": "Waybar v0.15.0",
+    "service_active": true,
+    "battery_markup_valid": true,
+    "battery_spacing_visually_checked": true,
+    "empty_title_hidden_after_restart_and_workspace_transition": true
+  },
+  "workspace_watcher_active": true,
+  "frame_time_benchmark": false,
+  "glass_sampling": {
+    "windows_fps_limit": 0,
+    "layers_fps_limit": 0,
+    "forced_resampling": false,
+    "refresh_hz": 120,
+    "mode": "damage driven with cached static backgrounds"
+  },
+  "native_startup": {
+    "layer_mapped_ms": 115,
+    "refresh_hz": 120.0,
+    "glass_stats": {
+      "monitors": [
+        {
+          "name": "eDP-1",
+          "frames": 199,
+          "windowGlassDraws": 0,
+          "windowOpaqueSkipped": 0,
+          "windowCacheHits": 0,
+          "windowCacheMisses": 0,
+          "windowDeferredResamples": 0,
+          "windowPassDiscarded": 0,
+          "layerGlassDraws": 387,
+          "layerCacheHits": 138,
+          "layerCacheMisses": 249,
+          "layerDeferredResamples": 0,
+          "subsurfaceGlassDraws": 0,
+          "subsurfaceCacheHits": 0,
+          "subsurfaceCacheMisses": 0,
+          "subsurfaceDeferredResamples": 0,
+          "blurPasses": 498,
+          "sampledMegapixels": 344.947,
+          "glassMegapixels": 807.275,
+          "stageTimersAvgMicroseconds": {
+            "sample_background": 0.0,
+            "blur_background": 0.0,
+            "apply_glass_effect": 0.0,
+            "layer_sample": 281.211,
+            "layer_composite": 567.527,
+            "subsurface_sample": 0.0,
+            "subsurface_composite": 0.0
+          }
+        }
+      ],
+      "timersEnabled": true,
+      "timersAvailable": true
+    }
+  },
+  "backend_snapshot": [
+    {
+      "elapsed_ms": 48,
+      "exit_code": 0,
+      "fields": [
+        "volume",
+        "network",
+        "brightness",
+        "displays",
+        "bluetooth",
+        "battery"
+      ],
+      "stderr": ""
+    },
+    {
+      "elapsed_ms": 33,
+      "exit_code": 0,
+      "fields": [
+        "volume",
+        "network",
+        "brightness",
+        "displays",
+        "bluetooth",
+        "battery"
+      ],
+      "stderr": ""
+    },
+    {
+      "elapsed_ms": 31,
+      "exit_code": 0,
+      "fields": [
+        "volume",
+        "network",
+        "brightness",
+        "displays",
+        "bluetooth",
+        "battery"
+      ],
+      "stderr": ""
+    }
+  ],
+  "gpu_timing_note": "Stage means only; these counters do not measure complete frame presentation intervals."
+}

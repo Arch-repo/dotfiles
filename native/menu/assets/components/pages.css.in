@@ -1,0 +1,13 @@
+/* Page roles only describe information. Primitive appearance is defined in native/common/assets/primitives.css.in. */
+.wifi-shell, .bluetooth-shell { padding: 1px; }
+.wifi-action-bar, .bluetooth-action-bar { margin-top: 8px; }
+.bluetooth-device-list { background: transparent; }
+.calendar-view { padding: 1px; }
+.calendar-editor { padding: 2px; }
+.calendar-editor-date { min-width: 100px; }
+.calendar-sync { padding: 6px 0; }
+.display-arranger { color: @accent; border-radius: {{radius.card}}px; border: 1px solid @ui-border; background: @ui-surface; }
+.display-virtual-row, .display-virtual-summary { padding: 14px 16px; background: @ui-surface; border-radius: {{radius.control}}px; margin-bottom: 3px; }
+.clipboard-area { border: 0; background: transparent; padding: 14px 16px; }
+.notifications-hero-row { margin-bottom: 8px; }
+.danger-row .item-title { color: @error; }

@@ -1,0 +1,3 @@
+window.anto-osd { background: transparent; color: @foreground; font-family: Inter, sans-serif; font-size: {{font.body}}px; }
+.osd-panel { background: shade(@background,.48); padding: 20px 24px; border: 1px solid alpha(@accent,.22); border-radius: {{radius.panel}}px; }
+.osd-panel image, .osd-value { color: @accent; }

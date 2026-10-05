@@ -1,0 +1,10 @@
+.anto-widget-window { background: transparent; color: @foreground; }
+.widget-panel { padding: {{spacing.xl}}px; border-radius: {{radius.panel}}px; }
+.widget-header { padding-bottom: {{spacing.xs}}px; }
+.widget-icon, .widget-accent, .widget-spectrum-bars { color: @accent; }
+.widget-time { font-size: {{font.widget_clock}}px; font-weight: 600; letter-spacing: -2px; }
+.widget-machine { font-size: {{font.heading}}px; font-weight: 600; }
+.widget-metrics .ui-metric-value { font-size: {{font.widget_metric}}px; font-weight: 600; }
+.widget-event { padding: {{spacing.sm}}px; border-radius: {{radius.control}}px; background: @ui-surface; }
+.widget-art { border-radius: {{radius.control}}px; }
+.widget-playback { margin-top: {{spacing.sm}}px; }
