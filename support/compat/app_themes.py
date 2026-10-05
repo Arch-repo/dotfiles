@@ -7,6 +7,8 @@ import configparser
 import json
 import os
 import re
+import subprocess
+import sys
 import tempfile
 
 
@@ -357,6 +359,9 @@ def main():
         install_obsidian(args.artifact, args.palette)
     elif args.application == "gtk":
         install_gtk(args.artifact)
+        office = args.artifact / 'libreoffice.json'
+        if office.is_file():
+            subprocess.run([sys.executable, str(Path(__file__).resolve().with_name('libreoffice_theme.py')), str(office)], check=True, timeout=16)
     else:
         install_qt(args.artifact)
 

@@ -12,9 +12,24 @@ ROOT = Path(__file__).resolve().parents[2]
 spec = importlib.util.spec_from_file_location("app_themes", ROOT / "support/compat/app_themes.py")
 module = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(module)
+office_spec = importlib.util.spec_from_file_location('libreoffice_theme', ROOT / 'support/compat/libreoffice_theme.py')
+office = importlib.util.module_from_spec(office_spec)
+office_spec.loader.exec_module(office)
 
 
 class Themes(unittest.TestCase):
+    def test_office_palette_cannot_override_documents_or_use_invalid_colors(self):
+        valid = {'startCenter': {'StartCenterThumbnailsBackgroundColor': 0x112233,
+                                'StartCenterThumbnailsTextColor': 0xeeffee},
+                 'appearance': {'AppBackground': 0x112233}}
+        office.validate(valid)
+        for value in (True, -1, 0x1000000, 'red'):
+            with self.assertRaises(ValueError):
+                office.validate({**valid, 'appearance': {'AppBackground': value}})
+        for unsupported in ({'DocColor': 0xffffff}, {'FontColor': 0xffffff}, {'AppBackground': 1, 'FieldColor': 2}):
+            with self.assertRaises(ValueError):
+                office.validate({**valid, 'appearance': unsupported})
+
     def test_ini_retains_fonts_comments_and_last_line(self):
         with tempfile.TemporaryDirectory() as folder:
             file = Path(folder) / "qt.conf"

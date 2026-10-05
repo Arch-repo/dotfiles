@@ -1,0 +1,11 @@
+{
+  "libreoffice": "LibreOffice 26.8.0.3 680(Build:3)",
+  "status": "passed",
+  "closedProfileInstall": true,
+  "livePaletteChange": true,
+  "idempotent": true,
+  "selectedSchemePreserved": true,
+  "documentColorsPreserved": true,
+  "restartPersistence": true,
+  "nativeCanvasAlpha": false
+}

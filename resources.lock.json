@@ -86,12 +86,12 @@
     },
     "gtk-theme": {
       "repository": "Arch-repo/gtk-theme",
-      "revision": "d128ac1f33489c5c2f66a5a7bedd98ab827bde7d",
+      "revision": "49851aa9463638508952d31ac40a8745fa458832",
       "files": [
         {
           "path": "palette/render.py",
           "filename": "render.py",
-          "sha256": "33a2585f3ccbab68855cb00529c6f8aa67975b73cc26db306b09bd7799999129"
+          "sha256": "9cd1ced47e554acc09c0a12b73a3b7d2ebf7d8c2d2d5c31385012ff564d8ed27"
         },
         {
           "path": "palette/colors.json",
@@ -127,6 +127,11 @@
           "path": "palette/compat.css.in",
           "filename": "compat.css.in",
           "sha256": "3d95484a3fdc69b7f3025ab8467e99f248a6f1efb2f30c3bc6c7d423c74f9e8f"
+        },
+        {
+          "path": "palette/libreoffice.json",
+          "filename": "libreoffice.json",
+          "sha256": "c8dae4c3c7b7dd8eba01cd66a9515e6ee8544689c55bf3e996ade30e0cd58db9"
         }
       ]
     },

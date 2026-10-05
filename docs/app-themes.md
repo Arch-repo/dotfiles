@@ -106,6 +106,37 @@ menu. Nemo è stato riaperto e verificato senza questo override.
 GTK/libadwaita e molte app
 Qt possono richiedere la riapertura per ricaricare uno stile già in memoria.
 
+### LibreOffice
+
+LibreOffice 26.8 usa GTK3 per i controlli, ma la vista dei documenti recenti è
+disegnata da VCL: `RecentDocsView::UpdateColors` legge una preferenza propria,
+il cui valore predefinito è `#666666`. Il CSS GTK non raggiunge questa superficie.
+Il renderer GTK emette anche `libreoffice.json`, con il fondo del desktop e il
+testo condivisi. `support/compat/libreoffice_theme.py` aggiorna i due colori dei
+documenti recenti e `AppBackground` dello schema attualmente selezionato.
+
+L'aggiornamento passa attraverso la Configuration API di LibreOffice, quindi
+funziona mentre l'app è aperta senza modificare il file delle preferenze dietro
+al processo. Una pipe UNO locale temporanea viene chiusa dopo il lavoro; se
+l'app non è aperta, un'istanza senza finestre iniziali aggiorna il profilo e viene
+terminata. Mantiene il backend grafico, così un documento aperto dall'utente
+durante il job può apparire normalmente e conserva la propria sessione.
+Lo schema selezionato, i colori dei documenti e le altre preferenze rimangono
+invariati. La stessa fase GTK lo aggiorna ai cambi di sfondo.
+
+La verifica `python3 scripts/verify_libreoffice_theme.py` usa un profilo isolato
+e l'app reale: conserva uno schema personale e i colori di pagina/testo,
+verifica aggiornamenti live, idempotenza e persistenza dopo il riavvio.
+Il [rapporto](libreoffice-theme-verification.json) distingue questa verifica
+dalla copertura generica del toolkit. LibreOffice rende la superficie VCL dei
+documenti recenti come RGB opaco: il colore è dinamico, ma non viene dichiarata
+una trasparenza per quel canvas e non si sbiadisce l'intera finestra.
+
+Riferimenti: [Appearance](https://help.libreoffice.org/latest/en-US/text/shared/optionen/01012000.html),
+[parametri UNO](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html),
+[RecentDocsView 26.8](https://github.com/LibreOffice/core/blob/libreoffice-26.8.0.3/sfx2/source/control/recentdocsview.cxx),
+[ThumbnailView 26.8](https://github.com/LibreOffice/core/blob/libreoffice-26.8.0.3/sfx2/source/control/thumbnailview.cxx).
+
 ## Trasparenza
 
 GTK e Kvantum usano l’alpha del fondo (opacità condivisa 0.46); il compositore
