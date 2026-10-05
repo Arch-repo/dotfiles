@@ -222,6 +222,8 @@ make_cover_image() {
 
 for effect_part in \
     "$effects_lib_dir/session_theme.sh" \
+    "$effects_lib_dir/editor_theme.sh" \
+    "$effects_lib_dir/toolkit_theme.sh" \
     "$effects_lib_dir/app_theme.sh" \
     "$effects_lib_dir/icon_theme.sh" \
     "$effects_lib_dir/boot_theme.sh"; do
@@ -248,7 +250,7 @@ phase_requested() {
                 esac
                 ;;
             session)
-                [[ "$phase" == "vscode" ]] && return 0
+                [[ "$phase" == "vscode" || "$phase" == "obsidian" ]] && return 0
                 ;;
             "$phase")
                 return 0
@@ -351,8 +353,7 @@ deferred_status=0
 
 if [[ "${ANTO426_WALLPAPER_CORE_APPS:-1}" != "0" ]]; then
     phase_requested gtk && launch_visible gtk write_gtk_theme
-    phase_requested qt && launch_visible qt write_qt_theme
-    phase_requested kvantum && launch_visible kvantum write_kvantum_theme
+    { phase_requested qt || phase_requested kvantum; } && launch_visible qt write_qt_theme
     phase_requested zen && launch_visible zen write_zen_theme
 fi
 
@@ -365,6 +366,10 @@ if ((${#visible_pids[@]} > 0)); then
     qt_reload_theme &
     pid_qt_reload=$!
     wait "$pid_gtk_reload" "$pid_qt_reload" || visible_status=1
+fi
+
+if [[ "${ANTO426_WALLPAPER_CORE_OBSIDIAN:-1}" != "0" ]]; then
+    phase_requested obsidian && launch_deferred obsidian write_obsidian_theme
 fi
 
 if [[ "${ANTO426_WALLPAPER_CORE_VSCODE:-1}" != "0" ]]; then

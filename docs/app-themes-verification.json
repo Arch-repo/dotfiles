@@ -1,0 +1,39 @@
+{
+  "vscode": {
+    "passed": true,
+    "vscode": "1.140.0",
+    "activated": true,
+    "commands": true,
+    "modernThemeSelected": true,
+    "nativePty": true,
+    "styleOptions": true,
+    "paletteStyleContinuity": true,
+    "compositorGlass": true
+  },
+  "obsidian": {
+    "dark": true,
+    "accent": "#ed94b8",
+    "background": "rgba(36, 33, 45, 0.74)",
+    "note": true,
+    "liveUpdate": true,
+    "updatedAccent": "#66aacc",
+    "passed": true,
+    "version": "1.13.7-2"
+  },
+  "installation": {
+    "vscodeExtension": "0.2.0",
+    "obsidianTheme": "1.0.0",
+    "registeredVaults": 1,
+    "pinnedResourcesVerified": true,
+    "hyprlandConfigValid": true,
+    "nativeArtifactsMatchBuild": true,
+    "gtkThemeSelected": true,
+    "gtkWidgetBaseInstalled": true,
+    "qt5AndQt6PalettesSelected": true,
+    "qtQuickPaletteInstalled": true,
+    "toolkitAccentMatchesShell": true,
+    "qtQuickStyleInstalled": true,
+    "qtSharedControlPrimitivesInstalled": true,
+    "nemoThemeOverrideRemoved": true
+  }
+}

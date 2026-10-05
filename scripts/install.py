@@ -103,7 +103,7 @@ def main():
         (state / "hypr" / name).touch(exist_ok=True)
     preferences = state / "wallpaper/preferences.json"
     if not preferences.exists():
-        preferences.write_text(json.dumps(dict(apps=True, vscode=True, icons=True, boot=True), indent=2) + "\n")
+        preferences.write_text(json.dumps(dict(apps=True, vscode=True, obsidian=True, icons=True, boot=True), indent=2) + "\n")
         preferences.chmod(0o600)
     palette = state / "theme/colors.css"
     import_missing(ROOT / "native/menu/assets/tokens.css", palette)

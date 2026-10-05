@@ -12,6 +12,7 @@ def generate(destination):
     values = {f"{group}.{key}": value for group, entries in tokens.items()
               if group != "colour" for key, value in entries.items()}
     destination.mkdir(parents=True, exist_ok=True)
+    write(destination / "application-material.json", json.dumps({name: tokens[name] for name in ("material", "spacing", "radius", "colour", "control")}, indent=2) + "\n")
     header = ["#pragma once", "/* Generated from design/tokens.json. */"]
     header += [f"#define ANTO_{name.replace('.', '_').upper()} {value}" for name, value in values.items()]
     write(destination / "design_tokens.h", "\n".join(header) + "\n")

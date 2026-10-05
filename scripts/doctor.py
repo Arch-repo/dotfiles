@@ -3,6 +3,7 @@
 from pathlib import Path
 import hashlib
 import json
+import os
 import shutil
 import subprocess
 
@@ -18,6 +19,7 @@ FEATURES = {
     "calendar": ["curl", "dbus-monitor"],
     "widgets": ["cava"],
     "authentication": ["sddm-greeter-qt6", "hyprlock", "fprintd-list"],
+    "application-themes": ["node", "python3"],
 }
 
 def main():
@@ -33,7 +35,7 @@ def main():
         artifacts[binary] = source.is_file() and installed.is_file() and hashlib.sha256(source.read_bytes()).digest() == hashlib.sha256(installed.read_bytes()).digest()
     styles = {}
     for source in sorted((ROOT / 'build/design').glob('*')):
-        if source.suffix not in ('.css','.conf'):
+        if source.suffix not in ('.css','.conf') and source.name != 'application-material.json':
             continue
         installed = HOME / '.local/share/anto-desktop' / source.name
         styles[source.name] = installed.is_file() and source.read_bytes() == installed.read_bytes()
@@ -45,6 +47,13 @@ def main():
         dependencies.setdefault("ocr-models", {})[language] = (HOME / f".local/share/anto-desktop/tessdata/{language}.traineddata").is_file()
     font = subprocess.run(["fc-match", "-f", "%{family}", "Noto Color Emoji"], text=True, capture_output=True) if shutil.which("fc-match") else None
     dependencies["emoji-data"] = {"native-unicode-catalog": (HOME/".local/share/anto-desktop/emoji.tsv").is_file()}
+    resources = Path(os.environ.get("XDG_DATA_HOME", HOME / ".local/share")) / "anto-desktop"
+    for name, theme in json.loads((ROOT / "resources.lock.json").read_text()).get("app_themes", {}).items():
+        checks = {}
+        for item in theme["files"]:
+            target = resources / name / item["filename"]
+            checks[item["filename"]] = target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == item["sha256"]
+        dependencies[name] = checks
     dependencies["fonts"] = {"noto-color-emoji": font is not None and font.returncode == 0 and "Noto Color Emoji" in font.stdout}
     terminal = subprocess.run(['ghostty','+show-config'],text=True,capture_output=True)
     terminal_values = dict(line.split(' = ',1) for line in terminal.stdout.splitlines() if ' = ' in line)

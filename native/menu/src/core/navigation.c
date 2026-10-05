@@ -118,7 +118,10 @@ void menu_back(MenuApp *app) {
 
 void menu_spawn(MenuApp *app, const char *const argv[], gboolean close_after) {
     g_autoptr(GError) error = NULL;
-    GSubprocess *process = g_subprocess_newv(argv, G_SUBPROCESS_FLAGS_NONE, &error);
+    g_autoptr(GSubprocessLauncher) launcher = g_subprocess_launcher_new(G_SUBPROCESS_FLAGS_NONE);
+    /* GUI tools and applications reached through helpers use the desktop theme. */
+    g_subprocess_launcher_unsetenv(launcher, "GTK_THEME");
+    GSubprocess *process = g_subprocess_launcher_spawnv(launcher, argv, &error);
     if (!process) {
         menu_notify("Menu", error ? error->message : "Impossibile avviare il comando");
         return;

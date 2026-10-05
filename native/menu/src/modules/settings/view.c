@@ -21,6 +21,7 @@ void menu_show_settings(MenuApp *app) {
     menu_add_section(app, "Palette · applicata al prossimo cambio sfondo");
     anto_settings_add_preference(app, "Applicazioni", "GTK, Qt, Kvantum e browser", "apps", TRUE, preferences);
     anto_settings_add_preference(app, "Editor", "Tema di Visual Studio Code", "vscode", TRUE, preferences);
+    anto_settings_add_preference(app, "Obsidian", "Tema Monet e colori della raccolta di note", "obsidian", TRUE, preferences);
     anto_settings_add_preference(app, "Icone", "Colori della cartella e tema icone", "icons", TRUE, preferences);
     anto_settings_add_preference(app, "GRUB e login", "Aggiorna automaticamente sfondo e colori a ogni cambio sfondo", "boot", TRUE, preferences);
     json_object_put(preferences);

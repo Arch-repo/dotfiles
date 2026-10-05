@@ -25,5 +25,151 @@
     "sha256": "8f3735cda1f92a779d78af67cf86066bb1f07143dc22f2ac29394d9bc57ab21a",
     "license_sha256": "e7a93b009565cfce55919a381437ac4db883e9da2126fa28b91d12732bc53d96",
     "license": "resources/licenses/Unicode-LICENSE.txt"
+  },
+  "app_themes": {
+    "vscode-theme": {
+      "repository": "Arch-repo/vscode-theme",
+      "revision": "02e4d7ac457bb1a1c388f7298ed40a3cab2eba85",
+      "files": [
+        {
+          "path": "palette/cli.cjs",
+          "filename": "cli.cjs",
+          "sha256": "dacd5ad5e39428461f312d747d36efadb80193eb74ac23c9ebe1769182ae1e3f"
+        },
+        {
+          "path": "palette/generate.cjs",
+          "filename": "generate.cjs",
+          "sha256": "84bcb50dc498320ab164b5a1f6eaba926f93678390118668825ba13bc13db6ec"
+        },
+        {
+          "path": "palette/base.json",
+          "filename": "base.json",
+          "sha256": "058a1ee9235fb4f391cdc93f976fc99f4eea2fd32ac4bb304d40c2ee0cee6d18"
+        },
+        {
+          "path": "palette/default.json",
+          "filename": "default.json",
+          "sha256": "5a33507422d1c7bda21157835b2702393d2199b8957a81325941661ac7adcf4b"
+        },
+        {
+          "path": "LICENSE.txt",
+          "filename": "LICENSE.txt",
+          "sha256": "b4bdb28c670386f4fa093650b0bb8773714ce53171a2d1a9adb81756119200f1"
+        }
+      ]
+    },
+    "obsidian-theme": {
+      "repository": "Arch-repo/obsidian-theme",
+      "revision": "16c885921aaf766c7c73e996c19fa257b0c6ffc0",
+      "files": [
+        {
+          "path": "manifest.json",
+          "filename": "manifest.json",
+          "sha256": "9e8e825732f47a5312f9bb9467147c23d4022cda2f70b0ad569b30db71b30b9f"
+        },
+        {
+          "path": "theme.css",
+          "filename": "theme.css",
+          "sha256": "0ce33bc0b8ef897c8d91f16d76d6a5b309556fc4ae6dafcc97bc94821d7cc4a1"
+        },
+        {
+          "path": "palette/template.css",
+          "filename": "template.css",
+          "sha256": "f4b8851becb7d6a3123b047616389682e336195781d9b064c489b94a13541d71"
+        },
+        {
+          "path": "LICENSE",
+          "filename": "LICENSE",
+          "sha256": "5439c5837626f72e932960a7500064d0c27a290955c47ba73073f37dd09fd73d"
+        }
+      ]
+    },
+    "gtk-theme": {
+      "repository": "Arch-repo/gtk-theme",
+      "revision": "d128ac1f33489c5c2f66a5a7bedd98ab827bde7d",
+      "files": [
+        {
+          "path": "palette/render.py",
+          "filename": "render.py",
+          "sha256": "33a2585f3ccbab68855cb00529c6f8aa67975b73cc26db306b09bd7799999129"
+        },
+        {
+          "path": "palette/colors.json",
+          "filename": "colors.json",
+          "sha256": "baaedc6079c7af8dca7aa24818a3602fd97c3f85b3d55c1f06b952d276d1ce5c"
+        },
+        {
+          "path": "palette/gtk3.css.in",
+          "filename": "gtk3.css.in",
+          "sha256": "404da55c2b54d57b85515bd17f89ce6504e91ac350edd0484387c0e925f8fb95"
+        },
+        {
+          "path": "palette/gtk4.css.in",
+          "filename": "gtk4.css.in",
+          "sha256": "afe3ca2cf6d0dc1358050757d884e53bca38e981827a82f75e075fc180d96acc"
+        },
+        {
+          "path": "palette/gtk4-legacy.css.in",
+          "filename": "gtk4-legacy.css.in",
+          "sha256": "f487219a249463a5d858e64bdb87da09e8d1e26d3c16f817ac68a9c48c6ab782"
+        },
+        {
+          "path": "palette/base.tar.gz",
+          "filename": "base.tar.gz",
+          "sha256": "62d04a13a26ab04aa5ce17ff1e9d9491edcdea227bae42d120643257c504ac01"
+        },
+        {
+          "path": "COPYING",
+          "filename": "COPYING",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "palette/compat.css.in",
+          "filename": "compat.css.in",
+          "sha256": "3d95484a3fdc69b7f3025ab8467e99f248a6f1efb2f30c3bc6c7d423c74f9e8f"
+        }
+      ]
+    },
+    "qt-theme": {
+      "repository": "Arch-repo/qt-theme",
+      "revision": "e98a411d3074017a85750b8f77ee2c32b3cfba81",
+      "files": [
+        {
+          "path": "palette/render.py",
+          "filename": "render.py",
+          "sha256": "2deb5b55e13d29d29a574e3f62672f97dbf58da1be836075d410beb80d79c829"
+        },
+        {
+          "path": "palette/base.svg",
+          "filename": "base.svg",
+          "sha256": "eb1f8435fe13f2c161a8ad0e73e7ebe9e915f629921a9b59798560696639a2f4"
+        },
+        {
+          "path": "palette/base.kvconfig",
+          "filename": "base.kvconfig",
+          "sha256": "158a5ab545f5cef10142043bb747556b1b3c63db9626d8d1ad47a4dd592b5b6e"
+        },
+        {
+          "path": "LICENSE",
+          "filename": "LICENSE",
+          "sha256": "8ceb4b9ee5adedde47b31e975c1d90c73ad27b6b165a1dcd80c7c545eb65b903"
+        },
+        {
+          "path": "palette/widgets.py",
+          "filename": "widgets.py",
+          "sha256": "2b992ff964f26500cf3254e91d1fff6ecb0bd15680c777116d3ad2e1dbbfa40c"
+        },
+        {
+          "path": "palette/widgets.qss.in",
+          "filename": "widgets.qss.in",
+          "sha256": "9bc39723120758316923bc60cce1a5d56a2b6ecc907f5c3ec4196202fa8ddb94"
+        },
+        {
+          "path": "palette/quick.tar.gz",
+          "filename": "quick.tar.gz",
+          "sha256": "87f9fe13a00c6a82fbd6eb1f546386b9a03982739bbcde8972f7de9bfcbec9c5"
+        }
+      ]
+    }
   }
 }

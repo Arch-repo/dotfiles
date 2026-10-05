@@ -4,6 +4,9 @@ void anto_launcher_launch_app(MenuApp *app, gpointer data) {
     AppEntry *entry = data;
     g_autoptr(GError) error = NULL;
     g_autoptr(GDesktopAppInfo) terminal_info = NULL;
+    g_autoptr(GAppLaunchContext) context = g_app_launch_context_new();
+    /* The shell's private GTK base must not override an application's theme. */
+    g_app_launch_context_unsetenv(context, "GTK_THEME");
     GAppInfo *info = entry ? entry->info : NULL;
     if (info && G_IS_DESKTOP_APP_INFO(info) && g_desktop_app_info_get_boolean(G_DESKTOP_APP_INFO(info), "Terminal")) {
         g_autoptr(GKeyFile) file = g_key_file_new();
@@ -18,7 +21,7 @@ void anto_launcher_launch_app(MenuApp *app, gpointer data) {
             info = terminal_info ? G_APP_INFO(terminal_info) : info;
         }
     }
-    if (!info || !g_app_info_launch(info, NULL, NULL, &error)) {
+    if (!info || !g_app_info_launch(info, NULL, context, &error)) {
         menu_notify("Applicazioni", error ? error->message : "Avvio non riuscito");
         return;
     }

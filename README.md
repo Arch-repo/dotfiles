@@ -41,6 +41,8 @@ python3 scripts/install.py --restore /percorso/dotfiles-backup-20261002-154626
 
 L'installazione non crea backup. Non copia credenziali o vecchi eseguibili. Non modifica il sistema come amministratore. Le impostazioni dei temi delle applicazioni vengono installate in directory utente reali, per evitare che la generazione dei colori modifichi i sorgenti.
 
+VS Code e Obsidian condividono la palette dello sfondo, con risorse fissate per revisione e checksum. Le destinazioni **Editor** e **Obsidian** si controllano separatamente nelle impostazioni. L'estensione VS Code supporta le superfici recenti dell'editor; il tema Obsidian mantiene la base Minimal e aggiorna i colori mentre è aperto. Installazione, trasparenza e verifica sono descritte in [Temi delle applicazioni](docs/app-themes.md).
+
 ## Uso
 
 La galleria è una pagina del menu principale, con la stessa finestra e la stessa navigazione. La larghezza del pannello e della barra laterale rimane fissa passando tra le pagine. `anto-menu system` apre il centro di controllo; `anto-menu --list-pages` elenca tutte le pagine. `anto-wallpaper` apre la pagina Sfondi, `anto-wallpaper --random` applica uno sfondo della raccolta. `anto-menu settings` gestisce le destinazioni della palette e le preferenze. `Esc` chiude sempre il menu, anche durante la ricerca; `Ctrl+Backspace` torna alla pagina precedente.

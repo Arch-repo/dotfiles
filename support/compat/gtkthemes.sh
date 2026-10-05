@@ -32,19 +32,17 @@ resolve_theme() {
 
 write_gtk_settings() {
     local selected_theme="$1"
-    local gtk_settings_dir
-
-    for gtk_settings_dir in "$HOME/.config/gtk-3.0" "$HOME/.config/gtk-4.0"; do
-        mkdir -p "$gtk_settings_dir"
-        cat >"$gtk_settings_dir/settings.ini" <<EOF
-[Settings]
-gtk-theme-name=$selected_theme
-gtk-icon-theme-name=$ICONS
-gtk-cursor-theme-name=$CURSOR
-gtk-font-name=$UI_FONT
-gtk-application-prefer-dark-theme=true
-EOF
-    done
+    python3 - "${BASH_SOURCE[0]}" "$selected_theme" "$ICONS" "$CURSOR" "$UI_FONT" <<'PY'
+import importlib.util,os,sys
+from pathlib import Path
+spec=importlib.util.spec_from_file_location('app_themes',Path(sys.argv[1]).resolve().parent/'app_themes.py')
+helper=importlib.util.module_from_spec(spec);spec.loader.exec_module(helper)
+root=Path(os.environ.get('XDG_CONFIG_HOME',Path.home()/'.config'))
+for version in ('3.0','4.0'):
+    entries=dict(zip(('gtk-theme-name','gtk-icon-theme-name','gtk-cursor-theme-name','gtk-font-name'),sys.argv[2:],strict=True))
+    entries['gtk-application-prefer-dark-theme']='true' if version=='3.0' else None
+    helper.update_ini(root/('gtk-'+version)/'settings.ini',{'Settings':entries})
+PY
 }
 
 apply_themes() {

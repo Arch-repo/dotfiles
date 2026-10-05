@@ -1,13 +1,31 @@
 #!/usr/bin/env python3
-"""Install checksum-pinned OCR models in the user data directory."""
+"""Install checksum-pinned OCR, emoji and application theme resources."""
 from pathlib import Path
 import hashlib
 import json
+import os
 import urllib.request
 
 ROOT = Path(__file__).resolve().parent.parent
 LOCK = ROOT / "resources.lock.json"
-DEST = Path.home() / ".local/share/anto-desktop/tessdata"
+DEST = Path(os.environ.get("XDG_DATA_HOME", Path.home() / ".local/share")) / "anto-desktop/tessdata"
+
+def install_app_themes(manifest):
+    for name, theme in manifest.get("app_themes", {}).items():
+        directory = DEST.parent / name
+        directory.mkdir(parents=True, exist_ok=True)
+        for item in theme["files"]:
+            target = directory / item["filename"]
+            if target.is_file() and hashlib.sha256(target.read_bytes()).hexdigest() == item["sha256"]:
+                continue
+            url = f'https://raw.githubusercontent.com/{theme["repository"]}/{theme["revision"]}/{item["path"]}'
+            with urllib.request.urlopen(url, timeout=30) as response:
+                content = response.read()
+            if hashlib.sha256(content).hexdigest() != item["sha256"]:
+                raise RuntimeError(f"Application theme checksum mismatch: {name}/{item['filename']}")
+            temporary = target.with_suffix(".download")
+            temporary.write_bytes(content)
+            temporary.replace(target)
 
 def main():
     manifest = json.loads(LOCK.read_text())
@@ -36,7 +54,8 @@ def main():
     (DEST.parent/"Unicode-LICENSE.txt").write_bytes(license_content)
     catalog=convert((DEST.parent/"emoji-source.txt").read_text())
     (DEST.parent/"emoji.tsv").write_text(catalog)
-    print("OCR and Unicode emoji resources verified")
+    install_app_themes(manifest)
+    print("OCR, Unicode emoji and application theme resources verified")
 
 if __name__ == "__main__":
     main()

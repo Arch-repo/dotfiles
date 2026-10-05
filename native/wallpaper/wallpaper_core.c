@@ -2853,7 +2853,7 @@ static int modules_bridge_should_wait(const char *modules_env) {
 }
 
 static void run_modules_bridge_sync(const Paths *paths, const char *env_path) {
-    const char *module_phases = "gtk qt kvantum zen vscode boot";
+    const char *module_phases = "gtk qt kvantum zen vscode obsidian boot";
     char *qscript;
     char *qenv;
     char cmd[PATH_MAX * 2 + 256];
@@ -2882,7 +2882,7 @@ static void run_modules_bridge_sync(const Paths *paths, const char *env_path) {
 
 static void start_modules_bridge(const Paths *paths, const char *env_path) {
     const char *modules_env = getenv("ANTO426_WALLPAPER_CORE_MODULES");
-    const char *module_phases = "gtk qt kvantum zen vscode boot";
+    const char *module_phases = "gtk qt kvantum zen vscode obsidian boot";
     char module_log[PATH_MAX];
     char *qscript;
     char *qenv;
@@ -4082,6 +4082,7 @@ static int boot_main(int argc, char **argv) {
         snprintf(command, sizeof(command),
                  "ANTO426_WALLPAPER_CORE_APPS=0 "
                  "ANTO426_WALLPAPER_CORE_VSCODE=0 "
+                 "ANTO426_WALLPAPER_CORE_OBSIDIAN=0 "
                  "ANTO426_WALLPAPER_CORE_BOOT=1 %s %s boot",
                  qscript, qenv);
         free(qscript);

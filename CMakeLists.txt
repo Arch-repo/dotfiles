@@ -12,7 +12,7 @@ execute_process(COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/scripts/design
   COMMAND_ERROR_IS_FATAL ANY)
 file(GLOB DESIGN_INPUTS CONFIGURE_DEPENDS ${CMAKE_SOURCE_DIR}/native/menu/assets/components/*.css.in
   ${CMAKE_SOURCE_DIR}/native/menu/assets/*.css.in ${CMAKE_SOURCE_DIR}/native/shell/assets/*.css.in ${CMAKE_SOURCE_DIR}/native/common/assets/*.css.in ${CMAKE_SOURCE_DIR}/native/widgets/assets/*.css.in)
-add_custom_command(OUTPUT ${DESIGN_DIR}/design_tokens.h ${DESIGN_DIR}/design.css ${DESIGN_DIR}/primitives.css ${DESIGN_DIR}/menu.css
+add_custom_command(OUTPUT ${DESIGN_DIR}/design_tokens.h ${DESIGN_DIR}/design.css ${DESIGN_DIR}/primitives.css ${DESIGN_DIR}/menu.css ${DESIGN_DIR}/application-material.json
   ${DESIGN_DIR}/widgets.css ${DESIGN_DIR}/wallpaper.css ${DESIGN_DIR}/osd.css ${DESIGN_DIR}/glass.css ${DESIGN_DIR}/waybar.css ${DESIGN_DIR}/swaync.css
   ${DESIGN_DIR}/terminal.conf ${DESIGN_DIR}/terminal-hypr.conf ${DESIGN_DIR}/Tokens.qml
   ${DESIGN_DIR}/hyprlock.conf ${DESIGN_DIR}/hyprlock-defaults.conf
@@ -134,6 +134,7 @@ install(FILES native/menu/assets/tokens.css DESTINATION share/anto-desktop)
 install(FILES ${DESIGN_DIR}/design.css ${DESIGN_DIR}/primitives.css ${DESIGN_DIR}/menu.css ${DESIGN_DIR}/widgets.css ${DESIGN_DIR}/wallpaper.css ${DESIGN_DIR}/osd.css
   ${DESIGN_DIR}/glass.css ${DESIGN_DIR}/waybar.css ${DESIGN_DIR}/swaync.css
   ${DESIGN_DIR}/terminal.conf ${DESIGN_DIR}/terminal-hypr.conf
+  ${DESIGN_DIR}/application-material.json
   ${DESIGN_DIR}/hyprlock.conf ${DESIGN_DIR}/hyprlock-defaults.conf DESTINATION share/anto-desktop)
 install(DIRECTORY native/login/ DESTINATION share/anto-desktop/login PATTERN "tests" EXCLUDE)
 install(FILES ${DESIGN_DIR}/Tokens.qml DESTINATION share/anto-desktop/login)
@@ -236,6 +237,11 @@ if(BUILD_TESTING)
   add_test(NAME widget-lifecycle COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/native/common/tests/gtk-isolated.py
     --assets ${DESIGN_DIR} --tokens ${CMAKE_SOURCE_DIR}/native/menu/assets/tokens.css
     dbus-run-session -- ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/native/widgets/tests/lifecycle.py $<TARGET_FILE:anto-widgets>)
+  add_test(NAME app-themes COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/support/tests/app_themes.py)
+  add_executable(launcher-theme-fixture native/menu/tests/launcher-theme.c native/menu/src/modules/launcher/actions.c)
+  target_include_directories(launcher-theme-fixture PRIVATE native/menu/include native/common/include)
+  target_link_libraries(launcher-theme-fixture PRIVATE PkgConfig::GTK)
+  add_test(NAME launcher-theme COMMAND dbus-run-session -- $<TARGET_FILE:launcher-theme-fixture>)
   add_test(NAME theme-reload COMMAND bash ${CMAKE_SOURCE_DIR}/support/tests/theme_reload_fixture.sh)
   add_test(NAME boot-login-commit COMMAND bash ${CMAKE_SOURCE_DIR}/support/tests/boot_login_commit_fixture.sh)
   add_test(NAME boot-menu-flow COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/support/tests/boot_menu_flow.py $<TARGET_FILE:anto-wallpaper-core>)
