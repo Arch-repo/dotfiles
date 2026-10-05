@@ -175,6 +175,47 @@
           "sha256": "87f9fe13a00c6a82fbd6eb1f546386b9a03982739bbcde8972f7de9bfcbec9c5"
         }
       ]
+    },
+    "zen-browser": {
+      "repository": "Arch-repo/zen-browser",
+      "revision": "a3765069ffd4e42994c911c0a58a781d80fd71c8",
+      "files": [
+        {
+          "path": "palette/render.py",
+          "filename": "render.py",
+          "sha256": "7835bd6d7dc6500bf2d9c55411efe74c065da529e9dc98deacd1bedb33cc2a1d"
+        },
+        {
+          "path": "palette/roles.css.in",
+          "filename": "roles.css.in",
+          "sha256": "b72f3763fa0978899f8e9e490321e3bdd3464743abf588c50cd5fcda508273d8"
+        },
+        {
+          "path": "palette/chrome.css.in",
+          "filename": "chrome.css.in",
+          "sha256": "f2f7ebc054958d16e1f11c6197ec6690775bd92269973ad40946e737456421d1"
+        },
+        {
+          "path": "palette/tabs.css.in",
+          "filename": "tabs.css.in",
+          "sha256": "cb132d7030d5221e2983d89fd60a2ec6ec72e44358b7bc0953d2a8b6d199452f"
+        },
+        {
+          "path": "palette/popups.css.in",
+          "filename": "popups.css.in",
+          "sha256": "c48e2d07afdb3683f484385da71db71e66d1841979bf089b0c4735c52c6cbc1a"
+        },
+        {
+          "path": "palette/content.css.in",
+          "filename": "content.css.in",
+          "sha256": "43b612aa2d00dc9b49aac182b79ad9d6141e322b1c44bd98d3039744fa0d99c5"
+        },
+        {
+          "path": "LICENSE",
+          "filename": "LICENSE",
+          "sha256": "814096d2c34cc216c624738a49356f32b7237733b4f7edb0685f4e50ef5074ba"
+        }
+      ]
     }
   }
 }

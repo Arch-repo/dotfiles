@@ -1,0 +1,33 @@
+{
+  "version": "1.23b",
+  "chrome": {
+    "accent": "#ed94b8",
+    "material": "rgba(57, 43, 54, 0.46)",
+    "background": "rgba(57, 43, 54, 0.46)",
+    "text": "#f5f2f8",
+    "fieldRadius": "12px",
+    "tabRadius": "12px",
+    "notification": "#3b3546",
+    "linuxTransparency": true,
+    "transparentBrowser": true,
+    "backgroundResponse": 34.92,
+    "glassDraws": 61,
+    "liveSamples": 2
+  },
+  "popup": {
+    "state": "open",
+    "background": "#3b3546",
+    "text": "#f5f2f8",
+    "radius": "18px"
+  },
+  "preferences": {
+    "accent": "#ed94b8",
+    "text": "#f5f2f8",
+    "cardRadius": "18px",
+    "primaryText": "#231e29",
+    "input": true
+  },
+  "websiteColorsPreserved": true,
+  "privateProfile": true,
+  "passed": true
+}

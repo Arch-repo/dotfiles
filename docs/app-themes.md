@@ -1,6 +1,6 @@
 # Temi delle applicazioni
 
-GTK, Qt, VS Code e Obsidian ricevono i ruoli della palette prodotta dal worker nativo degli
+GTK, Qt, Zen, VS Code e Obsidian ricevono i ruoli della palette prodotta dal worker nativo degli
 sfondi. L'accento non viene rimescolato dai singoli temi: editor, menu e shell
 usano gli stessi colori di origine.
 
@@ -12,14 +12,16 @@ usano gli stessi colori di origine.
 | [obsidian-theme](https://github.com/Arch-repo/obsidian-theme) | Fork di Minimal 9.1.1, CSS di base e mapping canonico `palette/template.css` |
 | [gtk-theme](https://github.com/Arch-repo/gtk-theme) | Base Orchis mantenuta, renderer GTK3, ruoli GTK4/libadwaita e fallback named colors |
 | [qt-theme](https://github.com/Arch-repo/qt-theme) | Renderer Qt5/Qt6, asset Kvantum, primitive Widgets e stile Qt Quick |
-| `resources.lock.json` | Revisioni immutabili e SHA-256 delle risorse dei quattro temi, incluse le licenze |
+| [zen-browser](https://github.com/Arch-repo/zen-browser) | Renderer canonico, token Gecko e moduli chrome, schede, popup e pagine interne |
+| `resources.lock.json` | Revisioni immutabili e SHA-256 delle risorse dei cinque temi, incluse le licenze |
 | `scripts/resources.py` | Download e verifica delle sole risorse necessarie alla generazione |
 | `support/wallpaper_effects.d/toolkit_theme.sh` | Bridge GTK/Qt senza mapping duplicati nei dotfiles |
 | `support/wallpaper_effects.d/editor_theme.sh` | Passaggio dei ruoli nativi ai renderer e all'installer condiviso |
+| `support/wallpaper_effects.d/app_theme.sh` | Bridge Zen e coordinamento delle destinazioni applicazioni |
 | `support/compat/app_themes.py` | Installazione atomica, aggiornamento delle preferenze JSONC e selezione dei temi e aggiornamento degli INI senza perdere font/commenti |
 
 Non occorre un clone Git durante un cambio sfondo. Le risorse installate sono in
-`$XDG_DATA_HOME/anto-desktop/{gtk-theme,qt-theme,vscode-theme,obsidian-theme}`, con il normale fallback
+`$XDG_DATA_HOME/anto-desktop/{gtk-theme,qt-theme,zen-browser,vscode-theme,obsidian-theme}`, con il normale fallback
 `~/.local/share`. Ogni job riceve uno snapshot privato della palette e si interrompe
 se appartiene a uno sfondo ormai sostituito. La generazione rimane in background.
 
@@ -140,6 +142,57 @@ Riferimenti: [Appearance](https://help.libreoffice.org/latest/en-US/text/shared/
 [parametri UNO](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html),
 [RecentDocsView 26.8](https://github.com/LibreOffice/core/blob/libreoffice-26.8.0.3/sfx2/source/control/recentdocsview.cxx),
 [ThumbnailView 26.8](https://github.com/LibreOffice/core/blob/libreoffice-26.8.0.3/sfx2/source/control/thumbnailview.cxx).
+
+## Zen
+
+Il tema è stato confrontato con Catppuccin (28 settembre 2025), Natsumi
+(2 ottobre 2026), Transparent Zen (13 settembre 2026), Nebula (7 maggio 2026)
+e soprattutto con i CSS effettivamente distribuiti in **Zen 1.23b / Gecko 157**.
+Il [registro upstream](https://github.com/Arch-repo/zen-browser/blob/main/UPSTREAM.md)
+riporta revisioni, date e superfici aggiornate. I riferimenti servono per i
+selettori e il comportamento; la generazione canonica è nella repository Zen,
+senza loader JavaScript o estensioni dei temi esterni.
+
+Palette e materiale sono gli stessi di GTK/Qt: alpha del pannello 0.46, raggi
+12 per i controlli e 18 per card e popup. Il backdrop del browser dipinge il
+pannello; le pagine interne hanno canvas trasparente per evitare un secondo
+strato di tinta. Popup, notifiche nella sidebar e toast ricevono il ruolo
+popover leggibile. Il tema copre URL bar, suggerimenti, schede/pinned, folder,
+workspace, media e i ruoli Gecko moderni insieme agli alias precedenti.
+Il layout e le azioni native di Zen restano gestiti dal browser.
+
+L'installer legge `profiles.ini`, inclusi nomi arbitrari e percorsi assoluti,
+e installa una cartella `chrome/anto426` con due import gestiti. Conserva CSS
+personali e preferenze estranee; migra soltanto i vecchi file interamente
+generati da `wallpaper_effects.sh`. Supporta anche i percorsi Flatpak e
+`ANTO426_ZEN_PROFILES` con profili separati da `:`. La destinazione
+**Impostazioni → Applicazioni** aggiorna questi artefatti al cambio sfondo.
+Zen carica `userChrome.css` e `userContent.css` all'avvio: i cambi richiedono
+il normale riavvio del browser. Le tre preferenze gestite abilitano CSS utente
+e trasparenza nativa; il controllo remoto è usato soltanto nel profilo di test.
+
+Il [rapporto Zen](zen-theme-verification.json) verifica il browser reale in
+un profilo privato: contrasto e raggi, menu nativo, pagine delle impostazioni,
+conservazione dei colori dei siti e pixel che cambiano quando cambia la scena
+sottostante. La composizione HyprGlass registra nuovi campionamenti del fondo.
+Le [schermate delle impostazioni](screenshots/zen-preferences.png) contengono
+solo dati sintetici. Non è una prova di ogni modalità o estensione di Zen.
+
+La prova usa le risorse installate e il fixture Wayland della build nativa;
+le dipendenze di automazione restano in un ambiente isolato, senza modificare
+i profili personali o abilitare il controllo remoto nelle loro preferenze:
+
+```sh
+python3 -m venv build/zen-tests-venv
+build/zen-tests-venv/bin/pip install marionette_driver==3.7.1 Pillow==12.3.0
+build/zen-tests-venv/bin/python scripts/verify_zen_theme.py
+```
+
+Riferimenti: [Zen 1.23b](https://github.com/zen-browser/desktop/releases/tag/1.23b),
+[Natsumi](https://github.com/greeeen-dev/natsumi-browser),
+[Transparent Zen](https://github.com/sameerasw/zen-themes/tree/main/TransparentZen),
+[Nebula](https://github.com/JustAdumbPrsn/Zen-Nebula),
+[Catppuccin](https://github.com/catppuccin/zen-browser).
 
 ## Trasparenza
 
