@@ -129,8 +129,12 @@ e l'app reale: conserva uno schema personale e i colori di pagina/testo,
 verifica aggiornamenti live, idempotenza e persistenza dopo il riavvio.
 Il [rapporto](libreoffice-theme-verification.json) distingue questa verifica
 dalla copertura generica del toolkit. LibreOffice rende la superficie VCL dei
-documenti recenti come RGB opaco: il colore è dinamico, ma non viene dichiarata
-una trasparenza per quel canvas e non si sbiadisce l'intera finestra.
+documenti recenti come RGB opaco. Per renderla traslucida, le regole
+`$antoOfficeClasses` applicano HyprGlass e un'opacità del compositore di 0.82,
+uguale per finestre attive, inattive e a schermo intero. È un fallback per VCL:
+coinvolge anche testo e immagini, mentre il tema GTK mantiene l'alpha separato
+dei fondi nelle applicazioni native. La prova toolkit verifica il canvas reale
+di LibreOffice con un profilo privato e uno sfondo sintetico che cambia.
 
 Riferimenti: [Appearance](https://help.libreoffice.org/latest/en-US/text/shared/optionen/01012000.html),
 [parametri UNO](https://help.libreoffice.org/latest/en-US/text/shared/guide/start_parameters.html),
@@ -139,10 +143,14 @@ Riferimenti: [Appearance](https://help.libreoffice.org/latest/en-US/text/shared/
 
 ## Trasparenza
 
-GTK e Kvantum usano l’alpha del fondo (opacità condivisa 0.46); il compositore
-non sbiadisce testo e icone. Le regole `$antoToolkitClasses` assegnano il preset
-HyprGlass a file manager e applicazioni native supportate. Nemo non riceve più
-opacità diverse tra finestra attiva e inattiva; i pannelli hanno separatori
+GTK, Kvantum e Qt Quick usano l’alpha del fondo (opacità condivisa 0.46); il
+compositore non sbiadisce testo e icone. HyprGlass è abilitato automaticamente
+per le finestre trasparenti, comprese le applicazioni nuove senza una regola
+specifica per la classe. `skip_opaque_windows = 1` evita lavoro inutile sui
+client opachi; le regole esplicite optano comunque nel vetro per i fallback.
+L'opacità generale resta 1.0 sia per finestre attive sia inattive, così il cambio
+di focus non altera il testo. Le regole `$antoToolkitClasses` mantengono il
+preset condiviso per le applicazioni native note; i pannelli hanno separatori
 contenuti e chrome coerente con il materiale.
 
 Le grandi superfici usano colori alpha; testo, selezioni e dialoghi conservano
@@ -176,9 +184,13 @@ Riferimenti primari: [colori VS Code](https://code.visualstudio.com/api/referenc
 
 Il [rapporto toolkit](toolkit-themes-verification.json) registra GTK3 **3.24.52**,
 GTK4 **4.22.5**, libadwaita **1.9.4**, Qt5 **5.15.19**, Qt6/Quick **6.11.2**.
-`scripts/verify_toolkit_themes.py` avvia finestre sintetiche e Nemo in una sessione
-Wayland privata. Verifica parsing CSS, ruoli di colore, testo opaco, classe/tag
-materiale e variazione dei pixel del fondo mentre cambia la scena sottostante.
+`scripts/verify_toolkit_themes.py` avvia finestre sintetiche, Nemo e LibreOffice
+in una sessione Wayland privata con output headless. La composizione GPU
+continua senza spostare i workspace dell'utente. Verifica parsing CSS, ruoli di
+colore, testo opaco e variazione dei pixel del fondo mentre cambia la scena
+sottostante. Le classi delle finestre sintetiche non ricevono tag forzati:
+l'attivazione automatica viene verificata anche attraverso i contatori dei draw
+HyprGlass e dei nuovi campionamenti del fondo.
 Include GTK4 sia con libadwaita sia con la base completa del tema e verifica
 anche il contrasto del testo sui pulsanti accentati. Qt5 e Qt6 verificano gli
 stessi controlli Widgets e Quick: geometria condivisa, colore del focus dipinto,
